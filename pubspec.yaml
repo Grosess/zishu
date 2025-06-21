@@ -1,0 +1,47 @@
+name: zishu
+description: "Master Chinese character writing with authentic stroke order guidance"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.8.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  shared_preferences: ^2.3.3
+  uuid: ^4.5.1
+  sqflite: ^2.3.3+2
+  path: ^1.9.0
+  path_provider: ^2.1.5
+  file_picker: ^10.2.0
+  url_launcher: ^6.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/icons/
+    - assets/brush_texture/
+    - assets/theme/
+    - assets/hanzi.db
+    - assets/characters/
+    - assets/character_data.json
+    - assets/character_sets.json
+    - database/makemeahanzi-master/makemeahanzi-master/graphics.txt
+    - database-sample/makemeahanzi-master/makemeahanzi-master/graphics.txt
+    - database/makemeahanzi-master/makemeahanzi-master/dictionary.txt
+    - database-sample/makemeahanzi-master/makemeahanzi-master/dictionary.txt
+    - assets/cedict_1_0_ts_utf-8_mdbg/cedict_ts.u8
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/drawingredlarge.png"
+  remove_alpha_ios: true
+  background_color_ios: "#E53935"

@@ -1,0 +1,5 @@
+*.pyc
+*.swp
+.meteor
+.DS_Store
+node_modules

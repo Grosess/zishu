@@ -1,0 +1,27 @@
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/drawingredlarge.png"
+  
+  # Android specific settings
+  adaptive_icon_background: "#E53935"  # Red background matching the icon
+  adaptive_icon_foreground: "assets/icons/drawingredlarge.png"
+  
+  # iOS specific settings
+  remove_alpha_ios: true
+  background_color_ios: "#E53935"
+  
+  # Web favicon
+  web:
+    generate: true
+    image_path: "assets/icons/drawingredlarge.png"
+    
+  # Windows and macOS icons
+  windows:
+    generate: true
+    image_path: "assets/icons/drawingredlarge.png"
+    icon_size: 48
+    
+  macos:
+    generate: true
+    image_path: "assets/icons/drawingredlarge.png"
