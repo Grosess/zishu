@@ -1,4 +1,4 @@
-# Database Setup Guide
+# Database Setup
 
 This app uses character stroke data from the MakeMeAHanzi project.
 
