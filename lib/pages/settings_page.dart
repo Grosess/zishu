@@ -826,8 +826,11 @@ class _SettingsPageState extends State<SettingsPage> {
       case 'blue':
         displayColor = const Color(0xFF1976D2);
         break;
-      case 'pink':
-        displayColor = const Color(0xFFF5B7C8);
+      case 'lightpink':
+        displayColor = const Color(0xFFFFC1CC);
+        break;
+      case 'hotpink':
+        displayColor = const Color(0xFFFF69B4);
         break;
       case 'gold':
         displayColor = const Color(0xFFFF8F00);
@@ -852,14 +855,29 @@ class _SettingsPageState extends State<SettingsPage> {
       title: Text(label),
       trailing: _duotoneBackground == value ? const Icon(Icons.check) : null,
       onTap: () async {
+        // Prevent selecting the same color as accent
+        if (value == _duotoneColor) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Background and accent colors must be different'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+          return;
+        }
+        
         setState(() {
           _duotoneBackground = value;
         });
         await _saveStringSetting('duotone_background', value);
+        
+        // Re-validate the combination
+        _validateDuotoneColorsSync();
+        
         if (mounted) {
-          MainApp.of(context)?.updateTheme('duotone', duotoneBackground: value, duotoneColor: _duotoneColor);
+          MainApp.of(context)?.updateTheme('duotone', duotoneBackground: _duotoneBackground, duotoneColor: _duotoneColor);
+          Navigator.pop(context);
         }
-        Navigator.pop(context);
       },
     );
   }
@@ -878,14 +896,29 @@ class _SettingsPageState extends State<SettingsPage> {
       title: Text(label),
       trailing: _duotoneColor == value ? const Icon(Icons.check) : null,
       onTap: () async {
+        // Prevent selecting the same color as background
+        if (value == _duotoneBackground) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Background and accent colors must be different'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+          return;
+        }
+        
         setState(() {
           _duotoneColor = value;
         });
         await _saveStringSetting('duotone_color', value);
+        
+        // Re-validate the combination
+        _validateDuotoneColorsSync();
+        
         if (mounted) {
-          MainApp.of(context)?.updateTheme('duotone', duotoneBackground: _duotoneBackground, duotoneColor: value);
+          MainApp.of(context)?.updateTheme('duotone', duotoneBackground: _duotoneBackground, duotoneColor: _duotoneColor);
+          Navigator.pop(context);
         }
-        Navigator.pop(context);
       },
     );
   }
@@ -894,19 +927,30 @@ class _SettingsPageState extends State<SettingsPage> {
     final isBackgroundNeutral = _duotoneBackground == 'white' || _duotoneBackground == 'black';
     final isAccentNeutral = _duotoneColor == 'white' || _duotoneColor == 'black';
     
-    // Check if both are neutral (invalid)
-    if (isBackgroundNeutral && isAccentNeutral) {
+    // Check if both are the same (invalid - no contrast)
+    if (_duotoneBackground == _duotoneColor) {
       // Default to white background, green accent
       _duotoneBackground = 'white';
       _duotoneColor = 'green';
       // Save corrected values
       _prefs.setString('duotone_background', _duotoneBackground);
       _prefs.setString('duotone_color', _duotoneColor);
+    }
+    // Check if both are neutral (invalid)
+    else if (isBackgroundNeutral && isAccentNeutral) {
+      // Keep white/black background, change accent to green
+      _duotoneColor = 'green';
+      // Save corrected value
+      _prefs.setString('duotone_color', _duotoneColor);
     } 
-    // Check if both are colors (invalid)
+    // Check if both are colors (invalid - must have one neutral)
     else if (!isBackgroundNeutral && !isAccentNeutral) {
-      // Keep the background, make accent white
-      _duotoneColor = 'white';
+      // Keep the background, make accent white or black based on background brightness
+      if (_duotoneBackground == 'lightpink' || _duotoneBackground == 'gold') {
+        _duotoneColor = 'black'; // Use black for light backgrounds
+      } else {
+        _duotoneColor = 'white'; // Use white for dark backgrounds
+      }
       // Save corrected value
       _prefs.setString('duotone_color', _duotoneColor);
     }

@@ -759,31 +759,14 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
                 
                 const SizedBox(height: 16),
                 
-                // Words and Time stats
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildStatCard(
-                        icon: Icons.translate,
-                        title: 'Words Learned',
-                        value: _totalWordsLearned.toString(),
-                        color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                          ? Theme.of(context).colorScheme.primary
-                          : Colors.teal,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildStatCard(
-                        icon: Icons.timer_outlined,
-                        title: 'Total Time',
-                        value: _formatDuration(_totalStudyTime),
-                        color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                          ? Theme.of(context).colorScheme.primary
-                          : Colors.indigo,
-                      ),
-                    ),
-                  ],
+                // Total Time stat - full width
+                _buildStatCard(
+                  icon: Icons.timer_outlined,
+                  title: 'Total Time',
+                  value: _formatDuration(_totalStudyTime),
+                  color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                    ? Theme.of(context).colorScheme.primary
+                    : Colors.indigo,
                 ),
               ],
             ),
