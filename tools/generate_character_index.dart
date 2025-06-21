@@ -3,7 +3,7 @@ import 'dart:convert';
 
 /// Generates an index file for fast character lookup in graphics.txt
 void main() async {
-  final graphicsPath = 'database-sample/makemeahanzi-master/makemeahanzi-master/graphics.txt';
+  final graphicsPath = 'database/makemeahanzi-master/makemeahanzi-master/graphics.txt';
   final outputPath = 'assets/character_index.json';
   
   final graphicsFile = File(graphicsPath);

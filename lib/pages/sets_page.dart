@@ -581,7 +581,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
                                 color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                                     ? (isLearned 
                                         ? Theme.of(context).colorScheme.secondary.withOpacity(0.3)
-                                        : Colors.grey.withOpacity(0.2))
+                                        : Colors.grey[100]!)
                                     : (isLearned 
                                         ? Colors.blue.withOpacity(0.2)
                                         : Colors.grey.withOpacity(0.2)),
@@ -590,7 +590,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
                                   color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                                       ? (isLearned 
                                           ? Theme.of(context).colorScheme.secondary
-                                          : Colors.grey.withOpacity(0.3))
+                                          : Theme.of(context).colorScheme.secondary.withOpacity(0.3))
                                       : (isLearned 
                                           ? Colors.blue.withOpacity(0.5)
                                           : Colors.grey.withOpacity(0.3)),
@@ -781,7 +781,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
                     
                     const Spacer(), // Space between left and right
                   
-                  // Right side - Practice and Endless buttons (stacked)
+                  // Right side - Practice button
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
@@ -853,46 +853,6 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
                           ),
                         ),
                       
-                      // Endless Practice - only show if 5+ learned
-                      FutureBuilder<List<String>>(
-                        future: _learningService.getLearnedCharactersForSet(validItems),
-                        builder: (context, snapshot) {
-                          final learnedCount = snapshot.data?.length ?? 0;
-                          final hasEnoughLearned = learnedCount >= 5;
-                          
-                          if (!hasEnoughLearned) {
-                            return const SizedBox(); // Don't show button at all
-                          }
-                          
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: SizedBox(
-                              width: 125,
-                              child: FilledButton.icon(
-                                onPressed: () async {
-                                  // Endless practice logic would go here
-                                  Navigator.pop(context);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Endless practice mode - coming soon!'),
-                                    ),
-                                  );
-                                },
-                                icon: const Icon(Icons.all_inclusive, size: 18),
-                                label: const Text('Endless',
-                                  style: TextStyle(fontSize: 13),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                                      ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withOpacity(0.6)
-                                      : Theme.of(context).colorScheme.tertiary,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
                     ],
                   ),
                 ],

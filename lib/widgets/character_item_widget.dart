@@ -66,13 +66,17 @@ class CharacterItemWidget extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: isLearned 
-                ? Colors.blue.withOpacity(0.1)
-                : Colors.grey.withOpacity(0.1),
+                ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                : Theme.of(context).brightness == Brightness.dark
+                    ? Theme.of(context).colorScheme.primary.withOpacity(0.05)
+                    : Colors.grey.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: isLearned 
-                  ? Colors.blue.withOpacity(0.3)
-                  : Colors.grey.withOpacity(0.2),
+                  ? Theme.of(context).colorScheme.primary.withOpacity(0.3)
+                  : Theme.of(context).brightness == Brightness.dark
+                      ? Theme.of(context).colorScheme.primary.withOpacity(0.15)
+                      : Colors.grey.withOpacity(0.2),
               width: 1,
             ),
           ),
@@ -86,7 +90,7 @@ class CharacterItemWidget extends StatelessWidget {
                   fontSize: 24,
                   fontWeight: FontWeight.w500,
                   color: isLearned 
-                      ? Colors.blue
+                      ? Theme.of(context).colorScheme.primary
                       : Theme.of(context).colorScheme.onSurface,
                 ),
               ),

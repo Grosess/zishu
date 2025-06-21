@@ -2264,8 +2264,10 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     if (box == null) return false;
     
     final canvasSize = box.size;
-    final padding = canvasSize.width * 0.1;
-    final drawSize = canvasSize.width - (padding * 2);
+    // Use rounded calculations to avoid floating-point precision issues
+    final paddingInt = (canvasSize.width * 0.08).round();
+    final padding = paddingInt.toDouble();
+    final drawSize = canvasSize.width.round() - (paddingInt * 2);
     
     // Normalize user stroke
     final normalizedUser = userStroke.map((p) => Offset(
@@ -2370,14 +2372,18 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       return false;
     }
     
-    final padding = canvasSize.width * 0.1;
+    // Avoid excessive rounding to prevent distortion on real devices
+    final padding = canvasSize.width * 0.08;
     final drawSize = canvasSize.width - (padding * 2);
-    final scale = drawSize / 1024;
+    final scale = drawSize / 1024.0 * 1.05; // Match character_stroke_service scaling
+    final scaledSize = 1024 * scale;
+    final offsetX = (canvasSize.width - scaledSize) / 2;
+    final offsetY = (canvasSize.height - scaledSize) / 2 - (canvasSize.height * 0.08);
     
     // Convert median points to canvas coordinates
     final canvasMedians = medianPoints.map((p) => Offset(
-      p[0] * scale + padding,
-      (1024 - p[1]) * scale + padding,
+      p[0] * scale + offsetX,
+      (1024 - p[1]) * scale + offsetY,
     )).toList();
     
     // Balanced location tolerance
@@ -2576,8 +2582,10 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     if (userStroke.length < 2 || medianPoints.length < 2) return 0.0;
     
     // Account for padding when normalizing
-    final padding = canvasSize.width * 0.1;
+    // Avoid excessive rounding to prevent distortion on real devices
+    final padding = canvasSize.width * 0.08;
     final drawSize = canvasSize.width - (padding * 2);
+    final scale = drawSize / 1024.0 * 1.05; // Match character_stroke_service scaling
     
     // Calculate average deviation
     double totalDeviation = 0.0;
@@ -2588,9 +2596,13 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       final medianIndex = (medianPoints.length * i / samples).round().clamp(0, medianPoints.length - 1);
       
       final userPoint = userStroke[userIndex];
+      final scaledSize = 1024 * scale;
+      final offsetX = (canvasSize.width - scaledSize) / 2;
+      final offsetY = (canvasSize.height - scaledSize) / 2 - (canvasSize.height * 0.08);
+      
       final medianPoint = Offset(
-        medianPoints[medianIndex][0] / 1024 * drawSize + padding,
-        (1024 - medianPoints[medianIndex][1]) / 1024 * drawSize + padding,
+        medianPoints[medianIndex][0] * scale + offsetX,
+        (1024 - medianPoints[medianIndex][1]) * scale + offsetY,
       );
       
       totalDeviation += (userPoint - medianPoint).distance;
@@ -3520,9 +3532,9 @@ class HintPainter extends CustomPainter {
       final end = medians.last;
       
       // Account for padding
-      final padding = size.width * 0.1;
+      final padding = size.width * 0.08; // Match character_stroke_service padding
       final drawSize = size.width - (padding * 2);
-      final scale = drawSize / 1024;
+      final scale = drawSize / 1024 * 1.05; // Match character_stroke_service scaling
       
       final startPoint = Offset(
         start[0] * scale + padding,
@@ -3855,9 +3867,9 @@ class StrokeOrderPainter extends CustomPainter {
       // Draw stroke number at median point
       if (i < characterStroke.medians.length && characterStroke.medians[i].isNotEmpty) {
         final medianPoint = characterStroke.medians[i][0];
-        final padding = size.width * 0.1;
+        final padding = size.width * 0.08; // Match character_stroke_service padding
         final drawSize = size.width - (padding * 2);
-        final scale = drawSize / 1024;
+        final scale = drawSize / 1024 * 1.05; // Match character_stroke_service scaling
         
         final numberPosition = Offset(
           medianPoint[0] * scale + padding,
@@ -3903,9 +3915,9 @@ class StrokeOrderPainter extends CustomPainter {
     if (currentStrokeIndex < characterStroke.medians.length) {
       final medians = characterStroke.medians[currentStrokeIndex];
       if (medians.length >= 2) {
-        final padding = size.width * 0.1;
+        final padding = size.width * 0.08; // Match character_stroke_service padding
         final drawSize = size.width - (padding * 2);
-        final scale = drawSize / 1024;
+        final scale = drawSize / 1024 * 1.05; // Match character_stroke_service scaling
         
         // Draw arrow at 25% of the stroke
         final arrowIndex = (medians.length * 0.25).round().clamp(1, medians.length - 1);

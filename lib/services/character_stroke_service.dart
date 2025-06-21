@@ -306,12 +306,17 @@ class StrokeValidator {
     }
     
     // Account for padding when normalizing (same as in parsePath)
+    // Avoid excessive rounding to prevent distortion on real devices
     final padding = canvasSize.width * 0.08;
     final drawSize = canvasSize.width - (padding * 2);
-    final scale = drawSize / 1024 * 1.05;
+    
+    // For validation, we can't check the SVG path, but we can assume simpler scaling
+    // This should match the most common case from parsePath
+    final scale = drawSize / 1024.0 * 1.05;
     final scaledSize = 1024 * scale;
     final offsetX = (canvasSize.width - scaledSize) / 2;
-    final offsetY = (canvasSize.height - scaledSize) / 2; // No upward adjustment to match parsePath
+    // Match parsePath's upward adjustment for consistency
+    final offsetY = (canvasSize.height - scaledSize) / 2 - (canvasSize.height * 0.08);
     
     // Normalize coordinates (accounting for the centered position)
     final normalizedUser = userStroke.map((p) => Offset(
@@ -631,18 +636,25 @@ class SvgPathConverter {
     double currentY = 0;
     
     // MakeMeAHanzi uses 1024x1024, scale to fit target with padding
-    // Use rounded calculations to avoid floating-point precision issues
-    final paddingInt = (targetSize.width * 0.08).round();
-    final padding = paddingInt.toDouble();
-    final drawSize = targetSize.width.round() - (paddingInt * 2);
-    final scale = drawSize / 1024.0 * 1.05; // Make 5% bigger
+    // Avoid excessive rounding to prevent distortion on real devices
+    final padding = targetSize.width * 0.08;
+    final drawSize = targetSize.width - (padding * 2);
+    
+    // Check if this might be a complex enclosed character (like 国, 圆, etc)
+    // by looking for multiple Z (close path) commands which indicate multiple strokes
+    final closeCount = svgPath.split('Z').length - 1;
+    final isComplexCharacter = closeCount > 3;
+    
+    // Use slightly smaller scale for complex characters to ensure they fit properly
+    final scaleFactor = isComplexCharacter ? 1.02 : 1.05;
+    final scale = drawSize / 1024.0 * scaleFactor;
     
     // Center the character properly with upward adjustment
-    // Round intermediate calculations to avoid precision issues
-    final scaledSize = (1024 * scale).roundToDouble();
-    final offsetX = ((targetSize.width - scaledSize) / 2).roundToDouble(); // Center horizontally
+    // Use direct calculations without premature rounding
+    final scaledSize = 1024 * scale;
+    final offsetX = (targetSize.width - scaledSize) / 2; // Center horizontally
     // Move characters up by 8% of the target height for better visual balance
-    final offsetY = ((targetSize.height - scaledSize) / 2).roundToDouble() - (targetSize.height * 0.08).roundToDouble();
+    final offsetY = (targetSize.height - scaledSize) / 2 - (targetSize.height * 0.08);
     
     // Debug logging disabled for production
     // print('SvgPathConverter - targetSize: $targetSize, scale: $scale, offsetX: $offsetX, offsetY: $offsetY');
@@ -656,9 +668,9 @@ class SvgPathConverter {
           if (i + 2 < commands.length) {
             final x = double.parse(commands[++i]);
             final y = double.parse(commands[++i]);
-            currentX = (x * scale + offsetX).roundToDouble();
+            currentX = x * scale + offsetX;
             // Flip Y coordinate
-            currentY = ((1024.0 - y) * scale + offsetY).roundToDouble();
+            currentY = (1024.0 - y) * scale + offsetY;
             path.moveTo(currentX, currentY);
           }
           break;
@@ -667,9 +679,9 @@ class SvgPathConverter {
           if (i + 2 < commands.length) {
             final x = double.parse(commands[++i]);
             final y = double.parse(commands[++i]);
-            currentX = (x * scale + offsetX).roundToDouble();
+            currentX = x * scale + offsetX;
             // Flip Y coordinate
-            currentY = ((1024.0 - y) * scale + offsetY).roundToDouble();
+            currentY = (1024.0 - y) * scale + offsetY;
             path.lineTo(currentX, currentY);
           }
           break;
@@ -678,15 +690,15 @@ class SvgPathConverter {
           if (i + 4 < commands.length) {
             final cx1 = double.parse(commands[++i]);
             final cy1 = double.parse(commands[++i]);
-            final cx = (cx1 * scale + offsetX).roundToDouble();
+            final cx = cx1 * scale + offsetX;
             // Flip Y coordinate for control point
-            final cy = ((1024.0 - cy1) * scale + offsetY).roundToDouble();
+            final cy = (1024.0 - cy1) * scale + offsetY;
             
             final x = double.parse(commands[++i]);
             final y = double.parse(commands[++i]);
-            currentX = (x * scale + offsetX).roundToDouble();
+            currentX = x * scale + offsetX;
             // Flip Y coordinate for end point
-            currentY = ((1024.0 - y) * scale + offsetY).roundToDouble();
+            currentY = (1024.0 - y) * scale + offsetY;
             path.quadraticBezierTo(cx, cy, currentX, currentY);
           }
           break;

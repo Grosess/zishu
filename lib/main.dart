@@ -16,6 +16,7 @@ import 'services/image_cache_service.dart';
 import 'services/statistics_service.dart';
 import 'services/streak_service.dart';
 import 'widgets/streak_display.dart';
+import 'pages/debug_characters_page.dart';
 
 // Theme extension for duotone themes
 class DuotoneThemeExtension extends ThemeExtension<DuotoneThemeExtension> {
@@ -464,8 +465,8 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         break;
       case 'blue':
         foregroundColor = (background == 'black' || background == 'blue' || background == 'purple') 
-          ? const Color(0xFF42A5F5) 
-          : const Color(0xFF1976D2);
+          ? const Color(0xFF42A5F5)  // Lighter blue for dark backgrounds
+          : const Color(0xFF0D47A1);  // Much darker blue for white background (blue 900)
         break;
       case 'lightpink':
         // Light pink - use different shades for contrast
@@ -806,6 +807,10 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   int _selectedIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ProfileService _profileService = ProfileService();
+  
+  // Debug access counter
+  int _debugTapCount = 0;
+  DateTime? _lastDebugTap;
 
   late final List<Widget> _pages;
   final GlobalKey<HomePageState> _homePageKey = GlobalKey<HomePageState>();
@@ -957,25 +962,47 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
             ),
           ),
         ),
-        title: ShaderMask(
-          shaderCallback: (bounds) => LinearGradient(
-            colors: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                ? [
-                    Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!,
-                    Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!,
-                  ]
-                : [
-                    Theme.of(context).colorScheme.primary,
-                    Theme.of(context).colorScheme.secondary,
-                  ],
-          ).createShader(bounds),
-          child: const Text(
-            'Zishu',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-              letterSpacing: 1.2,
+        title: GestureDetector(
+          onTap: () {
+            final now = DateTime.now();
+            // Reset counter if more than 2 seconds since last tap
+            if (_lastDebugTap == null || now.difference(_lastDebugTap!).inSeconds > 2) {
+              _debugTapCount = 0;
+            }
+            _debugTapCount++;
+            _lastDebugTap = now;
+            
+            // Open debug screen after 5 taps
+            if (_debugTapCount >= 5) {
+              _debugTapCount = 0;
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const DebugCharactersPage(),
+                ),
+              );
+            }
+          },
+          child: ShaderMask(
+            shaderCallback: (bounds) => LinearGradient(
+              colors: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                  ? [
+                      Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!,
+                      Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!,
+                    ]
+                  : [
+                      Theme.of(context).colorScheme.primary,
+                      Theme.of(context).colorScheme.secondary,
+                    ],
+            ).createShader(bounds),
+            child: const Text(
+              'Zishu',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+                letterSpacing: 1.2,
+              ),
             ),
           ),
         ),

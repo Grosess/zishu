@@ -418,11 +418,13 @@ class _CharacterListPageState extends State<CharacterListPage> {
                       elevation: 2,
                       color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                           ? (isLearned 
-                              ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withOpacity(0.3) 
-                              : Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!)
+                              ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2! 
+                              : Colors.grey[100]!)
                           : (isLearned 
                               ? Theme.of(context).colorScheme.primary.withOpacity(0.3) 
-                              : Theme.of(context).colorScheme.surface),
+                              : Theme.of(context).brightness == Brightness.dark
+                                  ? Theme.of(context).colorScheme.primary.withOpacity(0.08)
+                                  : Theme.of(context).colorScheme.surface),
                       child: Material(
                         color: Colors.transparent,
                         child: InkWell(
@@ -443,11 +445,13 @@ class _CharacterListPageState extends State<CharacterListPage> {
                       elevation: 2,
                       color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                           ? (isLearned 
-                              ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withOpacity(0.3) 
-                              : Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!)
+                              ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2! 
+                              : Colors.grey[100]!)
                           : (isLearned 
                               ? Theme.of(context).colorScheme.primary.withOpacity(0.3) 
-                              : Theme.of(context).colorScheme.surface),
+                              : Theme.of(context).brightness == Brightness.dark
+                                  ? Theme.of(context).colorScheme.primary.withOpacity(0.08)
+                                  : Theme.of(context).colorScheme.surface),
                       child: Material(
                         color: Colors.transparent,
                         child: InkWell(
@@ -1011,7 +1015,11 @@ class _CharacterListPageState extends State<CharacterListPage> {
             style: TextStyle(
               fontSize: 40,
               fontWeight: FontWeight.w300,
-              color: Colors.white,
+              color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                  ? (isLearned 
+                      ? Colors.white 
+                      : Theme.of(context).colorScheme.primary)
+                  : Colors.white,
             ),
           ),
           if (pinyin != null) ...[
@@ -1020,7 +1028,11 @@ class _CharacterListPageState extends State<CharacterListPage> {
               pinyin,
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.white70,
+                color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                    ? (isLearned 
+                        ? Colors.white70 
+                        : Theme.of(context).colorScheme.primary.withOpacity(0.7))
+                    : Colors.white70,
               ),
               textAlign: TextAlign.center,
             ),
@@ -1031,7 +1043,11 @@ class _CharacterListPageState extends State<CharacterListPage> {
               definition,
               style: TextStyle(
                 fontSize: 10,
-                color: Colors.white60,
+                color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                    ? (isLearned 
+                        ? Colors.white60 
+                        : Theme.of(context).colorScheme.primary.withOpacity(0.6))
+                    : Colors.white60,
               ),
               textAlign: TextAlign.center,
               maxLines: 2,
@@ -1166,7 +1182,11 @@ class _CharacterListPageState extends State<CharacterListPage> {
             style: TextStyle(
               fontSize: term.length > 2 ? 24 : 32,
               fontWeight: FontWeight.w300,
-              color: Colors.white,
+              color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                  ? (isLearned 
+                      ? Colors.white 
+                      : Theme.of(context).colorScheme.primary)
+                  : Colors.white,
             ),
             textAlign: TextAlign.center,
           ),
@@ -1179,7 +1199,11 @@ class _CharacterListPageState extends State<CharacterListPage> {
                     pinyin,
                     style: TextStyle(
                       fontSize: 11,
-                      color: Colors.white70,
+                      color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                          ? (isLearned 
+                              ? Colors.white70 
+                              : Theme.of(context).colorScheme.primary.withOpacity(0.7))
+                          : Colors.white70,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -1188,7 +1212,11 @@ class _CharacterListPageState extends State<CharacterListPage> {
                     definition,
                     style: TextStyle(
                       fontSize: 10,
-                      color: Colors.white60,
+                      color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                          ? (isLearned 
+                              ? Colors.white60 
+                              : Theme.of(context).colorScheme.primary.withOpacity(0.6))
+                          : Colors.white60,
                     ),
                     textAlign: TextAlign.center,
                     maxLines: 2,

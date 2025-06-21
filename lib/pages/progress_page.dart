@@ -671,16 +671,14 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(12),
-                    boxShadow: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true 
-                      ? [
-                          BoxShadow(
-                            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                            offset: Offset(0, 2),
-                            blurRadius: 8,
-                            spreadRadius: 1,
-                          ),
-                        ]
-                      : null,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                        offset: Offset(0, 2),
+                        blurRadius: 8,
+                        spreadRadius: 1,
+                      ),
+                    ],
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -712,12 +710,8 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
                         value: _dailyProgress,
                         minHeight: 8,
                         borderRadius: BorderRadius.circular(4),
-                        backgroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                          ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
-                          : null,
-                        valueColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                          ? AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary)
-                          : null,
+                        backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                        valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
                       ),
                     ],
                   ),

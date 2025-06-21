@@ -519,8 +519,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 
                 // Daily Learn Goal Setting
                 ListTile(
-                  title: const Text('Daily Learn Goal'),
-                  subtitle: Text('$_dailyLearnGoal characters per day'),
+                  title: const Text('Cards Per Group'),
+                  subtitle: Text('$_dailyLearnGoal characters per group'),
                   trailing: SizedBox(
                     width: 200,
                     child: Slider(
@@ -1055,7 +1055,7 @@ class _SettingsPageState extends State<SettingsPage> {
         case 'red':
           return const Color(0xFFD32F2F);
         case 'blue':
-          return const Color(0xFF1976D2);
+          return const Color(0xFF0D47A1);  // Darker blue for better contrast
         case 'lightpink':
           return const Color(0xFFFFB3C1); // Light pink for white background
         case 'hotpink':
