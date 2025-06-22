@@ -742,13 +742,15 @@ class _WritingPracticePageState extends State<WritingPracticePage>
             ),
           ],
           
-          // Drawing area (square)
-          Expanded(
-            child: Center(
-              child: AspectRatio(
-                aspectRatio: 1.0, // Force square
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          // Drawing area (square) with all buttons right below
+          Flexible(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AspectRatio(
+                  aspectRatio: 1.0, // Force square
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
                     color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                       ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1! // Use background color
@@ -976,57 +978,12 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                       },
                     ),
                   ),
+                  ),
                 ),
-              ),
-            ),
-          ),
-          
-          // Manual grading section - always present but visibility controlled
-          Container(
-            height: 56, // Fixed height to prevent jumping
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: AnimatedOpacity(
-              opacity: _showManualGrading ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 200),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: _showManualGrading ? () => _proceedWithGrade(false) : null,
-                    icon: const Icon(Icons.close),
-                    label: const Text('Incorrect'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _getButtonBackgroundColor(false),
-                      foregroundColor: _getButtonForegroundColor(),
-                      minimumSize: const Size(140, 48),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        side: !_autoGradedAsCorrect ? BorderSide(color: _getButtonBorderColor(), width: 3) : BorderSide.none,
-                      ),
-                    ),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: _showManualGrading ? () => _proceedWithGrade(true) : null,
-                    icon: const Icon(Icons.check),
-                    label: const Text('Correct'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _getButtonBackgroundColor(true),
-                      foregroundColor: _getButtonForegroundColor(),
-                      minimumSize: const Size(140, 48),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        side: _autoGradedAsCorrect ? BorderSide(color: _getButtonBorderColor(), width: 3) : BorderSide.none,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          
-          // Practice control buttons (erase, show next, show all)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                
+                // Practice control buttons (erase, show next, show all) - directly under character box
+                Padding(
+                  padding: const EdgeInsets.only(left: 16, right: 16, top: 0, bottom: 4),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -1069,88 +1026,66 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                 ),
               ],
             ),
+                ),
+                
+                // Manual grading section - always present but visibility controlled
+                Container(
+                  height: 56,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: AnimatedOpacity(
+              opacity: _showManualGrading ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 200),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: _showManualGrading ? () => _proceedWithGrade(false) : null,
+                    icon: const Icon(Icons.close),
+                    label: const Text('Incorrect'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _getButtonBackgroundColor(false),
+                      foregroundColor: _getButtonForegroundColor(),
+                      minimumSize: const Size(140, 48),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        side: !_autoGradedAsCorrect ? BorderSide(color: _getButtonBorderColor(), width: 3) : BorderSide.none,
+                      ),
+                    ),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: _showManualGrading ? () => _proceedWithGrade(true) : null,
+                    icon: const Icon(Icons.check),
+                    label: const Text('Correct'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _getButtonBackgroundColor(true),
+                      foregroundColor: _getButtonForegroundColor(),
+                      minimumSize: const Size(140, 48),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        side: _autoGradedAsCorrect ? BorderSide(color: _getButtonBorderColor(), width: 3) : BorderSide.none,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+                ),
+              ],
+            ),
           ),
           
-          // Radical analysis (only in learning mode)
+          // Radical analysis (only in learning mode) - moved to bottom
           if (widget.mode == PracticeMode.learning && 
               _radicalAnalysis != null)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: SimpleRadicalDisplay(
                 analysis: _radicalAnalysis!,
               ),
             ),
           
-          // Controls
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: Column(
-              children: [
-                // Section navigation (only show if multiple sections)
-                if (widget.allCharacters != null && widget.allCharacters!.length > 10)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Previous section
-                        IconButton(
-                          onPressed: _currentCharacterIndex >= 10 ? () {
-                            setState(() {
-                              // Jump to start of previous section
-                              final currentSection = _currentCharacterIndex ~/ 10;
-                              _currentCharacterIndex = (currentSection - 1) * 10;
-                              _loadCharacterData();
-                            });
-                          } : null,
-                          icon: const Icon(Icons.skip_previous),
-                          tooltip: 'Previous section',
-                        ),
-                        
-                        const SizedBox(width: 16),
-                        
-                        // Section indicator
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            'Section ${(_currentCharacterIndex ~/ 10) + 1}',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        
-                        const SizedBox(width: 16),
-                        
-                        // Next section
-                        IconButton(
-                          onPressed: (_currentCharacterIndex ~/ 10 + 1) * 10 < widget.allCharacters!.length ? () {
-                            setState(() {
-                              // Jump to start of next section
-                              final currentSection = _currentCharacterIndex ~/ 10;
-                              _currentCharacterIndex = (currentSection + 1) * 10;
-                              _loadCharacterData();
-                            });
-                          } : null,
-                          icon: const Icon(Icons.skip_next),
-                          tooltip: 'Next section',
-                        ),
-                      ],
-                    ),
-                  ),
-                
-                // Mode-specific navigation - fixed height to prevent layout jumps
-                SizedBox(
-                  height: 56, // Same height as manual grading section
-                  child: widget.mode == PracticeMode.learning
-                      ? _buildLearningModeNavigation()
-                      : _buildTestingModeNavigation(),
-                ),
-              ],
-            ),
-          ),
+          // Small bottom spacing
+          const SizedBox(height: 8),
           ],
         ),
       ),

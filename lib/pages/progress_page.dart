@@ -81,6 +81,13 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
   }
   
   @override
+  void didUpdateWidget(ProgressPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Refresh data when widget updates
+    loadStatistics();
+  }
+  
+  @override
   void dispose() {
     _progressAnimationController.dispose();
     _percentageAnimationController.dispose();
@@ -118,14 +125,14 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
     });
     
     // Load statistics
-    await _loadStatistics();
+    await loadStatistics();
     
     setState(() {
       _isLoading = false;
     });
   }
 
-  Future<void> _loadStatistics() async {
+  Future<void> loadStatistics() async {
     // Load real statistics
     final totalStats = await _statsService.getTotalStats();
     final dailyStats = await _statsService.getDailyStats(null);
@@ -234,7 +241,7 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
 
   Future<void> _saveGoal(String key, int value) async {
     await _prefs.setInt(key, value);
-    _loadStatistics(); // Recalculate progress
+    loadStatistics(); // Recalculate progress
   }
 
   void _showCongratulationsDialog() {
@@ -401,7 +408,7 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
                 
                 _saveGoal('character_goal', limitedGoal);
                 _prefs.setString('goal_deadline', selectedDate.toIso8601String());
-                _loadStatistics(); // Recalculate
+                loadStatistics(); // Recalculate
                 
                 Navigator.pop(context);
               },
@@ -644,14 +651,72 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
             ),
           ),
           
-          const Divider(height: 32),
-          
           // Daily statistics section
           Container(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Total Time stat - custom styled
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true 
+                      ? [
+                          BoxShadow(
+                            color: Theme.of(context).colorScheme.primary.withOpacity(0.08),
+                            offset: Offset(0, 2),
+                            blurRadius: 6,
+                            spreadRadius: 0.5,
+                          ),
+                        ]
+                      : null,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.timer_outlined,
+                        color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                          ? Theme.of(context).colorScheme.primary
+                          : Colors.indigo,
+                        size: 48,
+                      ),
+                      const SizedBox(width: 24),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Total Time',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          Text(
+                            _formatDuration(_totalStudyTime),
+                            style: TextStyle(
+                              fontSize: 48,
+                              fontWeight: FontWeight.w700,
+                              color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                ? Theme.of(context).colorScheme.primary
+                                : Colors.indigo,
+                              letterSpacing: -1,
+                              height: 1.1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 16),
+                
                 Text(
                   'Today\'s Progress',
                   style: TextStyle(
@@ -660,61 +725,6 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
-                const SizedBox(height: 16),
-                
-                // Daily progress bar
-                Container(
-                  height: 80,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                        offset: Offset(0, 2),
-                        blurRadius: 8,
-                        spreadRadius: 1,
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            '$_dailyCharactersLearned / $_charactersNeededToday new today',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
-                          ),
-                          Text(
-                            '${(_dailyProgress * 100).toInt()}%',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                                ? Theme.of(context).colorScheme.primary
-                                : Theme.of(context).colorScheme.primary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      LinearProgressIndicator(
-                        value: _dailyProgress,
-                        minHeight: 8,
-                        borderRadius: BorderRadius.circular(4),
-                        backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                        valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
-                      ),
-                    ],
-                  ),
-                ),
-                
                 const SizedBox(height: 16),
                 
                 // Daily stats cards
@@ -746,19 +756,11 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
                 
                 const SizedBox(height: 16),
                 
-                // Streak Display
-                const StreakDisplay(showOnlyIcon: false),
-                
-                const SizedBox(height: 16),
-                
-                // Total Time stat - full width
-                _buildStatCard(
-                  icon: Icons.timer_outlined,
-                  title: 'Total Time',
-                  value: _formatDuration(_totalStudyTime),
-                  color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                    ? Theme.of(context).colorScheme.primary
-                    : Colors.indigo,
+                // Streak Display with synchronized progress
+                StreakDisplay(
+                  showOnlyIcon: false,
+                  todayProgress: _dailyCharactersLearned,
+                  dailyGoal: _dailyPracticeGoal,
                 ),
               ],
             ),

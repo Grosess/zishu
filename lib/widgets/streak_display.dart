@@ -4,10 +4,14 @@ import '../main.dart';
 
 class StreakDisplay extends StatefulWidget {
   final bool showOnlyIcon;
+  final int? todayProgress;
+  final int? dailyGoal;
   
   const StreakDisplay({
     super.key,
     this.showOnlyIcon = false,
+    this.todayProgress,
+    this.dailyGoal,
   });
 
   @override
@@ -22,6 +26,16 @@ class _StreakDisplayState extends State<StreakDisplay> {
   void initState() {
     super.initState();
     _loadStreakData();
+  }
+  
+  @override
+  void didUpdateWidget(StreakDisplay oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Refresh data when todayProgress or dailyGoal changes
+    if (oldWidget.todayProgress != widget.todayProgress || 
+        oldWidget.dailyGoal != widget.dailyGoal) {
+      _loadStreakData();
+    }
   }
   
   Future<void> _loadStreakData() async {
@@ -44,7 +58,9 @@ class _StreakDisplayState extends State<StreakDisplay> {
         ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
         : Theme.of(context).colorScheme.primary;
     
-    final isGoalMet = _streakData!.todayProgress >= _streakData!.dailyGoal;
+    final todayProg = widget.todayProgress ?? _streakData!.todayProgress;
+    final dailyG = widget.dailyGoal ?? _streakData!.dailyGoal;
+    final isGoalMet = todayProg >= dailyG;
     final streakColor = isGoalMet ? primaryColor : primaryColor.withOpacity(0.5);
     
     if (widget.showOnlyIcon) {
@@ -201,7 +217,7 @@ class _StreakDisplayState extends State<StreakDisplay> {
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       Text(
-                        '${_streakData!.todayProgress}/${_streakData!.dailyGoal}',
+                        '${widget.todayProgress ?? _streakData!.todayProgress}/${widget.dailyGoal ?? _streakData!.dailyGoal}',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -210,11 +226,9 @@ class _StreakDisplayState extends State<StreakDisplay> {
                   ),
                   const SizedBox(height: 8),
                   LinearProgressIndicator(
-                    value: (_streakData!.todayProgress / _streakData!.dailyGoal).clamp(0.0, 1.0),
+                    value: ((widget.todayProgress ?? _streakData!.todayProgress) / (widget.dailyGoal ?? _streakData!.dailyGoal)).clamp(0.0, 1.0),
                     backgroundColor: primaryColor.withOpacity(0.2),
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      isGoalMet ? Colors.green : primaryColor,
-                    ),
+                    valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
                     minHeight: 8,
                     borderRadius: BorderRadius.circular(4),
                   ),

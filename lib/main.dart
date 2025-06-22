@@ -878,6 +878,8 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         break;
       case 2:
         _progressPageKey.currentState?.scrollToTop();
+        // Refresh progress data when navigating to the progress tab
+        _progressPageKey.currentState?.loadStatistics();
         break;
     }
   }
