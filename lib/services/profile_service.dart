@@ -41,24 +41,33 @@ class ProfileService extends ChangeNotifier {
   }
 
   Future<void> updateProfile({String? name, Uint8List? imageBytes}) async {
-    final prefs = await SharedPreferences.getInstance();
-    
-    if (name != null) {
-      _userName = name;
-      _firstName = name.split(' ').first;
-      await prefs.setString('user_name', name);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      
+      if (name != null) {
+        _userName = name;
+        _firstName = name.split(' ').first;
+        await prefs.setString('user_name', name);
+      }
+      
+      if (imageBytes != null) {
+        // Check image size (limit to 2MB)
+        if (imageBytes.length > 2 * 1024 * 1024) {
+          throw Exception('Image size too large. Please use an image smaller than 2MB.');
+        }
+        _profileImageBytes = imageBytes;
+        await prefs.setString('user_profile_image', base64Encode(imageBytes));
+      } else if (imageBytes == null && name == null) {
+        // Clear image
+        _profileImageBytes = null;
+        await prefs.remove('user_profile_image');
+      }
+      
+      notifyListeners();
+    } catch (e) {
+      // Re-throw to let caller handle the error
+      rethrow;
     }
-    
-    if (imageBytes != null) {
-      _profileImageBytes = imageBytes;
-      await prefs.setString('user_profile_image', base64Encode(imageBytes));
-    } else if (imageBytes == null && name == null) {
-      // Clear image
-      _profileImageBytes = null;
-      await prefs.remove('user_profile_image');
-    }
-    
-    notifyListeners();
   }
 
   void clearCache() {

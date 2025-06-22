@@ -8,7 +8,6 @@ import '../services/learning_service.dart';
 import '../services/cedict_service.dart';
 import '../utils/pinyin_utils.dart';
 import '../main.dart' show DuotoneThemeExtension;
-import '../services/image_cache_service.dart';
 
 class CharacterListPage extends StatefulWidget {
   final String setName;
@@ -37,13 +36,11 @@ class _CharacterListPageState extends State<CharacterListPage> {
   final CedictService _cedictService = CedictService();
   List<String> _learnedCharacters = [];
   bool _isSetFullyLearned = false;
-  bool _cedictInitialized = false;
   
   // Group management
   int? _selectedGroupIndex;
   int? _selectedSuperGroupIndex;
   int _groupSize = 10; // Will be loaded from settings
-  static const int _superGroupSize = 40; // 4 groups of 10
   bool _showGroups = false;
   
   @override
@@ -82,8 +79,6 @@ class _CharacterListPageState extends State<CharacterListPage> {
         }
       }
       
-      // Always set the flag since CEDICT is a singleton and stays initialized
-      _cedictInitialized = true;
       
       // Update UI if still mounted
       if (mounted) {
@@ -419,7 +414,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
                       color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                           ? (isLearned 
                               ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2! 
-                              : Colors.grey[100]!)
+                              : Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!)
                           : (isLearned 
                               ? Theme.of(context).colorScheme.primary.withOpacity(0.3) 
                               : Theme.of(context).brightness == Brightness.dark
@@ -446,7 +441,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
                       color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                           ? (isLearned 
                               ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2! 
-                              : Colors.grey[100]!)
+                              : Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!)
                           : (isLearned 
                               ? Theme.of(context).colorScheme.primary.withOpacity(0.3) 
                               : Theme.of(context).brightness == Brightness.dark
@@ -1017,7 +1012,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
               fontWeight: FontWeight.w300,
               color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                   ? (isLearned 
-                      ? Colors.white 
+                      ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1! 
                       : Theme.of(context).colorScheme.primary)
                   : Colors.white,
             ),
@@ -1030,7 +1025,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
                 fontSize: 12,
                 color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                     ? (isLearned 
-                        ? Colors.white70 
+                        ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withOpacity(0.7) 
                         : Theme.of(context).colorScheme.primary.withOpacity(0.7))
                     : Colors.white70,
               ),
@@ -1045,7 +1040,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
                 fontSize: 10,
                 color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                     ? (isLearned 
-                        ? Colors.white60 
+                        ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withOpacity(0.6) 
                         : Theme.of(context).colorScheme.primary.withOpacity(0.6))
                     : Colors.white60,
               ),
@@ -1184,7 +1179,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
               fontWeight: FontWeight.w300,
               color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                   ? (isLearned 
-                      ? Colors.white 
+                      ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1! 
                       : Theme.of(context).colorScheme.primary)
                   : Colors.white,
             ),
@@ -1201,7 +1196,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
                       fontSize: 11,
                       color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                           ? (isLearned 
-                              ? Colors.white70 
+                              ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withOpacity(0.7) 
                               : Theme.of(context).colorScheme.primary.withOpacity(0.7))
                           : Colors.white70,
                     ),
@@ -1214,7 +1209,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
                       fontSize: 10,
                       color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                           ? (isLearned 
-                              ? Colors.white60 
+                              ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withOpacity(0.6) 
                               : Theme.of(context).colorScheme.primary.withOpacity(0.6))
                           : Colors.white60,
                     ),

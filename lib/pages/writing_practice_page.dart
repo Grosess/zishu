@@ -440,32 +440,50 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   }
 
   void _loadCharacterData() async {
-    // Debug: Loading character data for: "$currentCharacter"
-    // Debug: Is word: ${widget.isWord}
-    // Debug: Word characters: $_wordCharacters
-    // Debug: Current word char index: $_currentWordCharacterIndex
-    
-    setState(() {
-      _isLoadingCharacter = true;
-    });
-    
-    // First, try to get the character from the stroke service
-    _characterStroke = _strokeService.getCharacterStroke(currentCharacter);
-    
-    // If not found, try to load it from database
-    if (_characterStroke == null) {
-      // Debug: Character "$currentCharacter" not in stroke service, loading from database...
-      await _database.loadCharacters([currentCharacter]);
+    try {
+      setState(() {
+        _isLoadingCharacter = true;
+      });
+      
+      // First, try to get the character from the stroke service
       _characterStroke = _strokeService.getCharacterStroke(currentCharacter);
       
+      // If not found, try to load it from database
       if (_characterStroke == null) {
-        // Debug: ERROR: Character "$currentCharacter" still not found after database load
-        // Debug: Available characters in stroke service: ${_strokeService.availableCharacters.length}
-      } else {
-        // Debug: Character "$currentCharacter" loaded successfully
+        await _database.loadCharacters([currentCharacter]);
+        _characterStroke = _strokeService.getCharacterStroke(currentCharacter);
+        
+        if (_characterStroke == null && mounted) {
+          // Show error dialog if character cannot be loaded
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              title: const Text('Character Not Available'),
+              content: Text('The character "$currentCharacter" is not available in the database.'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pop(); // Go back from practice page
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          );
+          return;
+        }
       }
-    } else {
-      // Debug: Character "$currentCharacter" already in stroke service
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading character: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
     
     // Load radical analysis if enabled and in learning mode

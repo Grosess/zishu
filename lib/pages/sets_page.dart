@@ -581,7 +581,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
                                 color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                                     ? (isLearned 
                                         ? Theme.of(context).colorScheme.secondary.withOpacity(0.3)
-                                        : Colors.grey[100]!)
+                                        : Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!)
                                     : (isLearned 
                                         ? Colors.blue.withOpacity(0.2)
                                         : Colors.grey.withOpacity(0.2)),

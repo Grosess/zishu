@@ -25,14 +25,23 @@ class ImageCacheService {
   /// Clear cache if memory pressure is high
   void handleMemoryPressure() {
     // Clear non-essential images
-    if (_imageCache.length > 10) {
+    if (_imageCache.length > 5) {
       _imageCache.clear();
     }
     
     // Reduce Flutter's image cache
     final imageCache = PaintingBinding.instance.imageCache;
-    if (imageCache.currentSizeBytes > 50 * 1024 * 1024) { // 50MB
+    if (imageCache.currentSizeBytes > 25 * 1024 * 1024) { // 25MB
       imageCache.clear();
     }
+  }
+  
+  /// Configure optimal cache settings
+  static void configureImageCache() {
+    final imageCache = PaintingBinding.instance.imageCache;
+    // Set maximum cache size to 50MB
+    imageCache.maximumSizeBytes = 50 * 1024 * 1024;
+    // Set maximum number of images to 100
+    imageCache.maximumSize = 100;
   }
 }

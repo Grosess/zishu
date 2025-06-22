@@ -16,7 +16,6 @@ import 'services/image_cache_service.dart';
 import 'services/statistics_service.dart';
 import 'services/streak_service.dart';
 import 'widgets/streak_display.dart';
-import 'pages/debug_characters_page.dart';
 
 // Theme extension for duotone themes
 class DuotoneThemeExtension extends ThemeExtension<DuotoneThemeExtension> {
@@ -76,6 +75,9 @@ Future<void> _initializeApp() async {
     DeviceOrientation.portraitDown,
   ]);
   
+  // Configure image cache for optimal performance
+  ImageCacheService.configureImageCache();
+  
   // Clear cache if needed
   await CharacterCacheManager.checkAndClearCache();
   
@@ -95,8 +97,6 @@ void main() async {
   // Add error handling
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
-    print('Flutter error: ${details.exception}');
-    print('Stack trace: ${details.stack}');
   };
   
   try {
@@ -122,10 +122,7 @@ void main() async {
       initialDuotoneBackground: duotoneBackground,
       initialDuotoneColor: duotoneColor,
     ));
-  } catch (e, stackTrace) {
-    print('Error during app initialization: $e');
-    print('Stack trace: $stackTrace');
-    
+  } catch (e) {
     // Show error app
     runApp(MaterialApp(
       home: Scaffold(
@@ -311,7 +308,6 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         _accentColor = _isDuotoneTheme ? _getDuotoneColors(_duotoneBackground, _duotoneColor)[1] : _getColorFromString(accentColorString);
       });
     } catch (e) {
-      print('Error loading theme settings: $e');
       // Theme is already initialized, so no need to do anything
     }
   }
@@ -566,18 +562,15 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
           secondary: foregroundColor,
           tertiary: foregroundColor,
           surface: backgroundColor,
-          background: backgroundColor,
           onPrimary: backgroundColor,
           onSecondary: backgroundColor,
           onSurface: foregroundColor,
-          onBackground: foregroundColor,
-          surfaceVariant: backgroundColor,
+          surfaceContainerHighest: backgroundColor,
           onSurfaceVariant: foregroundColor,
           outline: foregroundColor.withOpacity(0.3),
           shadow: foregroundColor.withOpacity(0.3),
         ),
         scaffoldBackgroundColor: backgroundColor,
-        dialogBackgroundColor: backgroundColor,
         cardColor: backgroundColor,
         dividerColor: foregroundColor.withOpacity(0.2),
         iconTheme: IconThemeData(color: foregroundColor),
@@ -594,8 +587,8 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         navigationBarTheme: NavigationBarThemeData(
           backgroundColor: backgroundColor,
           indicatorColor: foregroundColor.withOpacity(0.2),
-          iconTheme: MaterialStateProperty.all(IconThemeData(color: foregroundColor)),
-          labelTextStyle: MaterialStateProperty.all(TextStyle(color: foregroundColor)),
+          iconTheme: WidgetStateProperty.all(IconThemeData(color: foregroundColor)),
+          labelTextStyle: WidgetStateProperty.all(TextStyle(color: foregroundColor)),
         ),
         textTheme: TextTheme(
           bodyLarge: TextStyle(color: foregroundColor),
@@ -637,19 +630,19 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
           ),
         ),
         switchTheme: SwitchThemeData(
-          thumbColor: MaterialStateProperty.all(foregroundColor),
-          trackColor: MaterialStateProperty.resolveWith((states) {
-            if (states.contains(MaterialState.selected)) {
+          thumbColor: WidgetStateProperty.all(foregroundColor),
+          trackColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
               return foregroundColor.withOpacity(0.5);
             }
             return foregroundColor.withOpacity(0.2);
           }),
         ),
         radioTheme: RadioThemeData(
-          fillColor: MaterialStateProperty.all(foregroundColor),
+          fillColor: WidgetStateProperty.all(foregroundColor),
         ),
         checkboxTheme: CheckboxThemeData(
-          fillColor: MaterialStateProperty.all(foregroundColor),
+          fillColor: WidgetStateProperty.all(foregroundColor),
         ),
         cardTheme: CardThemeData(
           color: backgroundColor,
@@ -808,9 +801,6 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ProfileService _profileService = ProfileService();
   
-  // Debug access counter
-  int _debugTapCount = 0;
-  DateTime? _lastDebugTap;
 
   late final List<Widget> _pages;
   final GlobalKey<HomePageState> _homePageKey = GlobalKey<HomePageState>();
@@ -840,11 +830,24 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      // App is back in foreground, refresh HomePage if it's visible
-      if (_selectedIndex == 0 && _homePageKey.currentState != null) {
-        _homePageKey.currentState!.onPageVisible();
-      }
+    switch (state) {
+      case AppLifecycleState.resumed:
+        // App is back in foreground, refresh HomePage if it's visible
+        if (_selectedIndex == 0 && _homePageKey.currentState != null) {
+          _homePageKey.currentState!.onPageVisible();
+        }
+        break;
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+        // Free up memory when app goes to background
+        ImageCacheService().handleMemoryPressure();
+        break;
+      case AppLifecycleState.detached:
+      case AppLifecycleState.hidden:
+        // Clear caches when app is being terminated
+        ImageCacheService().clearCache();
+        CharacterCacheManager.clearMemoryCache();
+        break;
     }
   }
   
@@ -889,12 +892,14 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       Future.delayed(const Duration(milliseconds: 300), () {
         // Access the SetsPage and switch to custom tab
         // This would require adding a key to the SetsPage or using a different approach
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Custom set created! Check the Custom tab.'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Custom set created! Check the Custom tab.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
       });
     }
   }
@@ -962,47 +967,25 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
             ),
           ),
         ),
-        title: GestureDetector(
-          onTap: () {
-            final now = DateTime.now();
-            // Reset counter if more than 2 seconds since last tap
-            if (_lastDebugTap == null || now.difference(_lastDebugTap!).inSeconds > 2) {
-              _debugTapCount = 0;
-            }
-            _debugTapCount++;
-            _lastDebugTap = now;
-            
-            // Open debug screen after 5 taps
-            if (_debugTapCount >= 5) {
-              _debugTapCount = 0;
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const DebugCharactersPage(),
-                ),
-              );
-            }
-          },
-          child: ShaderMask(
-            shaderCallback: (bounds) => LinearGradient(
-              colors: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                  ? [
-                      Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!,
-                      Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!,
-                    ]
-                  : [
-                      Theme.of(context).colorScheme.primary,
-                      Theme.of(context).colorScheme.secondary,
-                    ],
-            ).createShader(bounds),
-            child: const Text(
-              'Zishu',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-                letterSpacing: 1.2,
-              ),
+        title: ShaderMask(
+          shaderCallback: (bounds) => LinearGradient(
+            colors: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                ? [
+                    Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!,
+                    Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!,
+                  ]
+                : [
+                    Theme.of(context).colorScheme.primary,
+                    Theme.of(context).colorScheme.secondary,
+                  ],
+          ).createShader(bounds),
+          child: const Text(
+            'Zishu',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              letterSpacing: 1.2,
             ),
           ),
         ),

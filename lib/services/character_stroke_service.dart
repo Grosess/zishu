@@ -657,7 +657,6 @@ class SvgPathConverter {
     final offsetY = (targetSize.height - scaledSize) / 2 - (targetSize.height * 0.08);
     
     // Debug logging disabled for production
-    // print('SvgPathConverter - targetSize: $targetSize, scale: $scale, offsetX: $offsetX, offsetY: $offsetY');
     
     // Y-axis needs to be flipped (1024 - y) because SVG origin is top-left
     // but MakeMeAHanzi coordinates seem to be bottom-left

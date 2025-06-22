@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math' as math;
-import '../services/local_storage_service.dart';
 import '../services/statistics_service.dart';
 import '../main.dart' show DuotoneThemeExtension;
 import '../widgets/streak_display.dart';
@@ -15,7 +14,6 @@ class ProgressPage extends StatefulWidget {
 }
 
 class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixin {
-  final LocalStorageService _storageService = LocalStorageService();
   final StatisticsService _statsService = StatisticsService();
   final ScrollController _scrollController = ScrollController();
   late SharedPreferences _prefs;

@@ -18,7 +18,7 @@ class CharacterDatabase {
   
   // Cache loaded characters with LRU eviction
   final Map<String, CharacterStroke> _cache = {};
-  static const int _maxCacheSize = 500;
+  static const int _maxCacheSize = 200; // Reduced for better memory management
   final List<String> _cacheOrder = [];
   
   // Index mapping characters to line numbers in graphics.txt
@@ -239,6 +239,19 @@ class CharacterDatabase {
   }
   
   Future<void> _loadCharactersBatch(List<String> characters) async {
+    // Filter out characters already loaded
+    final charactersToLoad = <String>[];
+    for (final character in characters) {
+      if (!_strokeService.hasCharacter(character) && !_cache.containsKey(character)) {
+        charactersToLoad.add(character);
+      } else if (_cache.containsKey(character) && !_strokeService.hasCharacter(character)) {
+        // Add from cache to stroke service
+        _strokeService.addCharacterStroke(_cache[character]!);
+      }
+    }
+    
+    if (charactersToLoad.isEmpty) return;
+    
     // Ensure graphics lines are loaded for batch processing
     if (_graphicsLines == null) {
       await _ensureGraphicsLoaded();
@@ -246,22 +259,12 @@ class CharacterDatabase {
     
     if (_graphicsLines == null || _index == null) {
       // Fallback to individual loading
-      await _loadCharactersIndividual(characters);
+      await _loadCharactersIndividual(charactersToLoad);
       return;
     }
     
-    // Process characters in batch
-    for (final character in characters) {
-      // Check if already in stroke service first
-      if (_strokeService.hasCharacter(character)) {
-        // Debug: Character "$character" already in stroke service, skipping load
-        continue;
-      }
-      
-      if (_cache.containsKey(character)) {
-        _strokeService.addCharacterStroke(_cache[character]!);
-        continue;
-      }
+    // Process characters in optimized batch
+    for (final character in charactersToLoad) {
       
       // Check if character exists in index
       final lineIndex = _index![character];

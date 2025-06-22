@@ -5,6 +5,9 @@ class CharacterCacheManager {
   static const String _cacheVersionKey = 'character_cache_version';
   static const String _currentVersion = '2.7'; // Increment this when data format changes
   
+  // Memory cache for frequently accessed data
+  static final Map<String, dynamic> _memoryCache = {};
+  
   /// Clear cache if version has changed
   static Future<void> checkAndClearCache() async {
     final prefs = await SharedPreferences.getInstance();
@@ -29,5 +32,28 @@ class CharacterCacheManager {
       }
     }
     // Production: removed debug print
+  }
+  
+  /// Clear memory cache to free up RAM
+  static void clearMemoryCache() {
+    _memoryCache.clear();
+  }
+  
+  /// Get item from memory cache
+  static dynamic getFromMemoryCache(String key) {
+    return _memoryCache[key];
+  }
+  
+  /// Add item to memory cache
+  static void addToMemoryCache(String key, dynamic value) {
+    // Limit cache size to prevent memory issues
+    if (_memoryCache.length > 100) {
+      // Remove oldest entries
+      final keysToRemove = _memoryCache.keys.take(20).toList();
+      for (final key in keysToRemove) {
+        _memoryCache.remove(key);
+      }
+    }
+    _memoryCache[key] = value;
   }
 }

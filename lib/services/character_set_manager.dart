@@ -1,5 +1,6 @@
 import 'makemeahanzi_processor.dart';
 import 'character_stroke_service.dart';
+import 'character_database.dart';
 
 class CharacterSet {
   final String id;
@@ -88,14 +89,33 @@ class CharacterSetManager {
     if (set == null) return false;
     
     try {
-      // Process characters from MakeMeAHanzi data
-      await _processor.processCharacters(set.characters);
+      // Use the more efficient database loading for better performance
+      final database = CharacterDatabase();
+      await database.initialize();
+      await database.loadCharacters(set.characters);
       
-      // The processor will automatically update the CharacterStrokeService
       return true;
     } catch (e) {
       // Production: removed debug print
       return false;
+    }
+  }
+  
+  // Preload multiple character sets efficiently
+  Future<void> preloadCharacterSets(List<String> setIds) async {
+    final allCharacters = <String>{};
+    
+    for (final setId in setIds) {
+      final set = getSet(setId);
+      if (set != null) {
+        allCharacters.addAll(set.characters);
+      }
+    }
+    
+    if (allCharacters.isNotEmpty) {
+      final database = CharacterDatabase();
+      await database.initialize();
+      await database.loadCharacters(allCharacters.toList());
     }
   }
   

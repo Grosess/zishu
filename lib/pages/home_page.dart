@@ -10,7 +10,6 @@ import '../services/learning_service.dart';
 import 'writing_practice_page.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:url_launcher/url_launcher.dart';
 import '../main.dart' show DuotoneThemeExtension;
 import 'help_page.dart';
@@ -275,7 +274,7 @@ class HomePageState extends State<HomePage> with RouteAware {
           }
         }
       }
-    } catch (e, stackTrace) {
+    } catch (e) {
       // Error logging handled by Flutter framework
     }
   }
