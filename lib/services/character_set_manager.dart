@@ -1,6 +1,8 @@
 import 'makemeahanzi_processor.dart';
 import 'character_stroke_service.dart';
 import 'character_database.dart';
+import 'package:flutter/services.dart';
+import 'dart:convert';
 
 class CharacterSet {
   final String id;
@@ -72,6 +74,48 @@ class CharacterSetManager {
   
   // User-created sets stored locally
   final Map<String, CharacterSet> _userSets = {};
+  
+  bool _predefinedSetsLoaded = false;
+  
+  // Load predefined sets from JSON
+  Future<void> loadPredefinedSets() async {
+    if (_predefinedSetsLoaded) return;
+    
+    try {
+      final String jsonString = await rootBundle.loadString('assets/character_sets.json');
+      final Map<String, dynamic> jsonData = jsonDecode(jsonString);
+      final List<dynamic> setsData = jsonData['sets'] ?? [];
+      
+      for (final setData in setsData) {
+        if (setData['characters'] != null) {
+          final String charactersStr = setData['characters'] as String;
+          final bool isWordSet = setData['type'] == 'word';
+          
+          List<String> characters;
+          if (isWordSet) {
+            characters = charactersStr.split(',').map((s) => s.trim()).toList();
+          } else {
+            characters = charactersStr.split('').toList();
+          }
+          
+          final set = CharacterSet(
+            id: setData['id'],
+            name: setData['name'],
+            characters: characters,
+            description: setData['description'],
+            isWordSet: isWordSet,
+            icon: setData['icon'],
+          );
+          
+          _predefinedSets[set.id] = set;
+        }
+      }
+      
+      _predefinedSetsLoaded = true;
+    } catch (e) {
+      // Error loading predefined sets
+    }
+  }
   
   // Get all available sets
   List<CharacterSet> getAllSets() {

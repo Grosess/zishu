@@ -98,6 +98,20 @@ class HelpPage extends StatelessWidget {
             
             _buildSection(
               context,
+              'Mark as Learned',
+              '• **Already know Chinese?** Mark characters you know\n'
+              '• Go to Profile tab → Mark as Learned button\n'
+              '• **Click**: Toggle individual characters\n'
+              '• **Click & Drag**: Select multiple characters at once\n'
+              '• Focus your practice on characters you don\'t know yet',
+              Icons.check_circle_outline,
+              primaryColor,
+            ),
+            
+            const SizedBox(height: 24),
+            
+            _buildSection(
+              context,
               'Tips for Success',
               '• Practice daily, even for just 5-10 minutes\n'
               '• Focus on stroke order accuracy\n'

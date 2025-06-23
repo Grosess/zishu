@@ -359,7 +359,7 @@ class StrokeValidator {
     final scaledSize = 1024 * scale;
     final offsetX = (canvasSize.width - scaledSize) / 2;
     // Match parsePath's offset calculation with upward adjustment
-    final offsetY = (canvasSize.height - scaledSize) / 2 - (canvasSize.height * 0.04);
+    final offsetY = (canvasSize.height - scaledSize) / 2 - (canvasSize.height * 0.07);
     
     // Normalize coordinates (accounting for the centered position)
     final normalizedUser = userStroke.map((p) => Offset(
@@ -713,8 +713,8 @@ class SvgPathConverter {
     // Use direct calculations without premature rounding
     final scaledSize = 1024 * scale;
     final offsetX = (targetSize.width - scaledSize) / 2; // Center horizontally
-    // Move up by 4% for better visual balance while still accommodating negative Y
-    final offsetY = (targetSize.height - scaledSize) / 2 - (targetSize.height * 0.04);
+    // Move up by 7% for better visual balance while still accommodating negative Y
+    final offsetY = (targetSize.height - scaledSize) / 2 - (targetSize.height * 0.07);
     
     // Validate offsets to prevent rendering issues
     if (offsetX.isNaN || offsetY.isNaN || offsetX.isInfinite || offsetY.isInfinite) {

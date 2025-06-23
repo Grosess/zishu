@@ -11,6 +11,7 @@ import 'pages/progress_page.dart';
 import 'pages/home_page.dart';
 import 'pages/profile_page.dart';
 import 'pages/practice_history_page.dart';
+import 'pages/mark_as_learned_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'services/image_cache_service.dart';
 import 'services/statistics_service.dart';
@@ -1117,6 +1118,37 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                     builder: (context) => const PracticeHistoryPage(),
                   ),
                 );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.check_circle_outline),
+              title: const Text('Mark as Learned'),
+              onTap: () async {
+                Navigator.pop(context);
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MarkAsLearnedPage(),
+                  ),
+                );
+                
+                // Refresh when returning if changes were made
+                if (result == true && mounted) {
+                  setState(() {
+                    // Force rebuild of all pages to refresh their data
+                    _pages = [
+                      HomePage(key: UniqueKey(), onNavigateToTab: _onItemTapped),
+                      sets.SetsPage(key: UniqueKey()),
+                      ProgressPage(key: UniqueKey()),
+                      ProfilePage(key: UniqueKey()),
+                    ];
+                  });
+                  
+                  // Also refresh the current page's data if it has a refresh method
+                  if (_selectedIndex == 2) { // Progress page
+                    (_pages[2].key as GlobalKey<ProgressPageState>?)?.currentState?.loadStatistics();
+                  }
+                }
               },
             ),
           ],

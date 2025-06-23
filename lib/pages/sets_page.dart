@@ -15,6 +15,8 @@ import '../config/database_config.dart';
 import '../services/cedict_service.dart';
 import '../services/statistics_service.dart';
 import '../main.dart' show DuotoneThemeExtension;
+import '../widgets/character_preview.dart';
+import '../services/character_database.dart';
 
 class SetsPage extends StatefulWidget {
   const SetsPage({super.key});
@@ -27,6 +29,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
   final CharacterSetManager _setManager = CharacterSetManager();
   final MakeMeAHanziProcessor _processor = MakeMeAHanziProcessor();
   final CharacterValidator _validator = CharacterValidator();
+  final CharacterDatabase _characterDatabase = CharacterDatabase();
   final LearningService _learningService = LearningService();
   final FolderService _folderService = FolderService();
   final CedictService _cedictService = CedictService();
@@ -57,6 +60,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
     _loadFolders();
     _initializeCedict();
     _loadExpandedFolders();
+    _initializeCharacterDatabase();
   }
   
   Future<void> _initializeWithSavedState() async {
@@ -91,6 +95,40 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
   Future<void> _saveTabIndex(int index) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('sets_tab_index', index);
+  }
+  
+  Future<void> _initializeCharacterDatabase() async {
+    try {
+      await _characterDatabase.initialize();
+      // Preload characters for set icons
+      _preloadSetIconCharacters();
+    } catch (e) {
+      // Database initialization failed, will fall back to text rendering
+    }
+  }
+  
+  Future<void> _preloadSetIconCharacters() async {
+    // Collect all unique icon characters from sets
+    final iconCharacters = <String>{};
+    
+    for (final set in _characterSets) {
+      final mainChar = set.icon ?? (set.characters.isNotEmpty ? set.characters.first : null);
+      if (mainChar != null && mainChar.length == 1) {
+        iconCharacters.add(mainChar);
+      }
+    }
+    
+    for (final set in _customSets) {
+      final mainChar = set.icon ?? (set.characters.isNotEmpty ? set.characters.first : null);
+      if (mainChar != null && mainChar.length == 1) {
+        iconCharacters.add(mainChar);
+      }
+    }
+    
+    // Load all icon characters at once
+    if (iconCharacters.isNotEmpty) {
+      await _characterDatabase.loadCharacters(iconCharacters.toList());
+    }
   }
   
   Future<void> _loadExpandedFolders() async {
@@ -291,6 +329,9 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
       
       // Load progress after sets are loaded
       await _loadSetProgress();
+      
+      // Preload icon characters after sets are loaded
+      _preloadSetIconCharacters();
     } catch (e, stackTrace) {
       // Production: removed debug print
       // Production: removed debug print
@@ -304,6 +345,9 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
       
       // Load progress even for default sets
       await _loadSetProgress();
+      
+      // Try to preload even with default sets
+      _preloadSetIconCharacters();
     }
   }
   
@@ -2079,6 +2123,8 @@ class _CharacterSetSquareCard extends StatelessWidget {
   Widget build(BuildContext context) {
     // Get the main character to display - use icon if available
     final mainCharacter = set.icon ?? (set.characters.isNotEmpty ? set.characters.first : '?');
+    // For multi-character items, extract the first character for SVG rendering
+    final firstChar = mainCharacter.isNotEmpty ? mainCharacter[0] : '?';
     final setColor = _getColorForSet();
     
     // Duotone theme adjustments
@@ -2139,23 +2185,9 @@ class _CharacterSetSquareCard extends StatelessWidget {
                               width: containerSize * 0.6,
                               height: containerSize * 0.6,
                               alignment: Alignment.center,
-                              child: FittedBox(
-                                fit: BoxFit.contain,
-                                child: Text(
-                                  mainCharacter,
-                                  style: TextStyle(
-                                    fontSize: 100, // Large fixed size, FittedBox will scale it down
-                                    fontWeight: FontWeight.w300,
-                                    color: characterColor,
-                                    shadows: isDuotone ? [] : [
-                                      Shadow(
-                                        offset: const Offset(2, 2),
-                                        blurRadius: 4,
-                                        color: Colors.black.withValues(alpha: 0.3),
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                              child: CharacterPreview(
+                                character: firstChar,
+                                color: characterColor,
                               ),
                             ),
                           ),

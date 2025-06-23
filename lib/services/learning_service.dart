@@ -123,7 +123,7 @@ class LearningService {
     final allLearnedCharacters = await getLearnedCharacters();
     final allLearnedWords = await getLearnedWords();
     return setCharacters.where((item) => 
-      allLearnedCharacters.contains(item) || allLearnedWords.contains(item)
+      _isItemLearned(item, allLearnedCharacters, allLearnedWords)
     ).toList();
   }
 
@@ -133,7 +133,7 @@ class LearningService {
     final allLearnedCharacters = await getLearnedCharacters();
     final allLearnedWords = await getLearnedWords();
     return setCharacters.every((item) => 
-      allLearnedCharacters.contains(item) || allLearnedWords.contains(item)
+      _isItemLearned(item, allLearnedCharacters, allLearnedWords)
     );
   }
 
@@ -147,7 +147,7 @@ class LearningService {
     
     // Check both characters and words
     final learnedCount = setCharacters.where((item) => 
-      allLearnedCharacters.contains(item) || allLearnedWords.contains(item)
+      _isItemLearned(item, allLearnedCharacters, allLearnedWords)
     ).length;
     
     return learnedCount / setCharacters.length;
@@ -207,6 +207,56 @@ class LearningService {
       return DateTime.parse(dateStr);
     }
     return null;
+  }
+  
+  // Remove a character from learned list
+  Future<void> removeLearnedCharacter(String character) async {
+    await initialize();
+    
+    // Clear cache to force fresh read
+    clearCache();
+    
+    final learned = await getLearnedCharacters();
+    if (learned.contains(character)) {
+      learned.remove(character);
+      await _prefs.setStringList('learned_characters', learned);
+      
+      // Update cache with new data
+      _cachedLearnedCharacters = learned.toSet();
+      _lastCacheUpdate = DateTime.now();
+      
+      // Remove the timestamp key
+      final key = 'learned_character_$character';
+      await _prefs.remove(key);
+      
+      // Force sync to ensure persistence
+      await _prefs.reload();
+    }
+  }
+
+  // Remove a word from learned list
+  Future<void> removeLearnedWord(String word) async {
+    await initialize();
+    
+    // Clear cache to force fresh read
+    clearCache();
+    
+    final learned = await getLearnedWords();
+    if (learned.contains(word)) {
+      learned.remove(word);
+      await _prefs.setStringList('learned_words', learned);
+      
+      // Update cache with new data
+      _cachedLearnedWords = learned.toSet();
+      _lastCacheUpdate = DateTime.now();
+      
+      // Remove the timestamp key
+      final key = 'learned_word_$word';
+      await _prefs.remove(key);
+      
+      // Force sync to ensure persistence
+      await _prefs.reload();
+    }
   }
 
   // Mark a word as learned
@@ -295,5 +345,30 @@ class LearningService {
         await _prefs.remove(key);
       }
     }
+  }
+  
+  // Helper method to check if an item (character or word) is learned
+  bool _isItemLearned(String item, List<String> learnedCharacters, List<String> learnedWords) {
+    // If it's a single character, check if it's in learned characters
+    if (item.length == 1) {
+      return learnedCharacters.contains(item);
+    }
+    
+    // If it's a multi-character word, check if:
+    // 1. The word itself is marked as learned, OR
+    // 2. All individual characters in the word are learned
+    if (learnedWords.contains(item)) {
+      return true;
+    }
+    
+    // Check if all characters in the word are learned
+    for (int i = 0; i < item.length; i++) {
+      final char = item[i];
+      if (!learnedCharacters.contains(char)) {
+        return false;
+      }
+    }
+    
+    return true;
   }
 }

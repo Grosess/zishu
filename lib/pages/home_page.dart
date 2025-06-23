@@ -13,6 +13,10 @@ import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
 import '../main.dart' show DuotoneThemeExtension;
 import 'help_page.dart';
+import 'character_list_page.dart';
+import 'groups_page.dart';
+import '../services/character_set_manager.dart';
+import 'mark_as_learned_page.dart';
 
 class HomePage extends StatefulWidget {
   final Function(int)? onNavigateToTab;
@@ -452,19 +456,182 @@ class HomePageState extends State<HomePage> with RouteAware {
     practiceHistory.insert(0, set['name']); // Add to front
     await _prefs.setStringList('recent_practice_sets', practiceHistory.take(10).toList());
     
-    // Navigate to practice
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => WritingPracticePage(
-          character: set['items'][0],
-          characterSet: set['name'],
-          allCharacters: List<String>.from(set['items']),
-          isWord: set['type'] == 'word',
-          mode: PracticeMode.learning,
+    // Show set synopsis dialog (same as in sets page)
+    _showSetSynopsis(set);
+  }
+  
+  void _showSetSynopsis(Map<String, dynamic> set) {
+    final validItems = List<String>.from(set['items']);
+    final isWordSet = set['type'] == 'word';
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Stack(
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(set['name']),
+                const SizedBox(height: 4),
+                Text(
+                  '${validItems.length} ${isWordSet ? 'words' : 'characters'}',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+            Positioned(
+              top: 0,
+              right: 0,
+              child: IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close, size: 20),
+                tooltip: 'Close',
+                style: IconButton.styleFrom(
+                  minimumSize: const Size(32, 32),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+            ),
+          ],
         ),
+        content: Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.5,
+            maxWidth: MediaQuery.of(context).size.width * 0.9,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Sample characters
+                Text(
+                  isWordSet ? 'Words:' : 'Characters:',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(height: 8),
+                FutureBuilder<List<String>>(
+                  future: _learningService.getLearnedCharactersForSet(validItems),
+                  builder: (context, snapshot) {
+                    final learnedCharacters = snapshot.data ?? [];
+                    return Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: validItems.take(10).map((item) {
+                        final isLearned = learnedCharacters.contains(item);
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isLearned 
+                              ? Theme.of(context).colorScheme.primaryContainer
+                              : Theme.of(context).colorScheme.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: isLearned
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(context).colorScheme.outline.withOpacity(0.5),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                item,
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  color: isLearned
+                                    ? Theme.of(context).colorScheme.onPrimaryContainer
+                                    : null,
+                                ),
+                              ),
+                              if (isLearned) ...[
+                                const SizedBox(width: 4),
+                                Icon(
+                                  Icons.check,
+                                  size: 16,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                              ],
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    );
+                  },
+                ),
+                if (validItems.length > 10) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    '... and ${validItems.length - 10} more',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    // View All button
+                    if (validItems.isNotEmpty)
+                      TextButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => CharacterListPage(
+                                setName: set['name'],
+                                characters: validItems,
+                                isWordSet: isWordSet,
+                                isCustomSet: false,
+                                setId: set['id'] ?? set['name'],
+                              ),
+                            ),
+                          ).then((_) => _loadData());
+                        },
+                        icon: const Icon(Icons.view_list, size: 18),
+                        label: const Text('View All'),
+                      ),
+                    const Spacer(),
+                    // Practice button
+                    if (validItems.isNotEmpty)
+                      FilledButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => WritingPracticePage(
+                                character: validItems[0],
+                                characterSet: set['name'],
+                                allCharacters: validItems,
+                                isWord: isWordSet,
+                                mode: PracticeMode.learning,
+                              ),
+                            ),
+                          ).then((_) => _loadData());
+                        },
+                        icon: const Icon(Icons.edit, size: 18),
+                        label: const Text('Practice'),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
-    ).then((_) => _loadData()); // Reload data when returning
+    );
   }
 
   Future<void> _launchFeedbackForm() async {
@@ -1037,6 +1204,8 @@ class HomePageState extends State<HomePage> with RouteAware {
                     child: OutlinedButton(
                       onPressed: () {
                         Navigator.pop(context);
+                        // Show second notification about marking learned characters
+                        _showMarkAsLearnedNotification();
                       },
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
@@ -1065,6 +1234,87 @@ class HomePageState extends State<HomePage> with RouteAware {
                       child: const Text(
                         'Learn more',
                         style: TextStyle(fontSize: 14),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  
+  void _showMarkAsLearnedNotification() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.check_circle_outline,
+                size: 48,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Already know some Chinese?',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'You can mark characters you already know as learned, so you can focus on practicing new ones!',
+                style: Theme.of(context).textTheme.bodyLarge,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                      ),
+                      child: const Text(
+                        "I'm good",
+                        style: TextStyle(fontSize: 14),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        // Navigate to Mark as Learned page
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const MarkAsLearnedPage(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.check, size: 16),
+                      label: const Text(
+                        'Mark learned',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                       ),
                     ),
                   ),

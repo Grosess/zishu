@@ -20,11 +20,15 @@ class CharacterPreview extends StatelessWidget {
     
     if (characterStroke == null) {
       return Center(
-        child: Text(
-          character,
-          style: TextStyle(
-            fontSize: 48,
-            color: color ?? Theme.of(context).colorScheme.onSurface,
+        child: FittedBox(
+          fit: BoxFit.contain,
+          child: Text(
+            character,
+            style: TextStyle(
+              fontSize: 120, // Large base size, will be scaled down by FittedBox
+              color: color ?? Theme.of(context).colorScheme.onSurface,
+              fontWeight: FontWeight.w400,
+            ),
           ),
         ),
       );
