@@ -350,16 +350,16 @@ class StrokeValidator {
     
     // Account for padding when normalizing (same as in parsePath)
     // Avoid excessive rounding to prevent distortion on real devices
-    final padding = canvasSize.width * 0.08;
+    final padding = canvasSize.width * 0.1;
     final drawSize = canvasSize.width - (padding * 2);
     
     // For validation, we can't check the SVG path, but we can assume simpler scaling
     // This should match the most common case from parsePath
-    final scale = drawSize / 1024.0 * 1.05;
+    final scale = drawSize / 1024.0 * 0.98;
     final scaledSize = 1024 * scale;
     final offsetX = (canvasSize.width - scaledSize) / 2;
-    // Match parsePath's upward adjustment for consistency
-    final offsetY = (canvasSize.height - scaledSize) / 2 - (canvasSize.height * 0.08);
+    // Match parsePath's offset calculation
+    final offsetY = (canvasSize.height - scaledSize) / 2;
     
     // Normalize coordinates (accounting for the centered position)
     final normalizedUser = userStroke.map((p) => Offset(
@@ -369,7 +369,7 @@ class StrokeValidator {
     
     // Flip Y coordinate for median points too
     final normalizedMedian = medianPoints.map((p) => 
-      Offset(p[0] / 1024, ((1024 - p[1]).clamp(0, 1024)) / 1024) // Flip Y coordinate with clamping
+      Offset(p[0] / 1024, (1024 - p[1]) / 1024) // Flip Y coordinate without clamping
     ).toList();
     
     // Calculate stroke lengths for comparison
@@ -697,7 +697,7 @@ class SvgPathConverter {
     
     // MakeMeAHanzi uses 1024x1024, scale to fit target with padding
     // Avoid excessive rounding to prevent distortion on real devices
-    final padding = targetSize.width * 0.08;
+    final padding = targetSize.width * 0.1; // Increased padding to accommodate overflow
     final drawSize = targetSize.width - (padding * 2);
     
     // Check if this might be a complex enclosed character (like 国, 圆, etc)
@@ -705,16 +705,16 @@ class SvgPathConverter {
     final closeCount = svgPath.split('Z').length - 1;
     final isComplexCharacter = closeCount > 3;
     
-    // Use slightly smaller scale for complex characters to ensure they fit properly
-    final scaleFactor = isComplexCharacter ? 1.02 : 1.05;
+    // Use slightly smaller scale to ensure all strokes fit
+    final scaleFactor = isComplexCharacter ? 0.95 : 0.98;
     final scale = drawSize / 1024.0 * scaleFactor;
     
-    // Center the character properly with upward adjustment
+    // Center the character properly
     // Use direct calculations without premature rounding
     final scaledSize = 1024 * scale;
     final offsetX = (targetSize.width - scaledSize) / 2; // Center horizontally
-    // Move characters up by 8% of the target height for better visual balance
-    final offsetY = (targetSize.height - scaledSize) / 2 - (targetSize.height * 0.08);
+    // Center vertically without upward adjustment to accommodate negative Y coordinates
+    final offsetY = (targetSize.height - scaledSize) / 2;
     
     // Validate offsets to prevent rendering issues
     if (offsetX.isNaN || offsetY.isNaN || offsetX.isInfinite || offsetY.isInfinite) {
@@ -727,14 +727,10 @@ class SvgPathConverter {
     // Y-axis needs to be flipped (1024 - y) because SVG origin is top-left
     // but MakeMeAHanzi coordinates seem to be bottom-left
     
-    // Helper function to flip Y coordinate and handle negative values
+    // Helper function to flip Y coordinate
+    // Don't clamp - let the rendering handle coordinates outside bounds
     double flipY(double y) {
-      // Handle negative Y coordinates by adjusting the range
-      // MakeMeAHanzi data can have Y values from about -50 to 1024
-      // We need to map this to 0 to 1024 for proper rendering
-      final flipped = 1024.0 - y;
-      // Clamp to valid range to prevent rendering issues
-      return flipped.clamp(0.0, 1024.0);
+      return 1024.0 - y;
     }
     
     for (int i = 0; i < commands.length; i++) {
