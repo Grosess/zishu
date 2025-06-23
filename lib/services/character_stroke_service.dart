@@ -355,11 +355,11 @@ class StrokeValidator {
     
     // For validation, we can't check the SVG path, but we can assume simpler scaling
     // This should match the most common case from parsePath
-    final scale = drawSize / 1024.0 * 0.98;
+    final scale = drawSize / 1024.0 * 1.03;
     final scaledSize = 1024 * scale;
     final offsetX = (canvasSize.width - scaledSize) / 2;
-    // Match parsePath's offset calculation
-    final offsetY = (canvasSize.height - scaledSize) / 2;
+    // Match parsePath's offset calculation with upward adjustment
+    final offsetY = (canvasSize.height - scaledSize) / 2 - (canvasSize.height * 0.04);
     
     // Normalize coordinates (accounting for the centered position)
     final normalizedUser = userStroke.map((p) => Offset(
@@ -705,16 +705,16 @@ class SvgPathConverter {
     final closeCount = svgPath.split('Z').length - 1;
     final isComplexCharacter = closeCount > 3;
     
-    // Use slightly smaller scale to ensure all strokes fit
-    final scaleFactor = isComplexCharacter ? 0.95 : 0.98;
+    // Use slightly larger scale for better visibility
+    final scaleFactor = isComplexCharacter ? 1.0 : 1.03;
     final scale = drawSize / 1024.0 * scaleFactor;
     
-    // Center the character properly
+    // Center the character properly with slight upward adjustment
     // Use direct calculations without premature rounding
     final scaledSize = 1024 * scale;
     final offsetX = (targetSize.width - scaledSize) / 2; // Center horizontally
-    // Center vertically without upward adjustment to accommodate negative Y coordinates
-    final offsetY = (targetSize.height - scaledSize) / 2;
+    // Move up by 4% for better visual balance while still accommodating negative Y
+    final offsetY = (targetSize.height - scaledSize) / 2 - (targetSize.height * 0.04);
     
     // Validate offsets to prevent rendering issues
     if (offsetX.isNaN || offsetY.isNaN || offsetX.isInfinite || offsetY.isInfinite) {
