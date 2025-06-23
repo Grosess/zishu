@@ -726,34 +726,42 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       ),
       body: Container(
         color: Colors.transparent,
-        child: Column(
-          children: [
-          // Character info section
-          if (widget.isWord && _wordCharacters.length > 1) ...[
-            // For multi-character words, show pronunciation above progress boxes
-            _buildWordPronunciation(),
-            // Progress boxes
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: _buildWordProgressBoxes(),
-            ),
-          ] else ...[
-            // For single characters, show pronunciation and definition
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: _buildCharacterInfoSection(),
-            ),
-          ],
-          
-          // Drawing area (square) with all buttons right below
-          Flexible(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AspectRatio(
-                  aspectRatio: 1.0, // Force square
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // Calculate max width to prevent overflow on wide screens
+            final maxWidth = math.min(constraints.maxWidth, 600.0);
+            
+            return Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: maxWidth),
+                child: Column(
+                  children: [
+                  // Character info section
+                  if (widget.isWord && _wordCharacters.length > 1) ...[
+                    // For multi-character words, show pronunciation above progress boxes
+                    _buildWordPronunciation(),
+                    // Progress boxes
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: _buildWordProgressBoxes(),
+                    ),
+                  ] else ...[
+                    // For single characters, show pronunciation and definition
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: _buildCharacterInfoSection(),
+                    ),
+                  ],
+                  
+                  // Drawing area (square) with all buttons right below
+                  Flexible(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AspectRatio(
+                          aspectRatio: 1.0, // Force square
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
                     color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                       ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1! // Use background color
@@ -1090,6 +1098,10 @@ class _WritingPracticePageState extends State<WritingPracticePage>
           // Small bottom spacing
           const SizedBox(height: 8),
           ],
+        ),
+              ),
+            );
+          },
         ),
       ),
     );
