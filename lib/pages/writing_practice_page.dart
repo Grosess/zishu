@@ -409,9 +409,6 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         _wordCharacters = _dictionary.splitIntoCharacters(word);
         
         // Debug: Multi-character word split into: $_wordCharacters
-        // Clear any potentially corrupted data for these characters
-        _strokeService.clearCharacters(_wordCharacters);
-        _database.clearCharactersFromCache(_wordCharacters);
         // Load all characters in the word
         await _database.loadCharacters(_wordCharacters);
       } else {
@@ -424,9 +421,6 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       // Load all characters for this practice session
       final charactersToLoad = widget.allCharacters ?? [widget.character];
       // Debug: Loading characters for practice: ${charactersToLoad.length} items
-      // Clear any potentially corrupted data for these characters
-      _strokeService.clearCharacters(charactersToLoad);
-      _database.clearCharactersFromCache(charactersToLoad);
       await _database.loadCharacters(charactersToLoad);
     }
     
@@ -450,13 +444,6 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       setState(() {
         _isLoadingCharacter = true;
       });
-      
-      // Clear any potentially corrupted data for this character
-      _strokeService.clearCharacter(currentCharacter);
-      _database.clearCharactersFromCache([currentCharacter]);
-      
-      // Refresh placeholder characters to ensure we get fresh data from database
-      _strokeService.refreshPlaceholderCharacters();
       
       // First, try to get the character from the stroke service
       _characterStroke = _strokeService.getCharacterStroke(currentCharacter);

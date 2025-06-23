@@ -51,11 +51,7 @@ class CharacterDatabase {
     _graphicsLines = null;
     _cache.clear();
     
-    // Only clear stroke service on first initialization or when switching databases
-    // Don't clear if we already have data loaded
-    if (_strokeService.availableCharacters.isEmpty) {
-      _strokeService.clearData();
-    }
+    // Don't clear stroke service data - it may contain valid cached data
     
     try {
       // For large databases, we load the index but not all data
