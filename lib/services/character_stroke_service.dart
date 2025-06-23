@@ -369,7 +369,7 @@ class StrokeValidator {
     
     // Flip Y coordinate for median points too
     final normalizedMedian = medianPoints.map((p) => 
-      Offset(p[0] / 1024, (1024 - p[1]) / 1024) // Flip Y coordinate
+      Offset(p[0] / 1024, ((1024 - p[1]).clamp(0, 1024)) / 1024) // Flip Y coordinate with clamping
     ).toList();
     
     // Calculate stroke lengths for comparison
@@ -727,6 +727,16 @@ class SvgPathConverter {
     // Y-axis needs to be flipped (1024 - y) because SVG origin is top-left
     // but MakeMeAHanzi coordinates seem to be bottom-left
     
+    // Helper function to flip Y coordinate and handle negative values
+    double flipY(double y) {
+      // Handle negative Y coordinates by adjusting the range
+      // MakeMeAHanzi data can have Y values from about -50 to 1024
+      // We need to map this to 0 to 1024 for proper rendering
+      final flipped = 1024.0 - y;
+      // Clamp to valid range to prevent rendering issues
+      return flipped.clamp(0.0, 1024.0);
+    }
+    
     for (int i = 0; i < commands.length; i++) {
       switch (commands[i]) {
         case 'M': // Move to
@@ -735,7 +745,7 @@ class SvgPathConverter {
             final y = double.parse(commands[++i]);
             currentX = x * scale + offsetX;
             // Flip Y coordinate
-            currentY = (1024.0 - y) * scale + offsetY;
+            currentY = flipY(y) * scale + offsetY;
             path.moveTo(currentX, currentY);
           }
           break;
@@ -746,7 +756,7 @@ class SvgPathConverter {
             final y = double.parse(commands[++i]);
             currentX = x * scale + offsetX;
             // Flip Y coordinate
-            currentY = (1024.0 - y) * scale + offsetY;
+            currentY = flipY(y) * scale + offsetY;
             path.lineTo(currentX, currentY);
           }
           break;
@@ -757,13 +767,13 @@ class SvgPathConverter {
             final cy1 = double.parse(commands[++i]);
             final cx = cx1 * scale + offsetX;
             // Flip Y coordinate for control point
-            final cy = (1024.0 - cy1) * scale + offsetY;
+            final cy = flipY(cy1) * scale + offsetY;
             
             final x = double.parse(commands[++i]);
             final y = double.parse(commands[++i]);
             currentX = x * scale + offsetX;
             // Flip Y coordinate for end point
-            currentY = (1024.0 - y) * scale + offsetY;
+            currentY = flipY(y) * scale + offsetY;
             path.quadraticBezierTo(cx, cy, currentX, currentY);
           }
           break;
@@ -778,17 +788,17 @@ class SvgPathConverter {
           if (numCount == 6 && i + 6 < commands.length) {
             // Standard cubic bezier: C x1 y1 x2 y2 x y
             final cx1 = double.parse(commands[++i]) * scale + offsetX;
-            final cy1 = (1024 - double.parse(commands[++i])) * scale + offsetY;
+            final cy1 = flipY(double.parse(commands[++i])) * scale + offsetY;
             final cx2 = double.parse(commands[++i]) * scale + offsetX;
-            final cy2 = (1024 - double.parse(commands[++i])) * scale + offsetY;
+            final cy2 = flipY(double.parse(commands[++i])) * scale + offsetY;
             currentX = double.parse(commands[++i]) * scale + offsetX;
-            currentY = (1024 - double.parse(commands[++i])) * scale + offsetY;
+            currentY = flipY(double.parse(commands[++i])) * scale + offsetY;
             path.cubicTo(cx1, cy1, cx2, cy2, currentX, currentY);
           } else if (numCount >= 2) {
             // Sometimes C is used as a line continuation
             // Just draw a line to the next point
             currentX = double.parse(commands[++i]) * scale + offsetX;
-            currentY = (1024 - double.parse(commands[++i])) * scale + offsetY;
+            currentY = flipY(double.parse(commands[++i])) * scale + offsetY;
             path.lineTo(currentX, currentY);
             
             // Skip any remaining coordinates
