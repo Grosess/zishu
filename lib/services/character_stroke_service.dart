@@ -676,8 +676,10 @@ class SvgPathConverter {
   static const int _maxCacheSize = 100;
   
   static Path parsePath(String svgPath, Size targetSize) {
-    // Create cache key from path and size
-    final cacheKey = '${svgPath.hashCode}_${targetSize.width.toStringAsFixed(2)}_${targetSize.height.toStringAsFixed(2)}';
+    // Create cache key from path length and first/last commands to avoid hash collisions
+    final pathStart = svgPath.length > 50 ? svgPath.substring(0, 50) : svgPath;
+    final pathEnd = svgPath.length > 50 ? svgPath.substring(svgPath.length - 50) : '';
+    final cacheKey = '${svgPath.length}_${pathStart.hashCode}_${pathEnd.hashCode}_${targetSize.width.toStringAsFixed(2)}_${targetSize.height.toStringAsFixed(2)}';
     
     // Check cache first
     if (_pathCache.containsKey(cacheKey)) {
@@ -713,6 +715,12 @@ class SvgPathConverter {
     final offsetX = (targetSize.width - scaledSize) / 2; // Center horizontally
     // Move characters up by 8% of the target height for better visual balance
     final offsetY = (targetSize.height - scaledSize) / 2 - (targetSize.height * 0.08);
+    
+    // Validate offsets to prevent rendering issues
+    if (offsetX.isNaN || offsetY.isNaN || offsetX.isInfinite || offsetY.isInfinite) {
+      // Return empty path if calculations are invalid
+      return Path();
+    }
     
     // Debug logging disabled for production
     
@@ -799,9 +807,10 @@ class SvgPathConverter {
     // Cache the path before returning
     _pathCache[cacheKey] = path;
     
-    // Implement LRU eviction
+    // Implement LRU eviction with proper ordering
     if (_pathCache.length > _maxCacheSize) {
-      // Remove oldest entry (first in map)
+      // Since Dart's Map maintains insertion order, we need to track access order separately
+      // For now, just remove the first entry (oldest insertion)
       final firstKey = _pathCache.keys.first;
       _pathCache.remove(firstKey);
     }
@@ -815,6 +824,19 @@ class SvgPathConverter {
   // Clear the cache when needed (e.g., when switching databases)
   static void clearCache() {
     _pathCache.clear();
+  }
+  
+  // Clear cache entries for paths matching a pattern
+  static void clearCacheForPaths(String pathPattern) {
+    final keysToRemove = <String>[];
+    for (final key in _pathCache.keys) {
+      if (key.contains(pathPattern)) {
+        keysToRemove.add(key);
+      }
+    }
+    for (final key in keysToRemove) {
+      _pathCache.remove(key);
+    }
   }
   
   static List<String> _tokenize(String svgPath) {
