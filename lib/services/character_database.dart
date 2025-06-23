@@ -194,13 +194,23 @@ class CharacterDatabase {
       await initialize();
     }
     
-    // Loading characters
+    // Wait if another load is in progress
+    while (_isLoading) {
+      await Future.delayed(const Duration(milliseconds: 10));
+    }
     
-    // For large character sets, load in batches
-    if (characters.length > 10) {
-      await _loadCharactersBatch(characters);
-    } else {
-      await _loadCharactersIndividual(characters);
+    _isLoading = true;
+    try {
+      // Loading characters
+      
+      // For large character sets, load in batches
+      if (characters.length > 10) {
+        await _loadCharactersBatch(characters);
+      } else {
+        await _loadCharactersIndividual(characters);
+      }
+    } finally {
+      _isLoading = false;
     }
   }
   
@@ -264,6 +274,7 @@ class CharacterDatabase {
       
       // Check if character exists in index
       final lineIndex = _index![character];
+      
       
       // If character not in index, try placeholder
       if (lineIndex == null) {
