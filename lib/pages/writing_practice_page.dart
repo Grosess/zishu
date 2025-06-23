@@ -445,6 +445,9 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         _isLoadingCharacter = true;
       });
       
+      // Refresh placeholder characters to ensure we get fresh data from database
+      _strokeService.refreshPlaceholderCharacters();
+      
       // First, try to get the character from the stroke service
       _characterStroke = _strokeService.getCharacterStroke(currentCharacter);
       

@@ -228,17 +228,29 @@ class CharacterStrokeService {
   // Add a character stroke dynamically
   void addCharacterStroke(CharacterStroke stroke) {
     if (_strokeData.containsKey(stroke.character)) {
-      // Production: removed debug print
-      // Overwriting existing stroke data
+      // Check if existing data is from placeholder and new data is from database
+      final existingStroke = _strokeData[stroke.character]!;
+      final isExistingPlaceholder = PlaceholderCharacters.hasPlaceholder(stroke.character) &&
+          _isPlaceholderData(existingStroke, stroke.character);
       
-      // Always use the new data from the database - it's more accurate than placeholders
-      // The database should be the authoritative source
-      // Production: removed debug print
+      // Always prefer database data over placeholder data
+      if (isExistingPlaceholder || !_isPlaceholderData(stroke, stroke.character)) {
+        _strokeData[stroke.character] = stroke;
+      }
+    } else {
+      _strokeData[stroke.character] = stroke;
     }
-    _strokeData[stroke.character] = stroke;
-    // Added character to stroke data
-    // Production: removed debug print
-    // Updated stroke data
+  }
+  
+  // Helper method to check if stroke data matches placeholder data
+  bool _isPlaceholderData(CharacterStroke stroke, String character) {
+    final placeholder = PlaceholderCharacters.getPlaceholder(character);
+    if (placeholder == null) return false;
+    
+    // Compare stroke counts and first stroke path to determine if it's placeholder data
+    return stroke.strokes.length == placeholder.strokes.length &&
+           stroke.strokes.isNotEmpty &&
+           stroke.strokes.first == placeholder.strokes.first;
   }
   
   // Add multiple character strokes
@@ -255,6 +267,8 @@ class CharacterStrokeService {
     // Clearing characters
     _strokeData.clear();
     _loaded = false;
+    // Clear the SVG path cache to prevent stale data
+    SvgPathConverter.clearCache();
     // Production: removed debug print
   }
   
@@ -264,6 +278,26 @@ class CharacterStrokeService {
       // Production: removed debug print
       _strokeData.remove(character);
     }
+  }
+  
+  // Force refresh characters that might have placeholder data
+  void refreshPlaceholderCharacters() {
+    final charactersToRefresh = <String>[];
+    
+    // Check all loaded characters to see if they match placeholder data
+    for (final entry in _strokeData.entries) {
+      if (_isPlaceholderData(entry.value, entry.key)) {
+        charactersToRefresh.add(entry.key);
+      }
+    }
+    
+    // Clear placeholder characters so they can be reloaded from database
+    for (final character in charactersToRefresh) {
+      _strokeData.remove(character);
+    }
+    
+    // Clear the SVG path cache to ensure fresh rendering
+    SvgPathConverter.clearCache();
   }
   
   // Check if data is loaded
@@ -628,7 +662,22 @@ class StrokeValidator {
 
 // SVG path parser
 class SvgPathConverter {
+  // Cache for parsed paths to avoid repeated parsing and numerical errors
+  static final Map<String, Path> _pathCache = {};
+  static const int _maxCacheSize = 100;
+  
   static Path parsePath(String svgPath, Size targetSize) {
+    // Create cache key from path and size
+    final cacheKey = '${svgPath.hashCode}_${targetSize.width.toStringAsFixed(2)}_${targetSize.height.toStringAsFixed(2)}';
+    
+    // Check cache first
+    if (_pathCache.containsKey(cacheKey)) {
+      // Return a copy of the cached path to avoid mutations
+      final cachedPath = _pathCache[cacheKey]!;
+      final pathCopy = Path();
+      pathCopy.addPath(cachedPath, Offset.zero);
+      return pathCopy;
+    }
     final path = Path();
     final commands = _tokenize(svgPath);
     
@@ -738,7 +787,25 @@ class SvgPathConverter {
       }
     }
     
-    return path;
+    // Cache the path before returning
+    _pathCache[cacheKey] = path;
+    
+    // Implement LRU eviction
+    if (_pathCache.length > _maxCacheSize) {
+      // Remove oldest entry (first in map)
+      final firstKey = _pathCache.keys.first;
+      _pathCache.remove(firstKey);
+    }
+    
+    // Return a copy to avoid mutations
+    final pathCopy = Path();
+    pathCopy.addPath(path, Offset.zero);
+    return pathCopy;
+  }
+  
+  // Clear the cache when needed (e.g., when switching databases)
+  static void clearCache() {
+    _pathCache.clear();
   }
   
   static List<String> _tokenize(String svgPath) {
