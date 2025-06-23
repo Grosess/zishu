@@ -317,7 +317,7 @@ class CharacterDatabase {
             final placeholderData = PlaceholderCharacters.getPlaceholder(character);
             if (placeholderData != null) {
               // Production: removed debug print
-              _cache[character] = placeholderData;
+              _addToCache(character, placeholderData);
               _strokeService.addCharacterStroke(placeholderData);
             }
             continue;
@@ -325,7 +325,7 @@ class CharacterDatabase {
           
           final strokeData = CharacterStroke.fromJson(json);
           // Production: removed debug print
-          _cache[character] = strokeData;
+          _addToCache(character, strokeData);
           _strokeService.addCharacterStroke(strokeData);
         } catch (e) {
           // Production: removed debug print
@@ -595,6 +595,16 @@ class CharacterDatabase {
     if (_cache.length > _maxCacheSize) {
       final oldest = _cacheOrder.removeAt(0);
       _cache.remove(oldest);
+    }
+  }
+  
+  /// Clear specific characters from cache
+  void clearCharactersFromCache(List<String> characters) {
+    for (final character in characters) {
+      if (_cache.containsKey(character)) {
+        _cache.remove(character);
+        _cacheOrder.remove(character);
+      }
     }
   }
 }

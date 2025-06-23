@@ -280,6 +280,15 @@ class CharacterStrokeService {
     }
   }
   
+  // Clear multiple characters
+  void clearCharacters(List<String> characters) {
+    for (final character in characters) {
+      _strokeData.remove(character);
+    }
+    // Clear path cache to ensure fresh rendering
+    SvgPathConverter.clearCache();
+  }
+  
   // Force refresh characters that might have placeholder data
   void refreshPlaceholderCharacters() {
     final charactersToRefresh = <String>[];
