@@ -38,15 +38,13 @@ class CharacterPreviewCache {
     try {
       await _ensureInitialized();
       
-      // First try to get from stroke service
+      // First clear any potentially stale placeholder data
       final strokeService = CharacterStrokeService();
-      var characterStroke = strokeService.getCharacterStroke(character);
+      strokeService.clearCharacter(character);
       
-      // If not found, try loading from database
-      if (characterStroke == null) {
-        await _database.loadCharacters([character]);
-        characterStroke = strokeService.getCharacterStroke(character);
-      }
+      // Try loading from database
+      await _database.loadCharacters([character]);
+      final characterStroke = strokeService.getCharacterStroke(character);
       
       // Cache the result (even if null)
       _cache[character] = characterStroke;
@@ -66,11 +64,14 @@ class CharacterPreviewCache {
     
     if (toLoad.isEmpty) return;
     
+    // Clear any potentially stale placeholder data
+    final strokeService = CharacterStrokeService();
+    strokeService.clearCharacters(toLoad);
+    
     // Load all at once
     await _database.loadCharacters(toLoad);
     
     // Cache the results
-    final strokeService = CharacterStrokeService();
     for (final character in toLoad) {
       final stroke = strokeService.getCharacterStroke(character);
       _cache[character] = stroke;
@@ -81,5 +82,11 @@ class CharacterPreviewCache {
   void clearCache() {
     _cache.clear();
     _loadingCharacters.clear();
+  }
+  
+  /// Clear cache for specific character
+  void clearCharacter(String character) {
+    _cache.remove(character);
+    _loadingCharacters.remove(character);
   }
 }
