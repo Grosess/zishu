@@ -691,15 +691,19 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                 _userStrokes.clear();
               });
             } else {
-              // Show summary if in testing mode and not endless practice
+              // Check if this is individual character practice
+              final isIndividualPractice = widget.allCharacters != null && widget.allCharacters!.length == 1;
+              
+              // Show summary if in testing mode and not endless practice or individual practice
               if (widget.mode == PracticeMode.testing && 
                   widget.characterSet != 'Endless Practice' && 
+                  !isIndividualPractice &&
                   _totalItemsStudied > 0) {
                 _showCompletionDialog();
               } else {
                 if (mounted) {
-              Navigator.pop(context);
-            }
+                  Navigator.pop(context);
+                }
               }
             }
           },
@@ -1503,17 +1507,39 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         } else {
           // Track the result for the last character
           _wordCharacterResults[_currentWordCharacterIndex] = wasCorrect;
-          // Only show completion dialog in testing mode
-          if (widget.mode == PracticeMode.testing) {
-            _showCompletionDialog();
-          } else {
-            // In learning mode, mark the set as learned if we completed all characters
-            if (widget.allCharacters != null) {
-              _learningService.markSetAsLearned(widget.characterSet, widget.allCharacters!);
+          
+          // Check if this is individual character practice (only one item)
+          final isIndividualPractice = widget.allCharacters != null && widget.allCharacters!.length == 1;
+          
+          if (isIndividualPractice) {
+            // For individual character practice, don't show summary
+            // Just call the completion callback if provided
+            if (widget.onComplete != null) {
+              widget.onComplete!(wasCorrect);
             }
-            // Just exit
+            
+            // Update streak if successful
+            if (wasCorrect) {
+              StreakService().updateProgress(1);
+            }
+            
+            // Navigate back
             if (mounted) {
               Navigator.pop(context);
+            }
+          } else {
+            // Only show completion dialog in testing mode for sets
+            if (widget.mode == PracticeMode.testing) {
+              _showCompletionDialog();
+            } else {
+              // In learning mode, mark the set as learned if we completed all characters
+              if (widget.allCharacters != null) {
+                _learningService.markSetAsLearned(widget.characterSet, widget.allCharacters!);
+              }
+              // Just exit
+              if (mounted) {
+                Navigator.pop(context);
+              }
             }
           }
         }
@@ -1939,6 +1965,8 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       final mainScreenState = context.findAncestorStateOfType<MainScreenState>();
       if (mainScreenState != null) {
         mainScreenState.navigateToSetsTab(showCustom: true);
+        // Refresh the sets page to show the new custom set
+        mainScreenState.refreshSetsPage();
       } else {
         // Fallback: just show success message
         ScaffoldMessenger.of(context).showSnackBar(

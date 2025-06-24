@@ -576,12 +576,20 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
           onSurface: foregroundColor,
           surfaceContainerHighest: backgroundColor,
           onSurfaceVariant: foregroundColor,
-          outline: foregroundColor.withOpacity(0.3),
-          shadow: foregroundColor.withOpacity(0.3),
+          outline: foregroundColor.withValues(alpha: 0.3),
+          shadow: foregroundColor.withValues(alpha: 0.3),
         ),
         scaffoldBackgroundColor: backgroundColor,
         cardColor: backgroundColor,
-        dividerColor: foregroundColor.withOpacity(0.2),
+        canvasColor: backgroundColor,
+        dividerColor: foregroundColor.withValues(alpha: 0.2),
+        dialogTheme: DialogThemeData(
+          backgroundColor: backgroundColor,
+        ),
+        bottomSheetTheme: BottomSheetThemeData(
+          backgroundColor: backgroundColor,
+          modalBackgroundColor: backgroundColor,
+        ),
         iconTheme: IconThemeData(color: foregroundColor),
         primaryIconTheme: IconThemeData(color: foregroundColor),
         listTileTheme: ListTileThemeData(
@@ -591,11 +599,11 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         bottomNavigationBarTheme: BottomNavigationBarThemeData(
           backgroundColor: backgroundColor,
           selectedItemColor: foregroundColor,
-          unselectedItemColor: foregroundColor.withOpacity(0.5),
+          unselectedItemColor: foregroundColor.withValues(alpha: 0.5),
         ),
         navigationBarTheme: NavigationBarThemeData(
           backgroundColor: backgroundColor,
-          indicatorColor: foregroundColor.withOpacity(0.2),
+          indicatorColor: foregroundColor.withValues(alpha: 0.2),
           iconTheme: WidgetStateProperty.all(IconThemeData(color: foregroundColor)),
           labelTextStyle: WidgetStateProperty.all(TextStyle(color: foregroundColor)),
         ),
@@ -624,7 +632,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
             backgroundColor: foregroundColor,
             foregroundColor: backgroundColor,
             elevation: 4,
-            shadowColor: foregroundColor.withOpacity(0.4),
+            shadowColor: foregroundColor.withValues(alpha: 0.4),
           ),
         ),
         filledButtonTheme: FilledButtonThemeData(
@@ -642,9 +650,9 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
           thumbColor: WidgetStateProperty.all(foregroundColor),
           trackColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.selected)) {
-              return foregroundColor.withOpacity(0.5);
+              return foregroundColor.withValues(alpha: 0.5);
             }
-            return foregroundColor.withOpacity(0.2);
+            return foregroundColor.withValues(alpha: 0.2);
           }),
         ),
         radioTheme: RadioThemeData(
@@ -656,18 +664,25 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         cardTheme: CardThemeData(
           color: backgroundColor,
           elevation: 4,
-          shadowColor: foregroundColor.withOpacity(0.3),
+          shadowColor: foregroundColor.withValues(alpha: 0.3),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: foregroundColor.withOpacity(0.1)),
+            side: BorderSide(color: foregroundColor.withValues(alpha: 0.1)),
           ),
         ),
         useMaterial3: true,
         fontFamilyFallback: const ['Noto Sans CJK SC', 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', 'Source Han Sans SC', 'WenQuanYi Micro Hei'],
+        pageTransitionsTheme: PageTransitionsTheme(
+          builders: {
+            TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+            TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+            TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+          },
+        ),
         extensions: [
           DuotoneThemeExtension(
             isDuotoneTheme: true,
-            gridColor: foregroundColor.withOpacity(0.15),
+            gridColor: foregroundColor.withValues(alpha: 0.15),
             duotoneColor1: backgroundColor,
             duotoneColor2: foregroundColor,
           ),
@@ -696,7 +711,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
-            side: BorderSide(color: _accentColor.withOpacity(0.1), width: 1),
+            side: BorderSide(color: _accentColor.withValues(alpha: 0.1), width: 1),
           ),
           color: Colors.white,
         ),
@@ -740,7 +755,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
-            side: BorderSide(color: _accentColor.withOpacity(0.2), width: 1),
+            side: BorderSide(color: _accentColor.withValues(alpha: 0.2), width: 1),
           ),
           color: const Color(0xFF1A1A1A),
         ),
@@ -772,10 +787,12 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
             statusBarIconBrightness: isLightBackground ? Brightness.dark : Brightness.light,
             statusBarBrightness: isLightBackground ? Brightness.light : Brightness.dark,
           );
-        } else if (_themeMode == ThemeMode.dark) {
+        } else if (_themeMode == ThemeMode.dark || 
+                   (_themeMode == ThemeMode.system && MediaQuery.of(context).platformBrightness == Brightness.dark)) {
+          // Dark theme or system dark mode
           statusBarStyle = SystemUiOverlayStyle.light;
         } else {
-          // Light theme - check if accent color is black or white
+          // Light theme or system light mode
           final accentColorName = _getColorName(_accentColor);
           if (accentColorName == 'black') {
             // Black accent - use black status bar
@@ -927,6 +944,20 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       });
     }
   }
+  
+  void refreshSetsPage() {
+    // Refresh the sets page to show new custom sets
+    if (_setsPageKey.currentState != null) {
+      // Force a rebuild of sets page
+      setState(() {
+        // This will trigger the sets page to reload
+      });
+      // Navigate to custom tab
+      Future.delayed(const Duration(milliseconds: 300), () {
+        // The sets page will reload its custom sets automatically
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -950,7 +981,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                     ? LinearGradient(
                         colors: [
                           Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!,
-                          Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withOpacity(0.8),
+                          Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.8),
                         ],
                       )
                     : LinearGradient(
@@ -963,7 +994,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                     ? [] // No shadow for duotone
                     : [
                         BoxShadow(
-                          color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -1015,9 +1046,22 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         ),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 16.0),
+            padding: const EdgeInsets.only(right: 8.0),
             child: StreakDisplay(key: _streakDisplayKey, showOnlyIcon: true),
           ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SettingsPage(),
+                ),
+              );
+            },
+            tooltip: 'Settings',
+          ),
+          const SizedBox(width: 8), // Add spacing from the edge
         ],
       ),
       drawer: Drawer(
@@ -1180,7 +1224,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
               blurRadius: 20,
               offset: const Offset(0, -5),
             ),

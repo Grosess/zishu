@@ -398,6 +398,24 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
     }
   }
   
+  Future<void> refreshCustomSets() async {
+    final customSets = <CharacterSet>[];
+    await _loadCustomSets(customSets);
+    
+    setState(() {
+      _customSets = customSets;
+    });
+    
+    // Switch to custom tab to show the new set
+    if (_tabController != null) {
+      _tabController!.animateTo(1);
+    }
+    
+    // Reload progress and preload icons
+    await _loadSetProgress();
+    _preloadSetIconCharacters();
+  }
+  
   Future<void> _saveCustomSetsToStorage() async {
     final prefs = await SharedPreferences.getInstance();
     final customSetJsonList = _customSets.map((set) => jsonEncode(set.toJson())).toList();
@@ -579,7 +597,9 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
                     Text(
                       'Progress: ${((_setProgress[set.id] ?? 0.0) * 100).toInt()}%',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: (_setProgress[set.id] ?? 0.0) >= 1.0 ? Colors.green : null,
+                        color: (_setProgress[set.id] ?? 0.0) >= 1.0 
+                            ? Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary
+                            : null,
                         fontWeight: (_setProgress[set.id] ?? 0.0) >= 1.0 ? FontWeight.bold : null,
                       ),
                     ),
@@ -633,7 +653,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
                                 color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                                     ? (isLearned 
                                         ? Theme.of(context).colorScheme.secondary.withOpacity(0.3)
-                                        : Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!)
+                                        : Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor1 ?? Theme.of(context).colorScheme.surfaceContainer)
                                     : (isLearned 
                                         ? Colors.blue.withOpacity(0.2)
                                         : Colors.grey.withOpacity(0.2)),
@@ -790,7 +810,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
                           ),
                           style: FilledButton.styleFrom(
                             backgroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                                ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                                ? Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary
                                 : Theme.of(context).colorScheme.primary,
                           ),
                         ),
@@ -895,7 +915,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
                             ),
                             style: FilledButton.styleFrom(
                               backgroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withOpacity(0.8)
+                                  ? (Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary).withOpacity(0.8)
                                   : Theme.of(context).colorScheme.secondary,
                             ),
                           ),
@@ -1182,7 +1202,11 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
               ],
             ),
           ),
-          const Divider(),
+          Divider(
+            color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                ? (Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.2)
+                : null,
+          ),
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -2041,10 +2065,10 @@ class _FolderCard extends StatelessWidget {
         onLongPress: onLongPress,
         borderRadius: BorderRadius.circular(12),
         splashColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-            ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.1)
+            ? (Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.1)
             : null,
         highlightColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-            ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.05)
+            ? (Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.05)
             : null,
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -2202,19 +2226,19 @@ class _CharacterSetSquareCard extends StatelessWidget {
     
     // Use theme-aware colors
     final backgroundColor = isDuotone 
-        ? duotoneExt!.duotoneColor1! 
+        ? duotoneExt?.duotoneColor1 ?? Theme.of(context).colorScheme.surfaceContainer
         : setColor;  // Always use set color for non-duotone themes
     
     final characterColor = isDuotone 
-        ? duotoneExt!.duotoneColor2! 
+        ? duotoneExt?.duotoneColor2 ?? Theme.of(context).colorScheme.primary
         : Colors.white.withValues(alpha: 0.9);
     
     final textColor = isDuotone 
-        ? duotoneExt!.duotoneColor2! 
+        ? duotoneExt?.duotoneColor2 ?? Theme.of(context).colorScheme.onSurface
         : Colors.white;
     
     final subtextColor = isDuotone 
-        ? duotoneExt!.duotoneColor2!.withValues(alpha: 0.7) 
+        ? (duotoneExt?.duotoneColor2 ?? Theme.of(context).colorScheme.onSurface).withValues(alpha: 0.7) 
         : Colors.white.withValues(alpha: 0.7);
     
     return Card(
@@ -2225,10 +2249,10 @@ class _CharacterSetSquareCard extends StatelessWidget {
         onLongPress: onLongPress,
         borderRadius: BorderRadius.circular(12),
         splashColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-            ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.1)
+            ? (Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.1)
             : null,
         highlightColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-            ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.05)
+            ? (Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.05)
             : null,
         child: Container(
           decoration: BoxDecoration(
@@ -2301,13 +2325,8 @@ class _CharacterSetSquareCard extends StatelessWidget {
                                   value: progress,
                                   backgroundColor: Colors.transparent,
                                   valueColor: AlwaysStoppedAnimation<Color>(
-                                    progress >= 1.0 
-                                      ? (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                                          ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!  // Use duotone foreground
-                                          : Colors.green)  // Green for completed in all themes
-                                      : (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                                          ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!  // Use duotone foreground for in-progress too
-                                          : Theme.of(context).colorScheme.primary),  // Blue (primary color) for other themes
+                                    Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? 
+                                    Theme.of(context).colorScheme.primary
                                   ),
                                   borderRadius: BorderRadius.circular(2),
                                 ),
@@ -2344,17 +2363,15 @@ class _CharacterSetSquareCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                          ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
-                          : Colors.green,
+                      color: Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? 
+                             Theme.of(context).colorScheme.primary,
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       Icons.check,
                       size: 16,
-                      color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                          ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!
-                          : Colors.white,
+                      color: Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor1 ?? 
+                             Theme.of(context).colorScheme.onPrimary,
                     ),
                   ),
                 ),
@@ -2369,7 +2386,7 @@ class _CharacterSetSquareCard extends StatelessWidget {
                       onTap: onMenuTap,
                       borderRadius: BorderRadius.circular(12),
                       splashColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                          ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.2)
+                          ? (Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.2)
                           : null,
                       highlightColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                           ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.1)
