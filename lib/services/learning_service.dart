@@ -1,4 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'streak_service.dart';
+import '../main.dart' as main;
 
 class LearningService {
   static final LearningService _instance = LearningService._internal();
@@ -41,6 +43,17 @@ class LearningService {
       
       // Force sync to ensure persistence
       await _prefs.reload();
+      
+      // Update streak progress
+      final streakService = StreakService();
+      await streakService.updateLearnedProgress(1);
+      
+      // Refresh UI if possible
+      try {
+        main.refreshStreakDisplay();
+      } catch (_) {
+        // Ignore if main screen is not available
+      }
     }
   }
 
@@ -74,6 +87,10 @@ class LearningService {
       
       // Force sync to ensure persistence
       await _prefs.reload();
+      
+      // Update streak progress with count of newly learned items
+      final streakService = StreakService();
+      await streakService.updateLearnedProgress(newLearned.length);
     }
   }
 
@@ -274,6 +291,17 @@ class LearningService {
       // Force sync to ensure persistence
       await _prefs.reload();
       
+      // Update streak progress
+      final streakService = StreakService();
+      await streakService.updateLearnedProgress(1);
+      
+      // Refresh UI if possible
+      try {
+        main.refreshStreakDisplay();
+      } catch (_) {
+        // Ignore if main screen is not available
+      }
+      
       // Log for debugging
       // Marked word as learned
     } else {
@@ -304,6 +332,10 @@ class LearningService {
     
     if (newLearned.isNotEmpty) {
       await _prefs.setStringList('learned_words', learned);
+      
+      // Update streak progress with count of newly learned items
+      final streakService = StreakService();
+      await streakService.updateLearnedProgress(newLearned.length);
     }
   }
 
@@ -345,6 +377,25 @@ class LearningService {
         await _prefs.remove(key);
       }
     }
+  }
+  
+  // Check if an item (character or word) is learned
+  Future<bool> isItemLearned(String item) async {
+    await initialize();
+    final learnedCharacters = await getLearnedCharacters();
+    final learnedWords = await getLearnedWords();
+    return _isItemLearned(item, learnedCharacters, learnedWords);
+  }
+  
+  // Get all unlearned items from a list
+  Future<List<String>> getUnlearnedItems(List<String> items) async {
+    await initialize();
+    final learnedCharacters = await getLearnedCharacters();
+    final learnedWords = await getLearnedWords();
+    
+    return items.where((item) => 
+      !_isItemLearned(item, learnedCharacters, learnedWords)
+    ).toList();
   }
   
   // Helper method to check if an item (character or word) is learned

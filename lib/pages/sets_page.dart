@@ -739,12 +739,8 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
                         width: 115,
                         child: FilledButton.icon(
                           onPressed: () async {
-                            // Filter to only unlearned items
-                            final learnedCharacters = await _learningService.getLearnedCharacters();
-                            final learnedWords = await _learningService.getLearnedWords();
-                            final allLearned = {...learnedCharacters, ...learnedWords};
-                            
-                            final unlearnedItems = validItems.where((item) => !allLearned.contains(item)).toList();
+                            // Filter to only unlearned items using the proper logic
+                            final unlearnedItems = await _learningService.getUnlearnedItems(validItems);
                             
                             if (unlearnedItems.isEmpty) {
                               Navigator.pop(context);
@@ -1084,28 +1080,59 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
     // Production: removed debug print
     if (!isCustomTab) {
       // Built-in sets - show as normal grid
-      return GridView.builder(
-        controller: _builtInScrollController,
-        padding: const EdgeInsets.all(16),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 1.0,
-        ),
-        itemCount: sets.length,
-        itemBuilder: (context, index) {
-          final set = sets[index];
-          final isLoading = _loadingStates[set.id] ?? false;
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          // Calculate responsive grid columns based on screen width
+          // Target card size: 150-200 logical pixels
+          final width = constraints.maxWidth;
+          int crossAxisCount = 2; // Default for phones
           
-          return _CharacterSetSquareCard(
-            set: set,
-            isLoading: isLoading,
-            isCustom: false,
-            progress: _setProgress[set.id] ?? 0.0,
-            onTap: isLoading ? null : () => _showSetSynopsis(set),
-            onLongPress: null,
-            onMenuTap: () => _showSetMenu(set),
+          if (width > 600) {
+            // Tablet in portrait or phone in landscape
+            crossAxisCount = 3;
+          }
+          if (width > 900) {
+            // Tablet in landscape
+            crossAxisCount = 4;
+          }
+          if (width > 1200) {
+            // Large tablet or desktop
+            crossAxisCount = 5;
+          }
+          
+          // Calculate actual card size to ensure cards don't get too large
+          final cardWidth = (width - 32 - (crossAxisCount - 1) * 16) / crossAxisCount;
+          final maxCardSize = 200.0; // Maximum card size
+          
+          // If cards would be too large, increase column count
+          if (cardWidth > maxCardSize) {
+            crossAxisCount = ((width - 32) / (maxCardSize + 16)).floor();
+          }
+          
+          return GridView.builder(
+            controller: _builtInScrollController,
+            padding: const EdgeInsets.all(16),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 1.0,
+            ),
+            itemCount: sets.length,
+            itemBuilder: (context, index) {
+              final set = sets[index];
+              final isLoading = _loadingStates[set.id] ?? false;
+              
+              return _CharacterSetSquareCard(
+                set: set,
+                isLoading: isLoading,
+                isCustom: false,
+                progress: _setProgress[set.id] ?? 0.0,
+                onTap: isLoading ? null : () => _showSetSynopsis(set),
+                onLongPress: null,
+                onMenuTap: () => _showSetMenu(set),
+              );
+            },
           );
         },
       );
@@ -1149,17 +1176,32 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
           ),
           const Divider(),
           Expanded(
-            child: GridView.builder(
-              controller: _customScrollController,
-              padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 1.0,
-              ),
-              itemCount: folderSets.length,
-              itemBuilder: (context, index) {
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                // Same responsive logic for folder view
+                final width = constraints.maxWidth;
+                int crossAxisCount = 2;
+                
+                if (width > 600) crossAxisCount = 3;
+                if (width > 900) crossAxisCount = 4;
+                if (width > 1200) crossAxisCount = 5;
+                
+                final cardWidth = (width - 32 - (crossAxisCount - 1) * 16) / crossAxisCount;
+                if (cardWidth > 200) {
+                  crossAxisCount = ((width - 32) / 216).floor();
+                }
+                
+                return GridView.builder(
+                  controller: _customScrollController,
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossAxisCount,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 1.0,
+                  ),
+                  itemCount: folderSets.length,
+                  itemBuilder: (context, index) {
                 final set = folderSets[index];
                 final isLoading = _loadingStates[set.id] ?? false;
                 
@@ -1171,6 +1213,8 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
                   onTap: isLoading ? null : () => _showSetSynopsis(set),
                   onLongPress: () => _showDeleteDialog(set),
                   onMenuTap: () => _showSetMenu(set),
+                );
+                  },
                 );
               },
             ),
@@ -1198,15 +1242,30 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
     // Add unfiled sets at the end
     displayItems.addAll(unfiledSets);
     
-    return GridView.builder(
-      controller: _customScrollController,
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 1.0,
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Same responsive logic
+        final width = constraints.maxWidth;
+        int crossAxisCount = 2;
+        
+        if (width > 600) crossAxisCount = 3;
+        if (width > 900) crossAxisCount = 4;
+        if (width > 1200) crossAxisCount = 5;
+        
+        final cardWidth = (width - 32 - (crossAxisCount - 1) * 16) / crossAxisCount;
+        if (cardWidth > 200) {
+          crossAxisCount = ((width - 32) / 216).floor();
+        }
+        
+        return GridView.builder(
+          controller: _customScrollController,
+          padding: const EdgeInsets.all(16),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 1.0,
+          ),
       itemCount: displayItems.length,
       itemBuilder: (context, index) {
         final item = displayItems[index];
@@ -1267,6 +1326,8 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
         }
         
         return const SizedBox.shrink();
+          },
+        );
       },
     );
   }

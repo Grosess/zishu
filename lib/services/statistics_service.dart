@@ -1,5 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'streak_service.dart';
 
 class StatisticsService {
   static final StatisticsService _instance = StatisticsService._internal();
@@ -76,8 +77,9 @@ class StatisticsService {
     // Update character-specific stats
     await _updateCharacterStats(character, success, attempts, duration);
     
-    // Update streak
-    await _updateStreak();
+    // Update streak using StreakService for practice-based progress
+    final streakService = StreakService();
+    await streakService.updateProgress(1); // Count practice sessions
   }
 
   Future<DailyStats> getDailyStats(String? date) async {
@@ -105,13 +107,17 @@ class StatisticsService {
   }
 
   Future<int> getCurrentStreak() async {
-    await initialize();
-    return _prefs.getInt('current_streak') ?? 0;
+    // Use StreakService as the single source of truth
+    final streakService = StreakService();
+    final data = await streakService.getStreakData();
+    return data.currentStreak;
   }
 
   Future<int> getLongestStreak() async {
-    await initialize();
-    return _prefs.getInt('longest_streak') ?? 0;
+    // Use StreakService as the single source of truth
+    final streakService = StreakService();
+    final data = await streakService.getStreakData();
+    return data.longestStreak;
   }
 
   Future<Set<String>> getLearnedCharacters() async {
@@ -192,41 +198,6 @@ class StatisticsService {
     }
   }
 
-  Future<void> _updateStreak() async {
-    final lastPractice = _prefs.getString('last_practice_date');
-    final today = _getTodayKey();
-    
-    if (lastPractice == today) {
-      // Already practiced today
-      return;
-    }
-    
-    final currentStreak = await getCurrentStreak();
-    final longestStreak = await getLongestStreak();
-    
-    if (lastPractice == null) {
-      // First practice
-      await _prefs.setInt('current_streak', 1);
-      await _prefs.setInt('longest_streak', 1);
-    } else {
-      final yesterday = DateTime.now().subtract(const Duration(days: 1));
-      final yesterdayKey = '${yesterday.year}-${yesterday.month.toString().padLeft(2, '0')}-${yesterday.day.toString().padLeft(2, '0')}';
-      
-      if (lastPractice == yesterdayKey) {
-        // Continuing streak
-        final newStreak = currentStreak + 1;
-        await _prefs.setInt('current_streak', newStreak);
-        if (newStreak > longestStreak) {
-          await _prefs.setInt('longest_streak', newStreak);
-        }
-      } else {
-        // Streak broken
-        await _prefs.setInt('current_streak', 1);
-      }
-    }
-    
-    await _prefs.setString('last_practice_date', today);
-  }
 }
 
 class DailyStats {

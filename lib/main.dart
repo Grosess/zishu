@@ -64,9 +64,17 @@ class DuotoneThemeExtension extends ThemeExtension<DuotoneThemeExtension> {
 // Global key to access MainApp state from anywhere
 final GlobalKey<_MainAppState> mainAppKey = GlobalKey<_MainAppState>();
 
+// Global key to access MainScreen state from anywhere
+final GlobalKey<MainScreenState> mainScreenKey = GlobalKey<MainScreenState>();
+
 // Method to force app restart
 void restartApp() {
   mainAppKey.currentState?.restartApp();
+}
+
+// Method to refresh streak display
+void refreshStreakDisplay() {
+  mainScreenKey.currentState?.refreshStreakDisplay();
 }
 
 Future<void> _initializeApp() async {
@@ -748,7 +756,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         ),
       ),
       themeMode: _themeMode,
-      home: const MainScreen(),
+      home: MainScreen(key: mainScreenKey),
       builder: (context, child) {
         // Determine status bar style based on theme
         SystemUiOverlayStyle statusBarStyle;
@@ -807,6 +815,9 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   final GlobalKey<HomePageState> _homePageKey = GlobalKey<HomePageState>();
   final GlobalKey<sets.SetsPageState> _setsPageKey = GlobalKey<sets.SetsPageState>();
   final GlobalKey<ProgressPageState> _progressPageKey = GlobalKey<ProgressPageState>();
+  
+  // Key for streak display to force refresh
+  Key _streakDisplayKey = UniqueKey();
 
   @override
   void initState() {
@@ -837,6 +848,8 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         if (_selectedIndex == 0 && _homePageKey.currentState != null) {
           _homePageKey.currentState!.onPageVisible();
         }
+        // Also refresh streak display
+        refreshStreakDisplay();
         break;
       case AppLifecycleState.paused:
       case AppLifecycleState.inactive:
@@ -855,6 +868,12 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   void _onProfileChanged() {
     setState(() {
       // Profile data updated
+    });
+  }
+  
+  void refreshStreakDisplay() {
+    setState(() {
+      _streakDisplayKey = UniqueKey(); // Force streak display to rebuild
     });
   }
   
@@ -881,6 +900,8 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         _progressPageKey.currentState?.scrollToTop();
         // Refresh progress data when navigating to the progress tab
         _progressPageKey.currentState?.loadStatistics();
+        // Also refresh streak display to ensure consistency
+        refreshStreakDisplay();
         break;
     }
   }
@@ -995,7 +1016,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
-            child: StreakDisplay(showOnlyIcon: true),
+            child: StreakDisplay(key: _streakDisplayKey, showOnlyIcon: true),
           ),
         ],
       ),
@@ -1134,20 +1155,17 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                 
                 // Refresh when returning if changes were made
                 if (result == true && mounted) {
-                  setState(() {
-                    // Force rebuild of all pages to refresh their data
-                    _pages = [
-                      HomePage(key: UniqueKey(), onNavigateToTab: _onItemTapped),
-                      sets.SetsPage(key: UniqueKey()),
-                      ProgressPage(key: UniqueKey()),
-                      ProfilePage(key: UniqueKey()),
-                    ];
-                  });
+                  // Refresh home page
+                  _homePageKey.currentState?.refreshData();
                   
-                  // Also refresh the current page's data if it has a refresh method
-                  if (_selectedIndex == 2) { // Progress page
-                    (_pages[2].key as GlobalKey<ProgressPageState>?)?.currentState?.loadStatistics();
-                  }
+                  // Refresh progress page
+                  _progressPageKey.currentState?.loadStatistics();
+                  
+                  // Refresh streak display
+                  refreshStreakDisplay();
+                  
+                  // Force UI update
+                  setState(() {});
                 }
               },
             ),

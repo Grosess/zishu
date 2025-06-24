@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math' as math;
 import '../services/statistics_service.dart';
+import '../services/streak_service.dart';
 import '../main.dart' show DuotoneThemeExtension;
 import '../widgets/streak_display.dart';
 
@@ -15,6 +16,7 @@ class ProgressPage extends StatefulWidget {
 
 class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixin {
   final StatisticsService _statsService = StatisticsService();
+  final StreakService _streakService = StreakService();
   final ScrollController _scrollController = ScrollController();
   late SharedPreferences _prefs;
   
@@ -138,45 +140,19 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
     final dailyStats = await _statsService.getDailyStats(null);
     final learnedCharacters = await _statsService.getLearnedCharacters();
     final learnedWords = await _statsService.getLearnedWords();
-    final streak = await _statsService.getCurrentStreak();
     
-    // Calculate actual characters learned today by checking timestamps
-    int todayLearned = 0;
-    final today = DateTime.now();
-    final todayKey = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
-    
-    // Check learned character timestamps
-    for (final char in learnedCharacters) {
-      final timestamp = _prefs.getString('learned_character_$char');
-      if (timestamp != null) {
-        final learnedDate = DateTime.parse(timestamp);
-        final learnedKey = '${learnedDate.year}-${learnedDate.month.toString().padLeft(2, '0')}-${learnedDate.day.toString().padLeft(2, '0')}';
-        if (learnedKey == todayKey) {
-          todayLearned++;
-        }
-      }
-    }
-    
-    // Check learned word timestamps
-    for (final word in learnedWords) {
-      final timestamp = _prefs.getString('learned_word_$word');
-      if (timestamp != null) {
-        final learnedDate = DateTime.parse(timestamp);
-        final learnedKey = '${learnedDate.year}-${learnedDate.month.toString().padLeft(2, '0')}-${learnedDate.day.toString().padLeft(2, '0')}';
-        if (learnedKey == todayKey) {
-          todayLearned++;
-        }
-      }
-    }
+    // Get streak data from StreakService (single source of truth)
+    final streakService = StreakService();
+    final streakData = await streakService.getStreakData();
     
     setState(() {
       _totalCharactersLearned = learnedCharacters.length;
       _totalWordsLearned = learnedWords.length;
       _totalStudyTime = totalStats.totalTime;
       _dailyCharactersStudied = dailyStats.charactersStudied;
-      _dailyCharactersLearned = todayLearned; // Use actual count
+      _dailyCharactersLearned = streakData.todayProgress; // Use streak service's count
       _dailyStudyTime = dailyStats.totalTime;
-      _currentStreak = streak;
+      _currentStreak = streakData.currentStreak; // Use streak service's streak
       
       // Calculate days remaining
       final now = DateTime.now();
@@ -760,7 +736,7 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
                 StreakDisplay(
                   showOnlyIcon: false,
                   todayProgress: _dailyCharactersLearned,
-                  dailyGoal: _dailyPracticeGoal,
+                  dailyGoal: _charactersNeededToday, // Use the same goal calculation
                 ),
               ],
             ),

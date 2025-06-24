@@ -13,12 +13,17 @@ class StreakService {
   factory StreakService() => _instance;
   StreakService._internal();
   
+  bool _initialized = false;
+  
   Future<void> initialize() async {
+    if (_initialized) return;
     _prefs = await SharedPreferences.getInstance();
+    _initialized = true;
   }
   
   // Get current streak data
   Future<StreakData> getStreakData() async {
+    await initialize(); // Ensure prefs is initialized
     final jsonString = _prefs.getString(_streakKey);
     
     // Always get the current daily goal based on progress
@@ -67,31 +72,40 @@ class StreakService {
     final today = DateTime.now();
     final todayString = "${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}";
     
-    // If it's a new day, reset progress
-    if (data.lastPracticeDate != null && data.lastPracticeDate != todayString) {
+    // Check if this is a new day
+    final bool isNewDay = data.lastPracticeDate != todayString;
+    
+    // If it's a new day
+    if (isNewDay) {
+      // Check if yesterday's goal was met (for streak continuation)
+      if (data.lastPracticeDate != null && data.todayProgress < data.dailyGoal) {
+        // Yesterday's goal was not met, reset streak
+        data.currentStreak = 0;
+      }
+      // Reset today's progress for the new day
       data.todayProgress = 0;
     }
     
     // Update progress
     data.todayProgress += itemsCompleted;
     
-    // Check if daily goal is met
-    if (data.todayProgress >= data.dailyGoal) {
-      // If this is the first time meeting goal today
-      if (data.lastPracticeDate != todayString) {
-        data.currentStreak += 1;
-        if (data.currentStreak > data.longestStreak) {
-          data.longestStreak = data.currentStreak;
-        }
+    // Check if daily goal is met for the first time today
+    if (data.todayProgress >= data.dailyGoal && data.todayProgress - itemsCompleted < data.dailyGoal) {
+      // We just crossed the goal threshold
+      data.currentStreak += 1;
+      if (data.currentStreak > data.longestStreak) {
+        data.longestStreak = data.currentStreak;
       }
     }
     
+    // Update the last practice date
     data.lastPracticeDate = todayString;
     await _saveStreakData(data);
   }
   
   // Get daily goal (calculated from progress page settings)
   Future<int> getDailyGoal() async {
+    await initialize(); // Ensure prefs is initialized
     // Get the character goal and deadline
     final characterGoal = _prefs.getInt('character_goal') ?? 100;
     final deadlineString = _prefs.getString('goal_deadline');
@@ -120,6 +134,7 @@ class StreakService {
   
   // Helper to get total learned count
   Future<int> _getTotalLearnedCount() async {
+    await initialize(); // Ensure prefs is initialized
     // Count learned characters
     int count = 0;
     final keys = _prefs.getKeys();
@@ -131,6 +146,79 @@ class StreakService {
     return count;
   }
   
+  // Update progress when items are marked as learned (not practiced)
+  Future<void> updateLearnedProgress(int itemsLearned) async {
+    final data = await getStreakData();
+    final today = DateTime.now();
+    final todayString = "${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}";
+    
+    // Check if this is a new day
+    final bool isNewDay = data.lastPracticeDate != todayString;
+    
+    // If it's a new day
+    if (isNewDay) {
+      // Check if yesterday's goal was met (for streak continuation)
+      if (data.lastPracticeDate != null && data.todayProgress < data.dailyGoal) {
+        // Yesterday's goal was not met, reset streak
+        data.currentStreak = 0;
+      }
+      // Reset today's progress for the new day
+      data.todayProgress = 0;
+    }
+    
+    // Update progress with learned items
+    data.todayProgress += itemsLearned;
+    
+    // Check if daily goal is met for the first time today
+    if (data.todayProgress >= data.dailyGoal && data.todayProgress - itemsLearned < data.dailyGoal) {
+      // We just crossed the goal threshold
+      data.currentStreak += 1;
+      if (data.currentStreak > data.longestStreak) {
+        data.longestStreak = data.currentStreak;
+      }
+    }
+    
+    // Update the last practice date
+    data.lastPracticeDate = todayString;
+    await _saveStreakData(data);
+  }
+  
+  // Get today's learned items count
+  Future<int> getTodayLearnedCount() async {
+    await initialize();
+    final today = DateTime.now();
+    final todayKey = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+    
+    int todayLearned = 0;
+    
+    // Check learned character timestamps
+    final learnedCharacters = _prefs.getStringList('learned_characters') ?? [];
+    for (final char in learnedCharacters) {
+      final timestamp = _prefs.getString('learned_character_$char');
+      if (timestamp != null) {
+        final learnedDate = DateTime.parse(timestamp);
+        final learnedKey = '${learnedDate.year}-${learnedDate.month.toString().padLeft(2, '0')}-${learnedDate.day.toString().padLeft(2, '0')}';
+        if (learnedKey == todayKey) {
+          todayLearned++;
+        }
+      }
+    }
+    
+    // Check learned word timestamps
+    final learnedWords = _prefs.getStringList('learned_words') ?? [];
+    for (final word in learnedWords) {
+      final timestamp = _prefs.getString('learned_word_$word');
+      if (timestamp != null) {
+        final learnedDate = DateTime.parse(timestamp);
+        final learnedKey = '${learnedDate.year}-${learnedDate.month.toString().padLeft(2, '0')}-${learnedDate.day.toString().padLeft(2, '0')}';
+        if (learnedKey == todayKey) {
+          todayLearned++;
+        }
+      }
+    }
+    
+    return todayLearned;
+  }
   
   // Check if today's goal is complete
   Future<bool> isTodayGoalComplete() async {
@@ -140,11 +228,13 @@ class StreakService {
   
   // Reset streak (for debugging/settings)
   Future<void> resetStreak() async {
+    await initialize(); // Ensure prefs is initialized
     await _prefs.remove(_streakKey);
   }
   
   // Private method to save streak data
   Future<void> _saveStreakData(StreakData data) async {
+    await initialize(); // Ensure prefs is initialized
     final json = jsonEncode(data.toJson());
     await _prefs.setString(_streakKey, json);
   }

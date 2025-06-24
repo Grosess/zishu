@@ -487,15 +487,9 @@ class _CharacterListPageState extends State<CharacterListPage> {
                         await _loadLearnedStatus();
                         
                         // Get unlearned characters from displayed set - extract terms first
-                        final unlearnedChars = _displayedCharacters
-                            .where((item) {
-                              final term = _extractTerm(item);
-                              final isLearned = _learnedCharacters.contains(term) || _learnedCharacters.contains(item);
-                              // Checking learned status
-                              return !isLearned;
-                            })
-                            .map((item) => _extractTerm(item))
-                            .toList();
+                        // Get unlearned items using the learning service's proper logic
+                        final displayedTerms = _displayedCharacters.map((item) => _extractTerm(item)).toList();
+                        final unlearnedChars = await _learningService.getUnlearnedItems(displayedTerms);
                         
                         // Production: removed debug print
                         

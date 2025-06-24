@@ -579,6 +579,7 @@ class HomePageState extends State<HomePage> with RouteAware {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Top row
                 Row(
                   children: [
                     // View All button
@@ -603,6 +604,56 @@ class HomePageState extends State<HomePage> with RouteAware {
                         label: const Text('View All'),
                       ),
                     const Spacer(),
+                    // Learn button
+                    if (validItems.isNotEmpty)
+                      FilledButton.icon(
+                        onPressed: () async {
+                          // Filter to only unlearned items
+                          final unlearnedItems = await _learningService.getUnlearnedItems(validItems);
+                          
+                          if (unlearnedItems.isEmpty) {
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('All items in this set have been learned!'),
+                              ),
+                            );
+                            return;
+                          }
+                          
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => WritingPracticePage(
+                                character: unlearnedItems.first,
+                                characterSet: set['name'],
+                                allCharacters: unlearnedItems,
+                                isWord: isWordSet,
+                                mode: PracticeMode.learning,
+                                onComplete: (success) async {
+                                  if (success) {
+                                    if (isWordSet && unlearnedItems.first.length > 1) {
+                                      await _learningService.markWordAsLearned(unlearnedItems.first);
+                                    } else {
+                                      await _learningService.markCharacterAsLearned(unlearnedItems.first);
+                                    }
+                                  }
+                                },
+                              ),
+                            ),
+                          ).then((_) => _loadData());
+                        },
+                        icon: const Icon(Icons.school, size: 18),
+                        label: const Text('Learn'),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                // Bottom row
+                Row(
+                  children: [
+                    const Spacer(),
                     // Practice button
                     if (validItems.isNotEmpty)
                       FilledButton.icon(
@@ -616,13 +667,16 @@ class HomePageState extends State<HomePage> with RouteAware {
                                 characterSet: set['name'],
                                 allCharacters: validItems,
                                 isWord: isWordSet,
-                                mode: PracticeMode.learning,
+                                mode: PracticeMode.testing,
                               ),
                             ),
                           ).then((_) => _loadData());
                         },
                         icon: const Icon(Icons.edit, size: 18),
                         label: const Text('Practice'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.secondary,
+                        ),
                       ),
                   ],
                 ),
