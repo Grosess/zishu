@@ -1,32 +1,105 @@
 import 'package:flutter/material.dart';
 import '../services/character_stroke_service.dart';
+import '../services/character_preview_cache.dart';
 
-class CharacterPreview extends StatelessWidget {
+class CharacterPreview extends StatefulWidget {
   final String character;
   final bool showStrokeOrder;
   final Color? color;
+  final bool forceText; // Option to force text rendering
 
   const CharacterPreview({
     super.key,
     required this.character,
     this.showStrokeOrder = false,
     this.color,
+    this.forceText = false,
   });
 
   @override
+  State<CharacterPreview> createState() => _CharacterPreviewState();
+}
+
+class _CharacterPreviewState extends State<CharacterPreview> {
+  CharacterStroke? _characterStroke;
+  bool _isLoading = true;
+  final CharacterPreviewCache _cache = CharacterPreviewCache();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCharacterData();
+  }
+
+  @override
+  void didUpdateWidget(CharacterPreview oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.character != widget.character) {
+      _loadCharacterData();
+    }
+  }
+
+  Future<void> _loadCharacterData() async {
+    // Skip loading if forcing text
+    if (widget.forceText) {
+      setState(() {
+        _isLoading = false;
+        _characterStroke = null;
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final characterStroke = await _cache.getCharacterStroke(widget.character);
+      
+      if (mounted) {
+        setState(() {
+          _characterStroke = characterStroke;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final strokeService = CharacterStrokeService();
-    final characterStroke = strokeService.getCharacterStroke(character);
-    
-    if (characterStroke == null) {
+    if (_isLoading) {
+      // Show a subtle loading state
       return Center(
         child: FittedBox(
           fit: BoxFit.contain,
           child: Text(
-            character,
+            widget.character,
             style: TextStyle(
-              fontSize: 120, // Large base size, will be scaled down by FittedBox
-              color: color ?? Theme.of(context).colorScheme.onSurface,
+              fontSize: 120,
+              color: (widget.color ?? Theme.of(context).colorScheme.onSurface).withValues(alpha: 0.3),
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+        ),
+      );
+    }
+    
+    if (_characterStroke == null) {
+      // Fallback to text if no stroke data available
+      return Center(
+        child: FittedBox(
+          fit: BoxFit.contain,
+          child: Text(
+            widget.character,
+            style: TextStyle(
+              fontSize: 120,
+              color: widget.color ?? Theme.of(context).colorScheme.onSurface,
               fontWeight: FontWeight.w400,
             ),
           ),
@@ -39,9 +112,9 @@ class CharacterPreview extends StatelessWidget {
         return CustomPaint(
           size: constraints.biggest,
           painter: CharacterPreviewPainter(
-            characterStroke: characterStroke,
-            color: color ?? Theme.of(context).colorScheme.onSurface,
-            showStrokeOrder: showStrokeOrder,
+            characterStroke: _characterStroke!,
+            color: widget.color ?? Theme.of(context).colorScheme.onSurface,
+            showStrokeOrder: widget.showStrokeOrder,
           ),
         );
       },

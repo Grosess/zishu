@@ -17,6 +17,7 @@ import '../services/statistics_service.dart';
 import '../main.dart' show DuotoneThemeExtension;
 import '../widgets/character_preview.dart';
 import '../services/character_database.dart';
+import '../services/character_preview_cache.dart';
 
 class SetsPage extends StatefulWidget {
   const SetsPage({super.key});
@@ -113,22 +114,29 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
     
     for (final set in _characterSets) {
       final mainChar = set.icon ?? (set.characters.isNotEmpty ? set.characters.first : null);
-      if (mainChar != null && mainChar.length == 1) {
-        iconCharacters.add(mainChar);
+      if (mainChar != null) {
+        // Extract first character for multi-character strings
+        final firstChar = mainChar.isNotEmpty ? mainChar[0] : null;
+        if (firstChar != null) {
+          iconCharacters.add(firstChar);
+        }
       }
     }
     
     for (final set in _customSets) {
       final mainChar = set.icon ?? (set.characters.isNotEmpty ? set.characters.first : null);
-      if (mainChar != null && mainChar.length == 1) {
-        iconCharacters.add(mainChar);
+      if (mainChar != null) {
+        // Extract first character for multi-character strings
+        final firstChar = mainChar.isNotEmpty ? mainChar[0] : null;
+        if (firstChar != null) {
+          iconCharacters.add(firstChar);
+        }
       }
     }
     
-    // Load all icon characters at once
-    if (iconCharacters.isNotEmpty) {
-      await _characterDatabase.loadCharacters(iconCharacters.toList());
-    }
+    // Use the preview cache to preload characters
+    final cache = CharacterPreviewCache();
+    await cache.preloadCharacters(iconCharacters.toList());
   }
   
   Future<void> _loadExpandedFolders() async {
