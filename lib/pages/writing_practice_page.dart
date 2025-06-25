@@ -70,6 +70,9 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   // User input tracking
   final List<List<Offset>> _userStrokes = [];
   List<Offset> _currentStroke = [];
+  Timer? _updateTimer;
+  List<Offset> _pendingPoints = [];
+  static const _updateInterval = Duration(milliseconds: 16); // 60 FPS
   
   // Stroke validation
   final List<int> _completedStrokeIndices = [];
@@ -204,6 +207,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     _autoProceedTimer?.cancel();
     _progressTimer?.cancel();
     _bounceController?.dispose();
+    _updateTimer?.cancel();
     
     // In learning mode, save progress for completed characters when backing out
     if (widget.mode == PracticeMode.learning && widget.allCharacters != null) {
@@ -928,21 +932,42 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                             if (_showManualGrading) {
                               return;
                             }
-                            setState(() {
-                              _currentStroke = [details.localPosition];
+                            
+                            // Initialize stroke
+                            _currentStroke = [details.localPosition];
+                            _pendingPoints.clear();
+                            
+                            // Start update timer for smooth rendering
+                            _updateTimer?.cancel();
+                            _updateTimer = Timer.periodic(_updateInterval, (_) {
+                              if (_pendingPoints.isNotEmpty) {
+                                setState(() {
+                                  _currentStroke.addAll(_pendingPoints);
+                                  _pendingPoints.clear();
+                                });
+                              }
                             });
+                            
+                            setState(() {});
                           },
                           onPanUpdate: (details) {
                             if (!_showManualGrading) {
-                              setState(() {
-                                _currentStroke.add(details.localPosition);
-                              });
+                              // Add to pending points instead of updating immediately
+                              _pendingPoints.add(details.localPosition);
                             }
                           },
                           onPanEnd: (details) {
                             if (!_showManualGrading) {
+                              // Cancel timer and flush pending points
+                              _updateTimer?.cancel();
+                              
                               // Force final update to show complete stroke
-                              setState(() {});
+                              setState(() {
+                                if (_pendingPoints.isNotEmpty) {
+                                  _currentStroke.addAll(_pendingPoints);
+                                  _pendingPoints.clear();
+                                }
+                              });
                               _handleStrokeEnd();
                             }
                           },
@@ -3035,6 +3060,9 @@ class CurrentStrokePainter extends CustomPainter {
       case StrokeType.simple:
         _paintSimpleStroke(canvas, size);
         break;
+      case StrokeType.classic:
+        _paintClassicStroke(canvas, size);
+        break;
     }
   }
   
@@ -3546,6 +3574,192 @@ class CurrentStrokePainter extends CustomPainter {
     
     canvas.drawCircle(currentStroke.first, widths.first * 0.6, poolPaint);
     canvas.drawCircle(currentStroke.last, widths.last * 0.5, poolPaint);
+  }
+  
+  void _paintClassicStroke(Canvas canvas, Size size) {
+    if (currentStroke.isEmpty) return;
+    
+    // For single point, draw a tapered dot
+    if (currentStroke.length < 2) {
+      final gradient = RadialGradient(
+        colors: [
+          strokeColor,
+          strokeColor.withValues(alpha: 0.6),
+        ],
+      );
+      final paint = Paint()
+        ..shader = gradient.createShader(
+          Rect.fromCircle(center: currentStroke.first, radius: strokeWidth * 0.6),
+        )
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(currentStroke.first, strokeWidth * 0.6, paint);
+      return;
+    }
+    
+    // Use cubic interpolation for smoother curves
+    final smoothPoints = <Offset>[];
+    smoothPoints.add(currentStroke.first);
+    
+    // Add interpolated points for smoother curves
+    for (int i = 1; i < currentStroke.length - 1; i++) {
+      final p0 = currentStroke[i - 1];
+      final p1 = currentStroke[i];
+      final p2 = currentStroke[i + 1];
+      
+      // Add the actual point
+      smoothPoints.add(p1);
+      
+      // Add interpolated point for smoother curve
+      if ((p1 - p0).distance > 5 && (p2 - p1).distance > 5) {
+        final mid1 = Offset((p0.dx + p1.dx) / 2, (p0.dy + p1.dy) / 2);
+        final mid2 = Offset((p1.dx + p2.dx) / 2, (p1.dy + p2.dy) / 2);
+        final control = p1;
+        
+        // Cubic bezier interpolation
+        for (double t = 0.2; t <= 0.8; t += 0.2) {
+          final u = 1 - t;
+          final interpolated = Offset(
+            u * u * mid1.dx + 2 * u * t * control.dx + t * t * mid2.dx,
+            u * u * mid1.dy + 2 * u * t * control.dy + t * t * mid2.dy,
+          );
+          smoothPoints.add(interpolated);
+        }
+      }
+    }
+    smoothPoints.add(currentStroke.last);
+    
+    // Calculate velocities for width variation
+    final velocities = <double>[];
+    for (int i = 0; i < smoothPoints.length; i++) {
+      if (i == 0) {
+        velocities.add(0.1);
+      } else {
+        final dist = (smoothPoints[i] - smoothPoints[i - 1]).distance;
+        velocities.add(math.min(dist / 10.0, 1.0));
+      }
+    }
+    
+    // Build the stroke path with variable width
+    final strokePath = Path();
+    final leftPoints = <Offset>[];
+    final rightPoints = <Offset>[];
+    
+    for (int i = 0; i < smoothPoints.length; i++) {
+      final point = smoothPoints[i];
+      
+      // Calculate width with taper at ends
+      double widthMultiplier = 1.0;
+      final progress = i / (smoothPoints.length - 1);
+      
+      // Strong taper at start and end
+      if (progress < 0.1) {
+        widthMultiplier = progress / 0.1 * 0.3 + 0.1;
+      } else if (progress > 0.9) {
+        widthMultiplier = (1.0 - progress) / 0.1 * 0.3 + 0.1;
+      } else {
+        // Vary width based on velocity in the middle
+        widthMultiplier = 1.2 - velocities[i] * 0.4;
+      }
+      
+      final width = strokeWidth * widthMultiplier;
+      
+      // Calculate perpendicular direction
+      Offset direction;
+      if (i == 0) {
+        direction = smoothPoints[1] - smoothPoints[0];
+      } else if (i == smoothPoints.length - 1) {
+        direction = smoothPoints[i] - smoothPoints[i - 1];
+      } else {
+        direction = smoothPoints[i + 1] - smoothPoints[i - 1];
+      }
+      
+      if (direction.distance > 0) {
+        direction = direction / direction.distance;
+        final perpendicular = Offset(-direction.dy, direction.dx);
+        
+        leftPoints.add(point + perpendicular * width * 0.5);
+        rightPoints.add(point - perpendicular * width * 0.5);
+      }
+    }
+    
+    // Build the smooth path
+    if (leftPoints.isNotEmpty && rightPoints.isNotEmpty) {
+      strokePath.moveTo(leftPoints.first.dx, leftPoints.first.dy);
+      
+      // Draw left side with cubic beziers
+      for (int i = 1; i < leftPoints.length - 1; i += 2) {
+        if (i + 1 < leftPoints.length) {
+          strokePath.quadraticBezierTo(
+            leftPoints[i].dx, leftPoints[i].dy,
+            leftPoints[i + 1].dx, leftPoints[i + 1].dy,
+          );
+        }
+      }
+      
+      // Connect to right side with smooth curve at the tip
+      final tipPoint = smoothPoints.last;
+      strokePath.quadraticBezierTo(
+        tipPoint.dx, tipPoint.dy,
+        rightPoints.last.dx, rightPoints.last.dy,
+      );
+      
+      // Draw right side back
+      for (int i = rightPoints.length - 2; i >= 1; i -= 2) {
+        if (i - 1 >= 0) {
+          strokePath.quadraticBezierTo(
+            rightPoints[i].dx, rightPoints[i].dy,
+            rightPoints[i - 1].dx, rightPoints[i - 1].dy,
+          );
+        }
+      }
+      
+      // Close path with smooth curve at the start
+      strokePath.quadraticBezierTo(
+        smoothPoints.first.dx, smoothPoints.first.dy,
+        leftPoints.first.dx, leftPoints.first.dy,
+      );
+      
+      // Create gradient for dynamic tip color
+      final tipProgress = math.min(20.0 / smoothPoints.length, 0.3);
+      final gradientColors = [
+        strokeColor,
+        strokeColor,
+        strokeColor.withValues(alpha: 0.85),
+        Color.lerp(strokeColor, 
+          isDarkMode ? Colors.white : Colors.grey[700]!, 
+          0.15)!,
+      ];
+      
+      final gradient = LinearGradient(
+        begin: Alignment(
+          (smoothPoints.first.dx - smoothPoints.last.dx) / size.width,
+          (smoothPoints.first.dy - smoothPoints.last.dy) / size.height,
+        ),
+        end: Alignment(
+          (smoothPoints.last.dx - smoothPoints.first.dx) / size.width,
+          (smoothPoints.last.dy - smoothPoints.first.dy) / size.height,
+        ),
+        colors: gradientColors,
+        stops: const [0.0, 0.7, 0.9, 1.0],
+      );
+      
+      // Draw main stroke with gradient
+      final paint = Paint()
+        ..shader = gradient.createShader(strokePath.getBounds())
+        ..style = PaintingStyle.fill
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 0.5);
+      
+      canvas.drawPath(strokePath, paint);
+      
+      // Add subtle edge softening
+      final edgePaint = Paint()
+        ..color = strokeColor.withValues(alpha: 0.1)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.0);
+      
+      canvas.drawPath(strokePath, edgePaint);
+    }
   }
   
   @override

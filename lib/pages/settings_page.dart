@@ -8,6 +8,7 @@ enum StrokeType {
   neon,
   gradient,
   invisible,
+  classic,
 }
 
 class SettingsPage extends StatefulWidget {
@@ -648,7 +649,8 @@ class _SettingsPageState extends State<SettingsPage> {
                         content: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            _buildStrokeTypeOption('Classic', StrokeType.simple, 'Clean minimal strokes'),
+                            _buildStrokeTypeOption('Simple', StrokeType.simple, 'Clean minimal strokes'),
+                            _buildStrokeTypeOption('Classic', StrokeType.classic, 'Smooth calligraphy brush'),
                             _buildStrokeTypeOption('Dynamic', StrokeType.dynamic, 'Width varies with speed'),
                             _buildStrokeTypeOption('Neon Glow', StrokeType.neon, 'Glowing electric effect'),
                             if (_themeMode != 'duotone')
@@ -759,7 +761,7 @@ class _SettingsPageState extends State<SettingsPage> {
   String _getStrokeTypeLabel(StrokeType type) {
     switch (type) {
       case StrokeType.simple:
-        return 'Classic';
+        return 'Simple';
       case StrokeType.dynamic:
         return 'Dynamic';
       case StrokeType.neon:
@@ -768,6 +770,8 @@ class _SettingsPageState extends State<SettingsPage> {
         return 'Rainbow';
       case StrokeType.invisible:
         return 'Invisible';
+      case StrokeType.classic:
+        return 'Classic';
     }
   }
   
@@ -795,6 +799,9 @@ class _SettingsPageState extends State<SettingsPage> {
               break;
             case StrokeType.invisible:
               _strokeWidth = 4.0; // Default width (won't be visible anyway)
+              break;
+            case StrokeType.classic:
+              _strokeWidth = 8.0; // Optimal width for classic brush strokes
               break;
           }
         });
