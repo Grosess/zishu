@@ -106,6 +106,9 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   // Canvas key
   final GlobalKey _canvasKey = GlobalKey();
   
+  // Continuous practice counter
+  int _practiceCount = 0;
+  
   // Time tracking
   DateTime? _practiceStartTime;
   
@@ -1301,12 +1304,99 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   }
   
   void _onCharacterComplete() {
+    // Check if this is individual character practice of an already learned character
+    final isIndividualPractice = widget.allCharacters != null && widget.allCharacters!.length == 1;
+    final isLearnedCharacter = widget.mode == PracticeMode.testing && isIndividualPractice;
+    
     // In learning mode, just proceed without grading
     if (widget.mode == PracticeMode.learning) {
       // Don't show success color, just proceed immediately
       Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted) {
           _proceedWithGrade(true); // Always treat as correct in learning mode
+        }
+      });
+      return;
+    }
+    
+    // For individual practice of learned characters, just reset for continuous practice
+    if (isLearnedCharacter) {
+      // Determine if the character was completed correctly
+      final wasCorrect = !_usedHint && _missedStrokes < 3;
+      
+      setState(() {
+        _showSuccess = true;
+        _autoGradedAsCorrect = wasCorrect;
+      });
+      
+      // Reset after a short delay to allow user to see the completed character
+      Future.delayed(const Duration(milliseconds: 400), () {
+        if (mounted) {
+          // For multi-character words, check if we need to move to next character
+          if (widget.isWord && _wordCharacters.length > 1) {
+            if (_currentWordCharacterIndex < _wordCharacters.length - 1) {
+              // Track the result for this character
+              _wordCharacterResults[_currentWordCharacterIndex] = wasCorrect;
+              
+              // Move to next character in the word
+              setState(() {
+                _currentWordCharacterIndex++;
+                _completedStrokeIndices.clear();
+                _wrongAttempts.fillRange(0, _wrongAttempts.length, 0);
+                _userStrokes.clear();
+                _showHintPath = false;
+                _showFullCharacter = false;
+                _usedHint = false;
+                _missedStrokes = 0;
+                _showSuccess = false;
+                _showManualGrading = false;
+                _testingCharacterRevealed = false;
+                _strokeDeviation = 0.0;
+                _autoGradedAsCorrect = false;
+                _loadCharacterData();
+              });
+            } else {
+              // Track the result for the last character
+              _wordCharacterResults[_currentWordCharacterIndex] = wasCorrect;
+              
+              // Completed the word, increment practice count and reset to first character
+              _practiceCount++;
+              setState(() {
+                _currentWordCharacterIndex = 0;
+                _wordCharacterResults.clear(); // Clear results for new round
+                _completedStrokeIndices.clear();
+                _wrongAttempts.fillRange(0, _wrongAttempts.length, 0);
+                _userStrokes.clear();
+                _showHintPath = false;
+                _showFullCharacter = false;
+                _usedHint = false;
+                _missedStrokes = 0;
+                _showSuccess = false;
+                _showManualGrading = false;
+                _testingCharacterRevealed = false;
+                _strokeDeviation = 0.0;
+                _autoGradedAsCorrect = false;
+                _loadCharacterData();
+              });
+            }
+          } else {
+            // Single character, just reset
+            _practiceCount++;
+            setState(() {
+              _completedStrokeIndices.clear();
+              _wrongAttempts.fillRange(0, _wrongAttempts.length, 0);
+              _userStrokes.clear();
+              _showHintPath = false;
+              _showFullCharacter = false;
+              _usedHint = false;
+              _missedStrokes = 0;
+              _showSuccess = false;
+              _showManualGrading = false;
+              _testingCharacterRevealed = false;
+              _strokeDeviation = 0.0;
+              _autoGradedAsCorrect = false;
+            });
+          }
         }
       });
       return;
@@ -2105,6 +2195,10 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     String? pinyin;
     String? definition;
     
+    // Check if this is continuous practice mode
+    final isIndividualPractice = widget.allCharacters != null && widget.allCharacters!.length == 1;
+    final isContinuousPractice = widget.mode == PracticeMode.testing && isIndividualPractice;
+    
     // For multi-character words, show the full word definition
     if (widget.isWord && _wordCharacters.length > 1) {
       if (_cedictService.isLoaded) {
@@ -2156,6 +2250,37 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         child: Column(
           children: [
+            // Practice counter for continuous practice mode
+            if (isContinuousPractice && _practiceCount > 0)
+              Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.repeat,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      widget.isWord && _wordCharacters.length > 1
+                          ? 'Practice: $_practiceCount words'
+                          : 'Practice: $_practiceCount',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             // Character reveal box - only show for single characters
             if (!widget.isWord || _wordCharacters.length <= 1)
               Container(
