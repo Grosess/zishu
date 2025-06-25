@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import '../services/cedict_service.dart';
 import '../services/character_database.dart';
 import '../services/learning_service.dart';
@@ -25,8 +26,9 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
   List<CedictEntry> _searchResults = [];
   bool _isSearching = false;
   Map<String, bool> _learnedStatus = {};
-  Map<String, List<String>> _pinyinToCharacters = {};
+  final Map<String, List<String>> _pinyinToCharacters = {};
   bool _isInitialized = false;
+  Timer? _debounceTimer;
   
   @override
   void initState() {
@@ -37,6 +39,7 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
   @override
   void dispose() {
     _searchController.dispose();
+    _debounceTimer?.cancel();
     super.dispose();
   }
   
@@ -109,8 +112,73 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
       }
     } else {
       // Search by pinyin or English using the full CEDICT dictionary
-      final searchResults = _cedictService.search(processedQuery, maxResults: 50);
-      results.addAll(searchResults);
+      final searchResults = _cedictService.search(processedQuery, maxResults: 100);
+      
+      // Get characters from predefined sets for prioritization
+      await _setManager.loadPredefinedSets();
+      final allSets = _setManager.getAllSets();
+      
+      // Create a map of character to priority (lower number = higher priority)
+      final characterPriority = <String, int>{};
+      
+      // HSK sets get highest priority
+      final hskPriorities = {
+        'hsk1': 1,
+        'hsk2': 2,
+        'hsk3': 3,
+        'hsk4': 4,
+        'hsk5': 5,
+        'hsk6': 6,
+      };
+      
+      // Assign priorities
+      for (final set in allSets) {
+        final setIdLower = set.id.toLowerCase();
+        int priority = 100; // Default priority for non-HSK sets
+        
+        // Check if it's an HSK set
+        for (final hskLevel in hskPriorities.keys) {
+          if (setIdLower.contains(hskLevel)) {
+            priority = hskPriorities[hskLevel]!;
+            break;
+          }
+        }
+        
+        // Other common sets get medium priority
+        if (setIdLower.contains('radicals')) priority = 20;
+        if (setIdLower.contains('numbers')) priority = 25;
+        if (setIdLower.contains('colors')) priority = 30;
+        if (setIdLower.contains('common')) priority = 35;
+        
+        // Assign priority to all characters in the set
+        for (final char in set.characters) {
+          if (!characterPriority.containsKey(char) || characterPriority[char]! > priority) {
+            characterPriority[char] = priority;
+          }
+        }
+      }
+      
+      // Sort search results by priority
+      searchResults.sort((a, b) {
+        final aPriority = characterPriority[a.simplified] ?? 999;
+        final bPriority = characterPriority[b.simplified] ?? 999;
+        
+        // First sort by priority
+        if (aPriority != bPriority) {
+          return aPriority.compareTo(bPriority);
+        }
+        
+        // Then by character length
+        if (a.simplified.length != b.simplified.length) {
+          return a.simplified.length.compareTo(b.simplified.length);
+        }
+        
+        // Finally by pinyin
+        return a.pinyin.compareTo(b.pinyin);
+      });
+      
+      // Take only the first 50 results after sorting
+      results.addAll(searchResults.take(50));
     }
     
     // Load learned status for results
@@ -244,7 +312,20 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
                 fillColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
               ),
               onChanged: (value) {
-                _performSearch(value);
+                // Cancel previous timer
+                _debounceTimer?.cancel();
+                
+                // Show loading immediately if there's text
+                if (value.isNotEmpty) {
+                  setState(() {
+                    _isSearching = true;
+                  });
+                }
+                
+                // Set up new timer
+                _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+                  _performSearch(value);
+                });
               },
               autofocus: true,
               textInputAction: TextInputAction.search,
@@ -257,9 +338,21 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
               ),
             )
           else if (_isSearching)
-            const Expanded(
+            Expanded(
               child: Center(
-                child: CircularProgressIndicator(),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Searching...',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             )
           else if (_searchController.text.isEmpty)

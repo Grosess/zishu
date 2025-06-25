@@ -331,6 +331,12 @@ class CedictService {
   /// Check if a definition should be filtered out
   bool _shouldFilterDefinition(String definition) {
     final lowerDef = definition.toLowerCase();
+    
+    // Filter out offensive terms
+    if (lowerDef.contains('nigger') || lowerDef.contains('negro')) {
+      return true;
+    }
+    
     return lowerDef.contains('variant of') || 
            lowerDef.contains('used in') ||
            lowerDef.contains('see also') ||
@@ -369,6 +375,8 @@ class CedictService {
     
     final results = <CedictEntry>[];
     final processedQuery = query.toLowerCase().trim();
+    // Also create a version without spaces for pinyin matching
+    final processedQueryNoSpaces = processedQuery.replaceAll(RegExp(r'\s+'), '');
     
     // First pass: exact matches
     for (final entry in _dictionary!.values) {
@@ -380,8 +388,8 @@ class CedictService {
       final pinyinNoTone = _removeTones(entry.pinyin).toLowerCase();
       final definitionLower = entry.definition.toLowerCase();
       
-      // Exact match in pinyin (without tones)
-      if (pinyinNoTone == processedQuery) {
+      // Exact match in pinyin (without tones and spaces)
+      if (pinyinNoTone == processedQueryNoSpaces) {
         results.add(entry);
         continue;
       }
@@ -407,7 +415,7 @@ class CedictService {
         final definitionLower = entry.definition.toLowerCase();
         
         // Partial match in pinyin or definition
-        if (pinyinNoTone.contains(processedQuery) || 
+        if (pinyinNoTone.contains(processedQueryNoSpaces) || 
             definitionLower.contains(processedQuery)) {
           results.add(entry);
         }
@@ -438,6 +446,6 @@ class CedictService {
         .replaceAll(RegExp(r'[ūúǔùu]'), 'u')
         .replaceAll(RegExp(r'[ǖǘǚǜü]'), 'u')
         .replaceAll(RegExp(r'[0-9]'), '')
-        .replaceAll(' ', '');
+        .replaceAll(RegExp(r'\s+'), ''); // Remove all whitespace
   }
 }
