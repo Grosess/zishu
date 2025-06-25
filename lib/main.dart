@@ -552,10 +552,8 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   }
   
   void restartApp() {
-    // Force complete rebuild of the app
-    setState(() {
-      // This will trigger a complete rebuild
-    });
+    // Reload theme settings from SharedPreferences
+    _loadThemeSettings();
   }
 
   ThemeData _buildLightTheme() {

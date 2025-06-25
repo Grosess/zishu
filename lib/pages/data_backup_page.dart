@@ -468,6 +468,9 @@ class _DataBackupPageState extends State<DataBackupPage> {
           ),
         );
         
+        // Restart the app to reload theme settings
+        restartApp();
+        
         // Navigate to home and clear all navigation history
         // This forces all widgets to rebuild with fresh data
         Navigator.of(context).pushAndRemoveUntil(

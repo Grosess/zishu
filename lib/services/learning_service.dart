@@ -22,7 +22,7 @@ class LearningService {
   }
 
   // Mark a character as learned
-  Future<void> markCharacterAsLearned(String character) async {
+  Future<void> markCharacterAsLearned(String character, {bool updateTodayProgress = true}) async {
     await initialize();
     
     // Clear cache to force fresh read
@@ -44,21 +44,23 @@ class LearningService {
       // Force sync to ensure persistence
       await _prefs.reload();
       
-      // Update streak progress
-      final streakService = StreakService();
-      await streakService.updateLearnedProgress(1);
-      
-      // Refresh UI if possible
-      try {
-        main.refreshStreakDisplay();
-      } catch (_) {
-        // Ignore if main screen is not available
+      // Update streak progress only if requested
+      if (updateTodayProgress) {
+        final streakService = StreakService();
+        await streakService.updateLearnedProgress(1);
+        
+        // Refresh UI if possible
+        try {
+          main.refreshStreakDisplay();
+        } catch (_) {
+          // Ignore if main screen is not available
+        }
       }
     }
   }
 
   // Mark multiple characters as learned
-  Future<void> markCharactersAsLearned(List<String> characters) async {
+  Future<void> markCharactersAsLearned(List<String> characters, {bool updateTodayProgress = true}) async {
     await initialize();
     
     // Clear cache to force fresh read
@@ -88,9 +90,11 @@ class LearningService {
       // Force sync to ensure persistence
       await _prefs.reload();
       
-      // Update streak progress with count of newly learned items
-      final streakService = StreakService();
-      await streakService.updateLearnedProgress(newLearned.length);
+      // Update streak progress only if requested
+      if (updateTodayProgress) {
+        final streakService = StreakService();
+        await streakService.updateLearnedProgress(newLearned.length);
+      }
     }
   }
 
@@ -277,7 +281,7 @@ class LearningService {
   }
 
   // Mark a word as learned
-  Future<void> markWordAsLearned(String word) async {
+  Future<void> markWordAsLearned(String word, {bool updateTodayProgress = true}) async {
     await initialize();
     final learned = await getLearnedWords();
     if (!learned.contains(word)) {
@@ -291,15 +295,17 @@ class LearningService {
       // Force sync to ensure persistence
       await _prefs.reload();
       
-      // Update streak progress
-      final streakService = StreakService();
-      await streakService.updateLearnedProgress(1);
-      
-      // Refresh UI if possible
-      try {
-        main.refreshStreakDisplay();
-      } catch (_) {
-        // Ignore if main screen is not available
+      // Update streak progress only if requested
+      if (updateTodayProgress) {
+        final streakService = StreakService();
+        await streakService.updateLearnedProgress(1);
+        
+        // Refresh UI if possible
+        try {
+          main.refreshStreakDisplay();
+        } catch (_) {
+          // Ignore if main screen is not available
+        }
       }
       
       // Log for debugging

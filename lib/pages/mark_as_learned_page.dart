@@ -4,6 +4,9 @@ import '../widgets/character_preview.dart';
 import '../main.dart' show DuotoneThemeExtension;
 import '../services/character_database.dart';
 import '../services/learning_service.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:io';
+import 'dart:convert';
 
 class MarkAsLearnedPage extends StatefulWidget {
   const MarkAsLearnedPage({super.key});
@@ -127,14 +130,14 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
            (codeUnit >= 0x2F800 && codeUnit <= 0x2FA1F); // CJK Compatibility Supplement
   }
   
-  Future<void> _toggleLearned(String item) async {
+  Future<void> _toggleLearned(String item, {bool updateTodayProgress = true}) async {
     final isLearned = _learnedStatus[item] ?? false;
     
     // Always mark as single character since we only show single characters
     if (isLearned) {
       await _learningService.removeLearnedCharacter(item);
     } else {
-      await _learningService.markCharacterAsLearned(item);
+      await _learningService.markCharacterAsLearned(item, updateTodayProgress: updateTodayProgress);
     }
     
     setState(() {
@@ -236,7 +239,7 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
     int importedCount = 0;
     for (final char in characters) {
       if (!(_learnedStatus[char] ?? false)) {
-        await _learningService.markCharacterAsLearned(char);
+        await _learningService.markCharacterAsLearned(char, updateTodayProgress: false);
         if (_allCharacters.contains(char)) {
           setState(() {
             _learnedStatus[char] = true;
@@ -258,6 +261,175 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
         content: Text('Imported $importedCount new characters'),
       ),
     );
+  }
+  
+  Future<void> _importFromSkritter() async {
+    // Show instructions dialog
+    final shouldProceed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Import from Skritter'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('To export your words from Skritter:'),
+            SizedBox(height: 12),
+            Text('1. Login to skritter.com'),
+            Text('2. Press the three bars in the top left'),
+            Text('3. Click "My Words"'),
+            Text('4. Click "Export"'),
+            Text('5. Save the file (.tsv or .csv)'),
+            SizedBox(height: 12),
+            Text('Then select the exported file to import.'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Select File'),
+          ),
+        ],
+      ),
+    );
+    
+    if (shouldProceed != true) return;
+    
+    // Open file picker
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['tsv', 'csv'],
+    );
+    
+    if (result != null && result.files.single.path != null) {
+      final file = File(result.files.single.path!);
+      await _parseSkritterFile(file);
+    }
+  }
+  
+  Future<void> _parseSkritterFile(File file) async {
+    try {
+      // Show progress dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+      
+      final content = await file.readAsString();
+      final lines = content.split('\n');
+      
+      // Determine if it's TSV or CSV
+      final isTsv = file.path.endsWith('.tsv');
+      final separator = isTsv ? '\t' : ',';
+      
+      final characters = <String>{};
+      
+      for (final line in lines) {
+        if (line.trim().isEmpty) continue;
+        
+        // Split by separator
+        final parts = line.split(separator);
+        if (parts.isNotEmpty) {
+          // The first column usually contains the Chinese characters/words
+          final chineseText = parts[0].trim();
+          
+          // Extract individual Chinese characters
+          for (int i = 0; i < chineseText.length; i++) {
+            final char = chineseText[i];
+            if (_isChineseCharacter(char)) {
+              characters.add(char);
+            }
+          }
+        }
+      }
+      
+      // Close progress dialog
+      Navigator.pop(context);
+      
+      if (characters.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No Chinese characters found in the file'),
+          ),
+        );
+        return;
+      }
+      
+      // Show confirmation dialog
+      final shouldImport = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Confirm Import'),
+          content: Text('Found ${characters.length} unique characters to import. Continue?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Import'),
+            ),
+          ],
+        ),
+      );
+      
+      if (shouldImport == true) {
+        // Show progress dialog again
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+        
+        // Mark all characters as learned
+        int importedCount = 0;
+        for (final char in characters) {
+          if (!(_learnedStatus[char] ?? false)) {
+            await _learningService.markCharacterAsLearned(char, updateTodayProgress: false);
+            if (_allCharacters.contains(char)) {
+              setState(() {
+                _learnedStatus[char] = true;
+              });
+            }
+            importedCount++;
+          }
+        }
+        
+        // Close progress dialog
+        Navigator.pop(context);
+        
+        setState(() {
+          _changesMade = true;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Imported $importedCount new characters from Skritter'),
+          ),
+        );
+      }
+    } catch (e) {
+      // Close progress dialog if open
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error reading file: ${e.toString()}'),
+        ),
+      );
+    }
   }
   
   void _startDragSelection(String item) {
@@ -284,7 +456,7 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
       // Apply the learned status to all dragged items
       for (final item in _draggedCharacters) {
         if ((_learnedStatus[item] ?? false) != _isSelecting) {
-          await _toggleLearned(item);
+          await _toggleLearned(item, updateTodayProgress: false);
         }
       }
       
@@ -332,13 +504,43 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
             },
           ),
           actions: [
-            TextButton.icon(
-              onPressed: _showImportDialog,
-              icon: const Icon(Icons.upload, size: 20),
-              label: const Text('Import'),
-              style: TextButton.styleFrom(
-                foregroundColor: Theme.of(context).colorScheme.primary,
+            PopupMenuButton<String>(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.upload, size: 20, color: Theme.of(context).colorScheme.primary),
+                    const SizedBox(width: 4),
+                    Text('Import', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+                  ],
+                ),
               ),
+              onSelected: (value) {
+                if (value == 'text') {
+                  _showImportDialog();
+                } else if (value == 'skritter') {
+                  _importFromSkritter();
+                }
+              },
+              itemBuilder: (BuildContext context) => [
+                const PopupMenuItem<String>(
+                  value: 'text',
+                  child: ListTile(
+                    leading: Icon(Icons.text_fields),
+                    title: Text('Import Text'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'skritter',
+                  child: ListTile(
+                    leading: Icon(Icons.file_upload),
+                    title: Text('Import from Skritter'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -440,7 +642,7 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
       onTapUp: (_) async {
         if (!_isScrolling && _draggedCharacters.length == 1) {
           // Single tap - toggle on release
-          await _toggleLearned(item);
+          await _toggleLearned(item, updateTodayProgress: false);
         }
         _endDragSelection();
       },
