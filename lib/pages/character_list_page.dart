@@ -168,13 +168,25 @@ class _CharacterListPageState extends State<CharacterListPage> {
       appBar: AppBar(
         title: Row(
           children: [
-            Expanded(
-              child: Text(_currentSetName),
+            Text(_currentSetName),
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: _showSetMenu,
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                child: const Icon(
+                  Icons.more_vert,
+                  size: 20,
+                ),
+              ),
             ),
+            const Spacer(),
             if (widget.isCustomSet)
               IconButton(
                 icon: const Icon(Icons.edit, size: 20),
                 onPressed: _showRenameDialog,
+                tooltip: 'Rename',
               ),
           ],
         ),
@@ -672,6 +684,99 @@ class _CharacterListPageState extends State<CharacterListPage> {
         ],
       ),
     );
+  }
+  
+  Future<void> _showSetMenu() async {
+    await showModalBottomSheet(
+      context: context,
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.check_circle),
+            title: const Text('Mark All as Learned'),
+            onTap: () {
+              Navigator.pop(context);
+              _showMarkAllAsLearnedDialog();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Future<void> _showMarkAllAsLearnedDialog() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Mark All as Learned'),
+        content: Text(
+          'Do you really want to mark all ${widget.characters.length} ${widget.isWordSet ? "words" : "characters"} in "$_currentSetName" as learned?\n\nYou will not be able to undo this action.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+            ),
+            child: const Text('Mark All as Learned'),
+          ),
+        ],
+      ),
+    );
+    
+    if (confirmed == true) {
+      // Show progress dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+      
+      try {
+        // Mark all items as learned
+        for (final item in widget.characters) {
+          final term = _extractTerm(item);
+          if (widget.isWordSet && term.length > 1) {
+            await _learningService.markWordAsLearned(term);
+          } else {
+            await _learningService.markCharacterAsLearned(term);
+          }
+        }
+        
+        // Reload learned status
+        await _loadLearnedStatus();
+        
+        // Close progress dialog
+        Navigator.pop(context);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Marked all items in "$_currentSetName" as learned'),
+            ),
+          );
+        }
+      } catch (e) {
+        // Close progress dialog on error
+        Navigator.pop(context);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to mark items as learned'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
   }
   
   Future<void> _updateSetName(String newName) async {

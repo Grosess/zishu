@@ -619,7 +619,26 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(set.name),
+                Row(
+                  children: [
+                    Text(set.name),
+                    const SizedBox(width: 8),
+                    InkWell(
+                      onTap: () {
+                        Navigator.pop(context);
+                        _showMarkAllAsLearnedDialog(set);
+                      },
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        child: const Icon(
+                          Icons.more_vert,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 4),
                 Text(
                   '${set.characters.length} ${set.isWordSet ? 'words' : 'characters'}',
@@ -1449,7 +1468,17 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
       builder: (context) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Mark all as learned option (available for all sets)
+          ListTile(
+            leading: const Icon(Icons.check_circle),
+            title: const Text('Mark All as Learned'),
+            onTap: () {
+              Navigator.pop(context);
+              _showMarkAllAsLearnedDialog(set);
+            },
+          ),
           if (_customSets.contains(set)) ...[
+            const Divider(height: 1),
             ListTile(
               leading: const Icon(Icons.edit),
               title: const Text('Rename'),
@@ -1487,6 +1516,83 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
         ],
       ),
     );
+  }
+  
+  Future<void> _showMarkAllAsLearnedDialog(CharacterSet set) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Mark All as Learned'),
+        content: Text(
+          'Do you really want to mark all ${set.characters.length} ${set.isWordSet ? "words" : "characters"} in "${set.name}" as learned?\n\nYou will not be able to undo this action.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+            ),
+            child: const Text('Mark All as Learned'),
+          ),
+        ],
+      ),
+    );
+    
+    if (confirmed == true) {
+      // Show progress dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+      
+      try {
+        // Mark all items in the set as learned
+        for (final item in set.characters) {
+          if (set.isWordSet && item.length > 1) {
+            await _learningService.markWordAsLearned(item);
+          } else {
+            await _learningService.markCharacterAsLearned(item);
+          }
+        }
+        
+        // Clear caches to ensure fresh data
+        _learningService.clearCache();
+        _statsService.clearCache();
+        
+        // Reload progress
+        await _loadSetProgress();
+        
+        // Close progress dialog
+        Navigator.pop(context);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Marked all items in "${set.name}" as learned'),
+            ),
+          );
+        }
+      } catch (e) {
+        // Close progress dialog on error
+        Navigator.pop(context);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to mark items as learned'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
   }
   
   Future<void> _showCreateFolderDialog() async {

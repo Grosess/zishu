@@ -143,6 +143,123 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
     });
   }
   
+  Future<void> _showImportDialog() async {
+    final controller = TextEditingController();
+    
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Import Known Characters'),
+        content: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.5,
+            maxWidth: MediaQuery.of(context).size.width * 0.9,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Enter all characters you already know:',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: controller,
+                  maxLines: null,
+                  keyboardType: TextInputType.multiline,
+                  decoration: const InputDecoration(
+                    hintText: '你好世界学习中文...',
+                    border: OutlineInputBorder(),
+                  ),
+                  autofocus: true,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Tip: You can paste characters from other sources.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: const Text('Import'),
+          ),
+        ],
+      ),
+    );
+    
+    if (result != null && result.isNotEmpty) {
+      await _importCharacters(result);
+    }
+  }
+  
+  Future<void> _importCharacters(String text) async {
+    // Extract all Chinese characters from the text
+    final characters = <String>{};
+    for (int i = 0; i < text.length; i++) {
+      final char = text[i];
+      if (_isChineseCharacter(char)) {
+        characters.add(char);
+      }
+    }
+    
+    if (characters.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No Chinese characters found in the input'),
+        ),
+      );
+      return;
+    }
+    
+    // Show progress dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+    
+    // Mark all characters as learned
+    int importedCount = 0;
+    for (final char in characters) {
+      if (!(_learnedStatus[char] ?? false)) {
+        await _learningService.markCharacterAsLearned(char);
+        if (_allCharacters.contains(char)) {
+          setState(() {
+            _learnedStatus[char] = true;
+          });
+        }
+        importedCount++;
+      }
+    }
+    
+    // Close progress dialog
+    Navigator.pop(context);
+    
+    setState(() {
+      _changesMade = true;
+    });
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Imported $importedCount new characters'),
+      ),
+    );
+  }
+  
   void _startDragSelection(String item) {
     // Don't start drag if we're scrolling
     if (_isScrolling) return;
@@ -214,6 +331,16 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
               }
             },
           ),
+          actions: [
+            TextButton.icon(
+              onPressed: _showImportDialog,
+              icon: const Icon(Icons.upload, size: 20),
+              label: const Text('Import'),
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+          ],
         ),
         body: NotificationListener<ScrollNotification>(
           onNotification: (notification) {
