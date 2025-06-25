@@ -319,7 +319,7 @@ class StrokeValidator {
     List<Offset> userStroke,
     List<List<double>> medianPoints,
     Size canvasSize,
-    {double tolerance = 0.42}
+    {double tolerance = 0.55}  // Increased from 0.42 for more leniency
   ) {
     if (userStroke.length < 2 || medianPoints.length < 2) return false;
     
@@ -336,7 +336,7 @@ class StrokeValidator {
     
     final strokeWidth = maxX - minX;
     final strokeHeight = maxY - minY;
-    final minSize = canvasSize.width * 0.01; // 1% of canvas - very lenient for small strokes
+    final minSize = canvasSize.width * 0.005; // 0.5% of canvas - extremely lenient for small strokes
     
     // Reject strokes that are too small in both dimensions
     if (strokeWidth < minSize && strokeHeight < minSize) {
@@ -385,8 +385,8 @@ class StrokeValidator {
     
     // Check if stroke length is reasonable (very relaxed for size flexibility)
     final isSmallStroke = medianLength < 0.15; // Small stroke in normalized space
-    final minRatio = isSmallStroke ? 0.15 : 0.25; // More forgiving on minimum size
-    final maxRatio = isSmallStroke ? 4.0 : 3.5; // More forgiving on maximum size
+    final minRatio = isSmallStroke ? 0.10 : 0.20; // Much more forgiving on minimum size
+    final maxRatio = isSmallStroke ? 6.0 : 4.5; // Much more forgiving on maximum size
     
     final lengthRatio = userLength / medianLength;
     if (lengthRatio < minRatio || lengthRatio > maxRatio) {
@@ -396,21 +396,21 @@ class StrokeValidator {
     
     // Very lenient location tolerance - focus on direction over exact shape
     final strokeSize = math.max(strokeWidth, strokeHeight) / canvasSize.width;
-    final sizeFactor = strokeSize > 0.3 ? 1.4 : 1.3; // Slightly more lenient for all strokes
-    final locationTolerance = tolerance * 0.40; // 40% of normalized space - more lenient
+    final sizeFactor = strokeSize > 0.3 ? 1.6 : 1.5; // More lenient for all strokes
+    final locationTolerance = tolerance * 0.50; // 50% of normalized space - much more lenient
     
     // Check key points with lenient tolerance
     final startDist = (normalizedUser.first - normalizedMedian.first).distance;
     final endDist = (normalizedUser.last - normalizedMedian.last).distance;
     
     // Check start and end points with very lenient tolerance
-    if (startDist > locationTolerance * 2.0 || endDist > locationTolerance * 2.0) {
+    if (startDist > locationTolerance * 2.5 || endDist > locationTolerance * 2.5) {
       // Production: removed debug print
       return false;
     }
     
-    // Stricter direction validation
-    final directionTolerance = tolerance * 0.5;
+    // Direction validation - more lenient for small strokes
+    final directionTolerance = isSmallStroke ? tolerance * 0.7 : tolerance * 0.5;
     if (!_validateStrokeDirection(normalizedUser, normalizedMedian, directionTolerance)) {
       return false;
     }
@@ -435,8 +435,8 @@ class StrokeValidator {
         }
       }
       
-      // Require 30% of sampled points to match - more relaxed for shape
-      if (matchedPoints < totalChecks * 0.30) return false;
+      // Require only 20% of sampled points to match - very relaxed for shape
+      if (matchedPoints < totalChecks * 0.20) return false;
     }
     
     return true;
@@ -503,7 +503,7 @@ class StrokeValidator {
       final startDist = (userStroke.first - medianPoints.first).distance;
       final endDist = (userStroke.last - medianPoints.last).distance;
       
-      if (startDist > 0.35 || endDist > 0.35) {
+      if (startDist > 0.45 || endDist > 0.45) {  // More lenient for multi-directional strokes
         // Production: removed debug print
         return false;
       }

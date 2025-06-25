@@ -988,6 +988,38 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                             ),
                           ),
                         
+                        // Practice counter for single card practice
+                        if (_practiceCount > 0 && widget.allCharacters != null && widget.allCharacters!.length == 1)
+                          Positioned(
+                            top: 12,
+                            left: 12,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withOpacity(0.9)
+                                  : Theme.of(context).colorScheme.surface.withOpacity(0.9),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                    ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withOpacity(0.3)
+                                    : Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Text(
+                                '$_practiceCount',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                    ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                                    : Theme.of(context).colorScheme.primary,
+                                ),
+                              ),
+                            ),
+                          ),
+                        
                             ],
                           ),
                         );
