@@ -1,0 +1,516 @@
+import 'package:flutter/material.dart';
+import '../services/cedict_service.dart';
+import '../services/character_database.dart';
+import '../services/learning_service.dart';
+import '../services/character_set_manager.dart';
+import '../widgets/character_preview.dart';
+import 'writing_practice_page.dart';
+import '../main.dart' show DuotoneThemeExtension;
+
+class CharacterSearchPage extends StatefulWidget {
+  const CharacterSearchPage({super.key});
+
+  @override
+  State<CharacterSearchPage> createState() => _CharacterSearchPageState();
+}
+
+class _CharacterSearchPageState extends State<CharacterSearchPage> {
+  final TextEditingController _searchController = TextEditingController();
+  final CedictService _cedictService = CedictService();
+  final CharacterDatabase _characterDatabase = CharacterDatabase();
+  final LearningService _learningService = LearningService();
+  final CharacterSetManager _setManager = CharacterSetManager();
+  
+  List<CedictEntry> _searchResults = [];
+  bool _isSearching = false;
+  Map<String, bool> _learnedStatus = {};
+  Map<String, List<String>> _pinyinToCharacters = {};
+  bool _isInitialized = false;
+  
+  @override
+  void initState() {
+    super.initState();
+    _initialize();
+  }
+  
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+  
+  Future<void> _initialize() async {
+    // Initialize services
+    await _cedictService.initialize();
+    await _characterDatabase.initialize();
+    await _setManager.loadPredefinedSets();
+    
+    // Build pinyin index
+    _buildPinyinIndex();
+    
+    setState(() {
+      _isInitialized = true;
+    });
+  }
+  
+  void _buildPinyinIndex() {
+    _pinyinToCharacters.clear();
+    
+    // Get all entries from cedict
+    if (_cedictService.isLoaded) {
+      // We need to iterate through all entries to build the index
+      // Since CedictService doesn't expose the dictionary, we'll search as user types
+    }
+  }
+  
+  Future<void> _performSearch(String query) async {
+    if (query.isEmpty) {
+      setState(() {
+        _searchResults = [];
+      });
+      return;
+    }
+    
+    setState(() {
+      _isSearching = true;
+    });
+    
+    final results = <CedictEntry>[];
+    final processedQuery = query.toLowerCase().trim();
+    
+    // Check if query contains Chinese characters
+    bool isChineseQuery = false;
+    for (int i = 0; i < query.length; i++) {
+      if (_isChineseCharacter(query[i])) {
+        isChineseQuery = true;
+        break;
+      }
+    }
+    
+    if (isChineseQuery) {
+      // Direct lookup for Chinese characters
+      final entry = _cedictService.lookup(query);
+      if (entry != null) {
+        results.add(entry);
+      }
+      
+      // Also check individual characters if it's a multi-character query
+      if (query.length > 1) {
+        for (int i = 0; i < query.length; i++) {
+          final char = query[i];
+          if (_isChineseCharacter(char)) {
+            final charEntry = _cedictService.lookup(char);
+            if (charEntry != null && !results.any((e) => e.simplified == char)) {
+              results.add(charEntry);
+            }
+          }
+        }
+      }
+    } else {
+      // Search by pinyin or English
+      // We need to search through all available characters from sets
+      // since CedictService doesn't expose all entries
+      await _setManager.loadPredefinedSets();
+      final sets = _setManager.getAllSets();
+      final checkedChars = <String>{};
+      
+      // First, collect all unique characters and words from sets
+      for (final set in sets) {
+        for (final item in set.characters) {
+          if (!checkedChars.contains(item)) {
+            checkedChars.add(item);
+            final entry = _cedictService.lookup(item);
+            if (entry != null) {
+              // Check if pinyin matches (remove tones for comparison)
+              final pinyinNoTone = _removeTones(entry.pinyin).toLowerCase();
+              final definitionLower = entry.definition.toLowerCase();
+              
+              if (pinyinNoTone.contains(processedQuery) || 
+                  definitionLower.contains(processedQuery)) {
+                results.add(entry);
+              }
+            }
+          }
+          
+          // Also check individual characters from words
+          if (item.length > 1) {
+            for (int i = 0; i < item.length; i++) {
+              final char = item[i];
+              if (_isChineseCharacter(char) && !checkedChars.contains(char)) {
+                checkedChars.add(char);
+                final charEntry = _cedictService.lookup(char);
+                if (charEntry != null) {
+                  final pinyinNoTone = _removeTones(charEntry.pinyin).toLowerCase();
+                  final definitionLower = charEntry.definition.toLowerCase();
+                  
+                  if (pinyinNoTone.contains(processedQuery) || 
+                      definitionLower.contains(processedQuery)) {
+                    results.add(charEntry);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      
+      // Remove duplicates
+      final uniqueResults = <String, CedictEntry>{};
+      for (final entry in results) {
+        uniqueResults[entry.simplified] = entry;
+      }
+      results.clear();
+      results.addAll(uniqueResults.values);
+      
+      // Sort results by relevance
+      results.sort((a, b) {
+        final aPinyinNoTone = _removeTones(a.pinyin).toLowerCase();
+        final bPinyinNoTone = _removeTones(b.pinyin).toLowerCase();
+        
+        // Exact pinyin matches come first
+        if (aPinyinNoTone == processedQuery && bPinyinNoTone != processedQuery) return -1;
+        if (bPinyinNoTone == processedQuery && aPinyinNoTone != processedQuery) return 1;
+        
+        // Then pinyin starts with query
+        if (aPinyinNoTone.startsWith(processedQuery) && !bPinyinNoTone.startsWith(processedQuery)) return -1;
+        if (bPinyinNoTone.startsWith(processedQuery) && !aPinyinNoTone.startsWith(processedQuery)) return 1;
+        
+        // Then by character length (single characters before words)
+        final aLen = a.simplified.length;
+        final bLen = b.simplified.length;
+        if (aLen != bLen) return aLen.compareTo(bLen);
+        
+        // Finally alphabetically
+        return a.pinyin.compareTo(b.pinyin);
+      });
+    }
+    
+    // Load learned status for results
+    final learnedStatus = <String, bool>{};
+    final learnedChars = await _learningService.getLearnedCharacters();
+    final learnedWords = await _learningService.getLearnedWords();
+    
+    for (final entry in results) {
+      if (entry.simplified.length == 1) {
+        learnedStatus[entry.simplified] = learnedChars.contains(entry.simplified);
+      } else {
+        learnedStatus[entry.simplified] = learnedWords.contains(entry.simplified);
+      }
+    }
+    
+    setState(() {
+      _searchResults = results;
+      _learnedStatus = learnedStatus;
+      _isSearching = false;
+    });
+  }
+  
+  String _removeTones(String pinyin) {
+    // Remove tone numbers and convert to basic letters
+    return pinyin
+        .replaceAll(RegExp(r'[āáǎàa]'), 'a')
+        .replaceAll(RegExp(r'[ēéěèe]'), 'e')
+        .replaceAll(RegExp(r'[īíǐìi]'), 'i')
+        .replaceAll(RegExp(r'[ōóǒòo]'), 'o')
+        .replaceAll(RegExp(r'[ūúǔùu]'), 'u')
+        .replaceAll(RegExp(r'[ǖǘǚǜü]'), 'u')
+        .replaceAll(RegExp(r'[0-9]'), '')
+        .replaceAll(' ', '');
+  }
+  
+  bool _isChineseCharacter(String char) {
+    if (char.isEmpty) return false;
+    final codeUnit = char.codeUnitAt(0);
+    return (codeUnit >= 0x4E00 && codeUnit <= 0x9FFF) ||
+           (codeUnit >= 0x3400 && codeUnit <= 0x4DBF) ||
+           (codeUnit >= 0x20000 && codeUnit <= 0x2A6DF) ||
+           (codeUnit >= 0x2A700 && codeUnit <= 0x2B73F) ||
+           (codeUnit >= 0x2B740 && codeUnit <= 0x2B81F) ||
+           (codeUnit >= 0x2B820 && codeUnit <= 0x2CEAF) ||
+           (codeUnit >= 0xF900 && codeUnit <= 0xFAFF) ||
+           (codeUnit >= 0x2F800 && codeUnit <= 0x2FA1F);
+  }
+  
+  Future<void> _handleCharacterTap(String character) async {
+    final isLearned = _learnedStatus[character] ?? false;
+    
+    if (isLearned) {
+      // Practice mode for learned characters
+      await _practiceCharacter(character);
+    } else {
+      // Learn mode for new characters
+      await _learnCharacter(character);
+    }
+  }
+  
+  Future<void> _practiceCharacter(String character) async {
+    // Preload character data
+    await _characterDatabase.loadCharacters([character]);
+    
+    if (!mounted) return;
+    
+    // Navigate to practice page in testing mode
+    final result = await Navigator.push<Map<String, dynamic>>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => WritingPracticePage(
+          character: character,
+          characterSet: 'Search Results',
+          allCharacters: [character],
+          isWord: character.length > 1,
+          mode: PracticeMode.testing,
+        ),
+      ),
+    );
+    
+    // Refresh learned status if we returned from practice
+    if (result != null && mounted) {
+      _performSearch(_searchController.text);
+    }
+  }
+  
+  Future<void> _learnCharacter(String character) async {
+    // Preload character data
+    await _characterDatabase.loadCharacters([character]);
+    
+    if (!mounted) return;
+    
+    // Navigate to practice page in learning mode
+    final result = await Navigator.push<Map<String, dynamic>>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => WritingPracticePage(
+          character: character,
+          characterSet: 'Search Results',
+          allCharacters: [character],
+          isWord: character.length > 1,
+          mode: PracticeMode.learning,
+        ),
+      ),
+    );
+    
+    // Refresh learned status if we returned from practice
+    if (result != null && mounted) {
+      _performSearch(_searchController.text);
+    }
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    final isDuotone = Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true;
+    
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Search Characters'),
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search by pinyin, Chinese, or English',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          _performSearch('');
+                        },
+                      )
+                    : null,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+              ),
+              onChanged: (value) {
+                _performSearch(value);
+              },
+              autofocus: true,
+              textInputAction: TextInputAction.search,
+            ),
+          ),
+          if (!_isInitialized)
+            const Expanded(
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (_isSearching)
+            const Expanded(
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (_searchController.text.isEmpty)
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.search,
+                      size: 64,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Enter pinyin to search',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Examples:',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '• Pinyin: "shang" → 上, 伤, 尚\n• Chinese: "上" → above/on\n• English: "water" → 水, 江, 河',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else if (_searchResults.isEmpty)
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.search_off,
+                      size: 64,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No results found',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Try a different pinyin',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: _searchResults.length,
+                itemBuilder: (context, index) {
+                  final entry = _searchResults[index];
+                  final isLearned = _learnedStatus[entry.simplified] ?? false;
+                  
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: ListTile(
+                      leading: entry.simplified.length == 1
+                          ? SizedBox(
+                              width: 48,
+                              height: 48,
+                              child: CharacterPreview(
+                                character: entry.simplified,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            )
+                          : Container(
+                              width: 48,
+                              height: 48,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                entry.simplified,
+                                style: TextStyle(
+                                  fontSize: entry.simplified.length == 2 ? 20 : 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                      title: Row(
+                        children: [
+                          Text(
+                            entry.simplified,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            entry.pinyin,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                          if (isLearned) ...[
+                            const SizedBox(width: 8),
+                            Icon(
+                              Icons.check_circle,
+                              size: 16,
+                              color: isDuotone
+                                  ? Theme.of(context).colorScheme.primary
+                                  : Colors.green,
+                            ),
+                          ],
+                        ],
+                      ),
+                      subtitle: Text(
+                        entry.definition,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      trailing: isLearned
+                          ? TextButton.icon(
+                              icon: const Icon(Icons.edit, size: 18),
+                              label: const Text('Practice'),
+                              onPressed: () => _handleCharacterTap(entry.simplified),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Theme.of(context).colorScheme.primary,
+                              ),
+                            )
+                          : TextButton.icon(
+                              icon: const Icon(Icons.school, size: 18),
+                              label: const Text('Learn'),
+                              onPressed: () => _handleCharacterTap(entry.simplified),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                      onTap: () => _handleCharacterTap(entry.simplified),
+                    ),
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}

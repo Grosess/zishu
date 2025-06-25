@@ -19,6 +19,7 @@ import '../services/character_set_manager.dart';
 import 'mark_as_learned_page.dart';
 import '../services/cedict_service.dart';
 import '../widgets/character_preview.dart';
+import 'character_search_page.dart';
 
 class HomePage extends StatefulWidget {
   final Function(int)? onNavigateToTab;
@@ -1517,6 +1518,91 @@ class HomePageState extends State<HomePage> with RouteAware {
                     color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                       ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!
                       : Colors.purple,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Search button
+          InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CharacterSearchPage(),
+                ),
+              );
+            },
+            borderRadius: BorderRadius.circular(20),
+            splashColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withOpacity(0.1)
+                : Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            highlightColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withOpacity(0.05)
+                : Theme.of(context).colorScheme.primary.withOpacity(0.05),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1
+                  : Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                    ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withOpacity(0.3)
+                    : Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                  width: 1.5,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                        ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withOpacity(0.1)
+                        : Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Icon(
+                      Icons.search,
+                      size: 36,
+                      color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                        ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                        : Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Search Characters',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: Theme.of(context).colorScheme.onSurface,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        Text(
+                          'Find characters by pinyin pronunciation',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ],
               ),
