@@ -1441,7 +1441,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                 : Colors.white.withOpacity(0.05),
             child: Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
@@ -1470,16 +1470,16 @@ class HomePageState extends State<HomePage> with RouteAware {
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                         ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withOpacity(0.2)
                         : Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(14),
                     ),
                     child: Icon(
                       Icons.all_inclusive,
-                      size: 36,
+                      size: 28,
                       color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                         ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!
                         : Colors.white,
@@ -1493,7 +1493,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                         Text(
                           'Endless Practice',
                           style: TextStyle(
-                            fontSize: 20,
+                            fontSize: 18,
                             fontWeight: FontWeight.w700,
                             color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                               ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!
@@ -1504,7 +1504,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                         Text(
                           'Practice all ${_allLearnedItems.length} learned items',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 13,
                             color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                               ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withOpacity(0.9)
                               : Colors.white.withOpacity(0.9),
@@ -1545,7 +1545,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                 : Theme.of(context).colorScheme.primary.withOpacity(0.05),
             child: Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                   ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1
@@ -1561,16 +1561,16 @@ class HomePageState extends State<HomePage> with RouteAware {
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                         ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withOpacity(0.1)
                         : Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(14),
                     ),
                     child: Icon(
                       Icons.search,
-                      size: 36,
+                      size: 28,
                       color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                         ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
                         : Theme.of(context).colorScheme.primary,
@@ -1584,16 +1584,16 @@ class HomePageState extends State<HomePage> with RouteAware {
                         Text(
                           'Search Characters',
                           style: TextStyle(
-                            fontSize: 20,
+                            fontSize: 18,
                             fontWeight: FontWeight.w700,
                             color: Theme.of(context).colorScheme.onSurface,
                             letterSpacing: 0.5,
                           ),
                         ),
                         Text(
-                          'Find characters by pinyin pronunciation',
+                          'Find by pinyin, Chinese or English',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 13,
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ),
