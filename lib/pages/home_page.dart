@@ -47,6 +47,7 @@ class HomePageState extends State<HomePage> with RouteAware {
   int _currentProgress = 0;
   double _progressPercentage = 0.0;
   int _paceOffset = 0; // Positive = ahead of pace, negative = behind
+  int _dailyGoal = 0; // Dynamic daily goal based on remaining characters and days
   
   // Recent sets
   List<Map<String, dynamic>> _recentSets = [];
@@ -209,15 +210,31 @@ class HomePageState extends State<HomePage> with RouteAware {
     
     if (daysElapsed <= 0 || totalDays <= 0) {
       _paceOffset = 0;
+      _dailyGoal = (_characterGoal - _currentProgress) ~/ math.max(1, totalDays);
       return;
     }
     
-    // Calculate expected progress
+    // Calculate expected progress for pace tracking
     final progressRate = daysElapsed / totalDays;
     final expectedProgress = (_characterGoal * progressRate).round();
     
     // Calculate pace offset
     _paceOffset = _currentProgress - expectedProgress;
+    
+    // Calculate dynamic daily goal based on remaining characters and days
+    final remainingCharacters = _characterGoal - _currentProgress;
+    final remainingDays = _goalDeadline!.difference(now).inDays;
+    
+    if (remainingDays <= 0) {
+      // Deadline passed or is today
+      _dailyGoal = remainingCharacters; // Need to complete all today
+    } else if (remainingCharacters <= 0) {
+      // Goal already achieved
+      _dailyGoal = 0;
+    } else {
+      // Calculate daily goal - round up to ensure we meet the goal
+      _dailyGoal = (remainingCharacters / remainingDays).ceil();
+    }
   }
 
   Future<void> _loadRecentSets() async {
@@ -1332,6 +1349,19 @@ class HomePageState extends State<HomePage> with RouteAware {
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
+                        if (_dailyGoal > 0) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            '$_dailyGoal per day',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                                  : Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
