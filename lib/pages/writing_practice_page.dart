@@ -134,6 +134,10 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   int? _bouncingStrokeIndex;
   double _strokeDeviation = 0.0;
   
+  // Classic stroke animation
+  AnimationController? _classicStrokeController;
+  Animation<double>? _classicStrokeAnimation;
+  
   // Settings
   bool _showRadicalAnalysis = false;
   
@@ -187,10 +191,31 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         // Show radical analysis in learning mode if enabled (default true)
         final savedSetting = prefs.getBool('show_radical_analysis') ?? true;
         _showRadicalAnalysis = widget.mode == PracticeMode.learning && savedSetting;
+        
+        // Initialize classic stroke animation if needed
+        if (_strokeType == StrokeType.classic) {
+          _initializeClassicStrokeAnimation();
+        }
       });
     });
     _initializeData();
     _initializeRadicalService();
+  }
+  
+  void _initializeClassicStrokeAnimation() {
+    _classicStrokeController?.dispose();
+    _classicStrokeController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    _classicStrokeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _classicStrokeController!,
+      curve: Curves.easeInOut,
+    ));
+    _classicStrokeController!.repeat(reverse: true);
   }
   
   @override
@@ -208,6 +233,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     _progressTimer?.cancel();
     _bounceController?.dispose();
     _updateTimer?.cancel();
+    _classicStrokeController?.dispose();
     
     // In learning mode, save progress for completed characters when backing out
     if (widget.mode == PracticeMode.learning && widget.allCharacters != null) {
@@ -948,6 +974,11 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                               }
                             });
                             
+                            // Start classic stroke animation if needed
+                            if (_strokeType == StrokeType.classic && _classicStrokeController == null) {
+                              _initializeClassicStrokeAnimation();
+                            }
+                            
                             setState(() {});
                           },
                           onPanUpdate: (details) {
@@ -971,19 +1002,40 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                               _handleStrokeEnd();
                             }
                           },
-                          child: CustomPaint(
-                            size: Size.infinite,
-                            painter: CurrentStrokePainter(
-                              currentStroke: _currentStroke,
-                              strokeColor: _strokeColor ?? (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                                ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
-                                : Theme.of(context).colorScheme.primary),
-                              strokeWidth: _strokeWidth,
-                              strokeType: _strokeType,
-                              isDarkMode: Theme.of(context).brightness == Brightness.dark,
-                              isDuotone: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme ?? false,
-                            ),
-                          ),
+                          child: _strokeType == StrokeType.classic && _classicStrokeAnimation != null
+                            ? AnimatedBuilder(
+                                animation: _classicStrokeAnimation!,
+                                builder: (context, child) {
+                                  return CustomPaint(
+                                    size: Size.infinite,
+                                    painter: CurrentStrokePainter(
+                                      currentStroke: _currentStroke,
+                                      strokeColor: _strokeColor ?? (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                        ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                                        : Theme.of(context).colorScheme.primary),
+                                      strokeWidth: _strokeWidth,
+                                      strokeType: _strokeType,
+                                      isDarkMode: Theme.of(context).brightness == Brightness.dark,
+                                      isDuotone: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme ?? false,
+                                      accentColor: Theme.of(context).colorScheme.primary,
+                                    ),
+                                  );
+                                },
+                              )
+                            : CustomPaint(
+                                size: Size.infinite,
+                                painter: CurrentStrokePainter(
+                                  currentStroke: _currentStroke,
+                                  strokeColor: _strokeColor ?? (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                    ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                                    : Theme.of(context).colorScheme.primary),
+                                  strokeWidth: _strokeWidth,
+                                  strokeType: _strokeType,
+                                  isDarkMode: Theme.of(context).brightness == Brightness.dark,
+                                  isDuotone: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme ?? false,
+                                  accentColor: Theme.of(context).colorScheme.primary,
+                                ),
+                              ),
                         ),
                         
                         // Success/error icon overlay for duotone mode
@@ -1019,28 +1071,42 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                             top: 12,
                             left: 12,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
                                 color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withOpacity(0.9)
-                                  : Theme.of(context).colorScheme.surface.withOpacity(0.9),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                                    ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withOpacity(0.3)
-                                    : Theme.of(context).colorScheme.outline.withOpacity(0.3),
-                                  width: 1,
-                                ),
+                                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withValues(alpha: 0.95)
+                                  : Theme.of(context).colorScheme.surface.withValues(alpha: 0.95),
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.1),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
                               ),
-                              child: Text(
-                                '$_practiceCount',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                                    ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
-                                    : Theme.of(context).colorScheme.primary,
-                                ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.refresh,
+                                    size: 14,
+                                    color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                      ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                                      : Theme.of(context).colorScheme.primary,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '$_practiceCount',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                        ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                                        : Theme.of(context).colorScheme.primary,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
@@ -2307,37 +2373,6 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         child: Column(
           children: [
-            // Practice counter for continuous practice mode
-            if (isContinuousPractice && _practiceCount > 0)
-              Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.repeat,
-                      size: 16,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      widget.isWord && _wordCharacters.length > 1
-                          ? 'Practice: $_practiceCount words'
-                          : 'Practice: $_practiceCount',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             // Character reveal box - only show for single characters
             if (!widget.isWord || _wordCharacters.length <= 1)
               Container(
@@ -3030,6 +3065,7 @@ class CurrentStrokePainter extends CustomPainter {
   final StrokeType strokeType;
   final bool isDarkMode;
   final bool isDuotone;
+  final Color? accentColor;
 
   CurrentStrokePainter({
     required this.currentStroke,
@@ -3038,6 +3074,7 @@ class CurrentStrokePainter extends CustomPainter {
     this.strokeType = StrokeType.simple,
     this.isDarkMode = false,
     this.isDuotone = false,
+    this.accentColor,
   });
 
   @override
@@ -3719,15 +3756,25 @@ class CurrentStrokePainter extends CustomPainter {
         leftPoints.first.dx, leftPoints.first.dy,
       );
       
-      // Create gradient for dynamic tip color
+      // Create gradient for dynamic tip color with time-based accent
       final tipProgress = math.min(20.0 / smoothPoints.length, 0.3);
+      
+      // Calculate time-based blend factor (oscillates between 0.3 and 0.7)
+      final timeBlend = 0.5 + 0.2 * math.sin(DateTime.now().millisecondsSinceEpoch / 300.0);
+      
+      // Blend stroke color with accent color for the tip
+      final tipColor = Color.lerp(
+        strokeColor,
+        accentColor ?? strokeColor,
+        timeBlend,
+      )!;
+      
       final gradientColors = [
         strokeColor,
         strokeColor,
-        strokeColor.withValues(alpha: 0.85),
-        Color.lerp(strokeColor, 
-          isDarkMode ? Colors.white : Colors.grey[700]!, 
-          0.15)!,
+        Color.lerp(strokeColor, tipColor, 0.3)!,
+        Color.lerp(strokeColor, tipColor, 0.6)!,
+        tipColor,
       ];
       
       final gradient = LinearGradient(
@@ -3740,7 +3787,7 @@ class CurrentStrokePainter extends CustomPainter {
           (smoothPoints.last.dy - smoothPoints.first.dy) / size.height,
         ),
         colors: gradientColors,
-        stops: const [0.0, 0.7, 0.9, 1.0],
+        stops: const [0.0, 0.5, 0.7, 0.85, 1.0],
       );
       
       // Draw main stroke with gradient
@@ -3763,7 +3810,18 @@ class CurrentStrokePainter extends CustomPainter {
   }
   
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    // Always repaint for classic stroke to animate the tip color
+    if (strokeType == StrokeType.classic) return true;
+    
+    if (oldDelegate is CurrentStrokePainter) {
+      return currentStroke.length != oldDelegate.currentStroke.length ||
+             strokeColor != oldDelegate.strokeColor ||
+             strokeWidth != oldDelegate.strokeWidth ||
+             strokeType != oldDelegate.strokeType;
+    }
+    return true;
+  }
 }
 
 class CompletedStrokesPainter extends CustomPainter {
@@ -3813,6 +3871,12 @@ class CompletedStrokesPainter extends CustomPainter {
       ..color = fillColor
       ..style = PaintingStyle.fill;
     
+    // Add a subtle outline paint to separate overlapping strokes
+    final outlinePaint = Paint()
+      ..color = fillColor.withValues(alpha: 0.3)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+    
     // Draw each stroke individually with the same fill color
     for (final index in completedIndices) {
       if (index < characterStroke.strokes.length) {
@@ -3844,6 +3908,9 @@ class CompletedStrokesPainter extends CustomPainter {
         
         // Fill with appropriate color
         canvas.drawPath(path, fillPaint);
+        
+        // Draw subtle outline to separate overlapping strokes
+        canvas.drawPath(path, outlinePaint);
         
         if (index == bouncingStrokeIndex && bounceProgress > 0) {
           canvas.restore();

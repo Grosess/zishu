@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import '../services/character_set_manager.dart';
 import '../widgets/character_preview.dart';
-import '../main.dart' show DuotoneThemeExtension;
+import '../main.dart' show DuotoneThemeExtension, refreshStreakDisplay;
 import '../services/character_database.dart';
 import '../services/learning_service.dart';
+import '../services/statistics_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 import 'dart:convert';
@@ -256,6 +257,18 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
       _changesMade = true;
     });
     
+    // Clear caches to ensure UI updates
+    final statsService = StatisticsService();
+    statsService.clearCache();
+    _learningService.clearCache();
+    
+    // Refresh streak display
+    try {
+      refreshStreakDisplay();
+    } catch (_) {
+      // Ignore if main screen is not available
+    }
+    
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Imported $importedCount new characters'),
@@ -411,6 +424,18 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
         setState(() {
           _changesMade = true;
         });
+        
+        // Clear caches to ensure UI updates
+        final statsService = StatisticsService();
+        statsService.clearCache();
+        _learningService.clearCache();
+        
+        // Refresh streak display
+        try {
+          refreshStreakDisplay();
+        } catch (_) {
+          // Ignore if main screen is not available
+        }
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

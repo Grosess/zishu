@@ -1992,15 +1992,19 @@ class HomePageState extends State<HomePage> with RouteAware {
                   const SizedBox(width: 12),
                   Expanded(
                     child: FilledButton.icon(
-                      onPressed: () {
+                      onPressed: () async {
                         Navigator.pop(context);
                         // Navigate to Mark as Learned page
-                        Navigator.push(
+                        final result = await Navigator.push<bool>(
                           context,
                           MaterialPageRoute(
                             builder: (context) => const MarkAsLearnedPage(),
                           ),
                         );
+                        // Refresh data if changes were made
+                        if (result == true) {
+                          _loadData();
+                        }
                       },
                       icon: const Icon(Icons.check, size: 16),
                       label: const Text(
