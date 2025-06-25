@@ -119,10 +119,26 @@ void main() async {
     
     // Load theme settings before running app
     final prefs = await SharedPreferences.getInstance();
-    final themeMode = prefs.getString('theme_mode') ?? 'system';
+    
+    // Check if this is the first time running the app
+    final isFirstRun = !prefs.containsKey('theme_mode');
+    
+    // Determine system theme for initial background color
+    final brightness = WidgetsBinding.instance.platformDispatcher.platformBrightness;
+    final systemIsDark = brightness == Brightness.dark;
+    
+    // Set default theme to duotone with system-based background and blue accent
+    final themeMode = prefs.getString('theme_mode') ?? 'duotone';
     final accentColor = prefs.getString('accent_color') ?? 'blue';
-    final duotoneBackground = prefs.getString('duotone_background') ?? 'white';
-    final duotoneColor = prefs.getString('duotone_color') ?? 'green';
+    final duotoneBackground = prefs.getString('duotone_background') ?? (isFirstRun ? (systemIsDark ? 'black' : 'white') : 'white');
+    final duotoneColor = prefs.getString('duotone_color') ?? 'blue';
+    
+    // Save defaults if first run
+    if (isFirstRun) {
+      await prefs.setString('theme_mode', 'duotone');
+      await prefs.setString('duotone_background', systemIsDark ? 'black' : 'white');
+      await prefs.setString('duotone_color', 'blue');
+    }
     
     runApp(MainApp(
       key: mainAppKey,
