@@ -17,6 +17,8 @@ import 'character_list_page.dart';
 import 'groups_page.dart';
 import '../services/character_set_manager.dart';
 import 'mark_as_learned_page.dart';
+import '../services/cedict_service.dart';
+import '../widgets/character_preview.dart';
 
 class HomePage extends StatefulWidget {
   final Function(int)? onNavigateToTab;
@@ -456,11 +458,436 @@ class HomePageState extends State<HomePage> with RouteAware {
     practiceHistory.insert(0, set['name']); // Add to front
     await _prefs.setStringList('recent_practice_sets', practiceHistory.take(10).toList());
     
-    // Show set synopsis dialog (same as in sets page)
-    _showSetSynopsis(set);
+    // Create a complete CharacterSet object like in sets page
+    final characterSet = CharacterSet(
+      id: set['name'].toString().toLowerCase().replaceAll(' ', '_'),
+      name: set['name'],
+      characters: List<String>.from(set['items']),
+      description: '',
+      isWordSet: set['type'] == 'word',
+    );
+    
+    // Show the synopsis dialog directly (same as sets page)
+    _showSetSynopsis(characterSet);
   }
   
-  void _showSetSynopsis(Map<String, dynamic> set) {
+  Future<void> _showSetSynopsis(CharacterSet set) async {
+    // Don't validate all items - just show the dialog immediately
+    // Make sure to preserve the original order
+    final validItems = List<String>.from(set.characters);
+    final invalidItems = <dynamic>[];
+    
+    // Get progress for this set
+    double progress = 0.0;
+    if (set.characters.isNotEmpty) {
+      final learnedItems = await _learningService.getLearnedCharactersForSet(set.characters);
+      progress = learnedItems.length / set.characters.length;
+    }
+    
+    // Show synopsis dialog
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Stack(
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(set.name),
+                const SizedBox(height: 4),
+                Text(
+                  '${set.characters.length} ${set.isWordSet ? 'words' : 'characters'}',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+            // Close button positioned at top right of dialog content
+            Positioned(
+              top: 0,
+              right: 0,
+              child: IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close, size: 20),
+                tooltip: 'Close',
+                style: IconButton.styleFrom(
+                  minimumSize: const Size(32, 32),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.5,
+            maxWidth: MediaQuery.of(context).size.width * 0.9,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (set.description != null && set.description!.isNotEmpty) ...[
+                  Text(
+                    set.description!,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const Divider(height: 24),
+                ],
+                
+                // Progress indicator
+                Row(
+                  children: [
+                    Icon(
+                      Icons.school,
+                      size: 20,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Progress: ${(progress * 100).toInt()}%',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: progress >= 1.0 
+                            ? Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary
+                            : null,
+                        fontWeight: progress >= 1.0 ? FontWeight.bold : null,
+                      ),
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Sample characters
+                Text(
+                  set.isWordSet ? 'Words:' : 'Characters:',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(height: 8),
+                FutureBuilder<List<String>>(
+                  future: _learningService.getLearnedCharactersForSet(set.characters),
+                  builder: (context, snapshot) {
+                    final learnedCharacters = snapshot.data ?? [];
+                    return Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: set.characters.take(10).map((item) {
+                        final isLearned = learnedCharacters.contains(item);
+                        return Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.pop(context);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => WritingPracticePage(
+                                    character: item,
+                                    characterSet: set.name,
+                                    allCharacters: [item],
+                                    isWord: set.isWordSet,
+                                    mode: isLearned ? PracticeMode.testing : PracticeMode.learning,
+                                    onComplete: (success) async {
+                                      if (!isLearned && success) {
+                                        await _learningService.markCharacterAsLearned(item);
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ).then((_) => _loadData());
+                            },
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                    ? (isLearned 
+                                        ? Theme.of(context).colorScheme.secondary.withOpacity(0.3)
+                                        : Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor1 ?? Theme.of(context).colorScheme.surfaceContainer)
+                                    : (isLearned 
+                                        ? Colors.blue.withOpacity(0.2)
+                                        : Colors.grey.withOpacity(0.2)),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                      ? (isLearned 
+                                          ? Theme.of(context).colorScheme.secondary
+                                          : Theme.of(context).colorScheme.secondary.withOpacity(0.3))
+                                      : (isLearned 
+                                          ? Colors.blue.withOpacity(0.5)
+                                          : Colors.grey.withOpacity(0.3)),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Text(
+                                item,
+                                style: TextStyle(
+                                  fontSize: item.length >= 4 ? 14 : (item.length >= 3 ? 16 : 20),
+                                  color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                      ? (isLearned 
+                                          ? Theme.of(context).colorScheme.secondary
+                                          : Theme.of(context).colorScheme.onSurface)
+                                      : (isLearned 
+                                          ? Colors.blue
+                                          : Theme.of(context).colorScheme.onSurface),
+                                  fontWeight: isLearned ? FontWeight.bold : FontWeight.normal,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    );
+                  },
+                ),
+                if (set.characters.length > 10) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    '... and ${set.characters.length - 10} more',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+                
+                if (false) ...[ // Disabled validation check for performance
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.warning, color: Colors.orange, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '${invalidItems.length} items unavailable in database',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Top row
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Left side - Show Groups (aligned left)
+                    if (validItems.length > 10)
+                      TextButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => GroupsPage(
+                                setName: set.name,
+                                characters: validItems,
+                                isWordSet: set.isWordSet,
+                              ),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.apps, size: 18),
+                        label: const Text('Show Groups', 
+                          style: TextStyle(fontSize: 13),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    
+                    const Spacer(), // Space between left and right
+                    
+                    // Right side - Learn button
+                    if (validItems.isNotEmpty && progress < 1.0)
+                      SizedBox(
+                        width: 115,
+                        child: FilledButton.icon(
+                          onPressed: () async {
+                            // Filter to only unlearned items using the proper logic
+                            final unlearnedItems = await _learningService.getUnlearnedItems(validItems);
+                            
+                            if (unlearnedItems.isEmpty) {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('All items in this set have been learned!'),
+                                ),
+                              );
+                              return;
+                            }
+                            
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => WritingPracticePage(
+                                  character: unlearnedItems.first,
+                                  characterSet: set.name,
+                                  allCharacters: unlearnedItems,
+                                  isWord: set.isWordSet,
+                                  mode: PracticeMode.learning,
+                                  onComplete: (success) async {
+                                    if (success) {
+                                      if (set.isWordSet && unlearnedItems.first.length > 1) {
+                                        await _learningService.markWordAsLearned(unlearnedItems.first);
+                                      } else {
+                                        await _learningService.markCharacterAsLearned(unlearnedItems.first);
+                                      }
+                                    }
+                                  },
+                                ),
+                              ),
+                            ).then((_) => _loadData());
+                          },
+                          icon: const Icon(Icons.school, size: 18),
+                          label: const Text('Learn',
+                            style: TextStyle(fontSize: 13),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                ? Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary
+                                : Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                // Bottom row
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Left side - View All (aligned left)
+                    if (validItems.isNotEmpty)
+                      TextButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => CharacterListPage(
+                                setName: set.name,
+                                characters: validItems,
+                                isWordSet: set.isWordSet,
+                                isCustomSet: false,
+                                setId: set.id,
+                              ),
+                            ),
+                          ).then((_) => _loadData());
+                        },
+                        icon: const Icon(Icons.view_list, size: 18),
+                        label: const Text('View All',
+                          style: TextStyle(fontSize: 13),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    
+                    const Spacer(), // Space between left and right
+                  
+                  // Right side - Practice button
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      // Practice - always available
+                      if (validItems.isNotEmpty)
+                        SizedBox(
+                          width: 125,
+                          child: FilledButton.icon(
+                            onPressed: () async {
+                              // Show loading
+                              showDialog(
+                                context: context,
+                                barrierDismissible: false,
+                                builder: (context) => const Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+                              
+                              // Clear cache to get fresh data
+                              _learningService.clearCache();
+                              _statsService.clearCache();
+                              
+                              // Get ALL fresh learned items from this set
+                              final learnedCharacters = await _statsService.getLearnedCharacters();
+                              final learnedWords = await _statsService.getLearnedWords();
+                              final allLearned = {...learnedCharacters, ...learnedWords};
+                              
+                              // Filter this set's items against fresh learned data
+                              final learnedItems = set.characters.where((item) => allLearned.contains(item)).toList();
+                              learnedItems.shuffle(); // Randomize order
+                              
+                              // Close loading dialog
+                              Navigator.pop(context);
+                              
+                              if (learnedItems.isEmpty) {
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('No learned items in this set yet. Use "Learn" first!'),
+                                  ),
+                                );
+                                return;
+                              }
+                              
+                              Navigator.pop(context);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => WritingPracticePage(
+                                    character: learnedItems.first,
+                                    characterSet: set.name,
+                                    allCharacters: learnedItems,
+                                    isWord: set.isWordSet,
+                                    mode: PracticeMode.testing,
+                                  ),
+                                ),
+                              ).then((_) => _loadData());
+                            },
+                            icon: const Icon(Icons.edit, size: 18),
+                            label: const Text('Practice',
+                              style: TextStyle(fontSize: 13),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                  ? (Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary).withOpacity(0.8)
+                                  : Theme.of(context).colorScheme.secondary,
+                            ),
+                          ),
+                        ),
+                      
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  /*
+  // This method is no longer used - we navigate to the sets page instead
+  void _showSetSynopsis_REMOVED(Map<String, dynamic> set) {
     final validItems = List<String>.from(set['items']);
     final isWordSet = set['type'] == 'word';
     
@@ -687,6 +1114,7 @@ class HomePageState extends State<HomePage> with RouteAware {
       ),
     );
   }
+  */
 
   Future<void> _launchFeedbackForm() async {
     final Uri url = Uri.parse('https://forms.gle/5R1saZ3v3ia1R1uN7');

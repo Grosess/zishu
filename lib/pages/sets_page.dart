@@ -62,21 +62,37 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
     _initializeCedict();
     _loadExpandedFolders();
     _initializeCharacterDatabase();
+    
+    // Check if there's a pending set to show (from recent sets)
+    _checkPendingSetToShow();
   }
   
   Future<void> _initializeWithSavedState() async {
     // Load saved tab index
     final prefs = await SharedPreferences.getInstance();
-    final savedIndex = prefs.getInt('sets_tab_index') ?? 0;
     
-    // Initialize controllers with saved index
+    // Check if this is the first time opening sets page
+    final hasOpenedSetsPage = prefs.getBool('has_opened_sets_page') ?? false;
+    int initialIndex;
+    
+    if (!hasOpenedSetsPage) {
+      // First time - default to Built-in tab (index 0)
+      initialIndex = 0;
+      // Mark that we've opened the sets page
+      await prefs.setBool('has_opened_sets_page', true);
+    } else {
+      // Not first time - use saved index or default to 0
+      initialIndex = prefs.getInt('sets_tab_index') ?? 0;
+    }
+    
+    // Initialize controllers with determined index
     if (mounted) {
       setState(() {
-        _currentTabIndex = savedIndex;
+        _currentTabIndex = initialIndex;
         _tabController = TabController(
           length: 2, 
           vsync: this, 
-          initialIndex: savedIndex
+          initialIndex: initialIndex
         );
         _controllersInitialized = true;
         
@@ -96,6 +112,68 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
   Future<void> _saveTabIndex(int index) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('sets_tab_index', index);
+  }
+  
+  Future<void> _checkPendingSetToShow() async {
+    // Wait for everything to load
+    int waitTime = 0;
+    while (_isLoading && waitTime < 3000) {
+      await Future.delayed(const Duration(milliseconds: 100));
+      waitTime += 100;
+    }
+    
+    final prefs = await SharedPreferences.getInstance();
+    final pendingSetJson = prefs.getString('pending_set_to_show');
+    
+    if (pendingSetJson != null && mounted) {
+      // Clear the pending set
+      await prefs.remove('pending_set_to_show');
+      
+      try {
+        final setData = jsonDecode(pendingSetJson);
+        
+        // Find the matching set in our loaded sets
+        CharacterSet? targetSet;
+        
+        // Search in character sets
+        for (final set in _characterSets) {
+          if (set.name == setData['name']) {
+            targetSet = set;
+            break;
+          }
+        }
+        
+        // If not found, search in custom sets
+        if (targetSet == null) {
+          for (final set in _customSets) {
+            if (set.name == setData['name']) {
+              targetSet = set;
+              // Switch to custom tab
+              if (_tabController != null) {
+                _tabController!.animateTo(1);
+              }
+              break;
+            }
+          }
+        }
+        
+        // If we found the set, show its synopsis
+        if (targetSet != null) {
+          // Ensure progress is loaded
+          if (!_setProgress.containsKey(targetSet.id)) {
+            await _loadSetProgress();
+          }
+          
+          // Wait a bit for the UI to settle
+          await Future.delayed(const Duration(milliseconds: 200));
+          if (mounted) {
+            _showSetSynopsis(targetSet);
+          }
+        }
+      } catch (e) {
+        // Error handling
+      }
+    }
   }
   
   Future<void> _initializeCharacterDatabase() async {
