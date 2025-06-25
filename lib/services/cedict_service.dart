@@ -362,4 +362,82 @@ class CedictService {
   
   /// Get total number of entries
   int get entryCount => _dictionary?.length ?? 0;
+  
+  /// Search the dictionary by pinyin or English definition
+  List<CedictEntry> search(String query, {int maxResults = 100}) {
+    if (_dictionary == null || query.isEmpty) return [];
+    
+    final results = <CedictEntry>[];
+    final processedQuery = query.toLowerCase().trim();
+    
+    // First pass: exact matches
+    for (final entry in _dictionary!.values) {
+      if (results.length >= maxResults) break;
+      
+      // Skip entries with unhelpful definitions
+      if (_shouldFilterDefinition(entry.definition)) continue;
+      
+      final pinyinNoTone = _removeTones(entry.pinyin).toLowerCase();
+      final definitionLower = entry.definition.toLowerCase();
+      
+      // Exact match in pinyin (without tones)
+      if (pinyinNoTone == processedQuery) {
+        results.add(entry);
+        continue;
+      }
+      
+      // Exact word match in definition
+      final definitionWords = definitionLower.split(RegExp(r'[\s,;/()]+'));
+      if (definitionWords.contains(processedQuery)) {
+        results.add(entry);
+        continue;
+      }
+    }
+    
+    // Second pass: partial matches if not enough results
+    if (results.length < 20) {
+      for (final entry in _dictionary!.values) {
+        if (results.length >= maxResults) break;
+        if (results.contains(entry)) continue; // Skip already added
+        
+        // Skip entries with unhelpful definitions
+        if (_shouldFilterDefinition(entry.definition)) continue;
+        
+        final pinyinNoTone = _removeTones(entry.pinyin).toLowerCase();
+        final definitionLower = entry.definition.toLowerCase();
+        
+        // Partial match in pinyin or definition
+        if (pinyinNoTone.contains(processedQuery) || 
+            definitionLower.contains(processedQuery)) {
+          results.add(entry);
+        }
+      }
+    }
+    
+    // Sort results by relevance
+    results.sort((a, b) {
+      // Single characters before multi-character words
+      if (a.simplified.length != b.simplified.length) {
+        return a.simplified.length.compareTo(b.simplified.length);
+      }
+      
+      // Then by pinyin
+      return a.pinyin.compareTo(b.pinyin);
+    });
+    
+    return results;
+  }
+  
+  /// Remove tone marks from pinyin for easier searching
+  String _removeTones(String pinyin) {
+    return pinyin
+        .replaceAll(RegExp(r'[āáǎàa]'), 'a')
+        .replaceAll(RegExp(r'[ēéěèe]'), 'e')
+        .replaceAll(RegExp(r'[īíǐìi]'), 'i')
+        .replaceAll(RegExp(r'[ōóǒòo]'), 'o')
+        .replaceAll(RegExp(r'[ūúǔùu]'), 'u')
+        .replaceAll(RegExp(r'[ǖǘǚǜü]'), 'u')
+        .replaceAll(RegExp(r'[0-9]'), '')
+        .replaceAll(' ', '');
+  }
 }

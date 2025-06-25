@@ -6,6 +6,7 @@ import '../services/character_set_manager.dart';
 import '../widgets/character_preview.dart';
 import 'writing_practice_page.dart';
 import '../main.dart' show DuotoneThemeExtension;
+import '../utils/pinyin_utils.dart';
 
 class CharacterSearchPage extends StatefulWidget {
   const CharacterSearchPage({super.key});
@@ -107,82 +108,9 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
         }
       }
     } else {
-      // Search by pinyin or English
-      // We need to search through all available characters from sets
-      // since CedictService doesn't expose all entries
-      await _setManager.loadPredefinedSets();
-      final sets = _setManager.getAllSets();
-      final checkedChars = <String>{};
-      
-      // First, collect all unique characters and words from sets
-      for (final set in sets) {
-        for (final item in set.characters) {
-          if (!checkedChars.contains(item)) {
-            checkedChars.add(item);
-            final entry = _cedictService.lookup(item);
-            if (entry != null) {
-              // Check if pinyin matches (remove tones for comparison)
-              final pinyinNoTone = _removeTones(entry.pinyin).toLowerCase();
-              final definitionLower = entry.definition.toLowerCase();
-              
-              if (pinyinNoTone.contains(processedQuery) || 
-                  definitionLower.contains(processedQuery)) {
-                results.add(entry);
-              }
-            }
-          }
-          
-          // Also check individual characters from words
-          if (item.length > 1) {
-            for (int i = 0; i < item.length; i++) {
-              final char = item[i];
-              if (_isChineseCharacter(char) && !checkedChars.contains(char)) {
-                checkedChars.add(char);
-                final charEntry = _cedictService.lookup(char);
-                if (charEntry != null) {
-                  final pinyinNoTone = _removeTones(charEntry.pinyin).toLowerCase();
-                  final definitionLower = charEntry.definition.toLowerCase();
-                  
-                  if (pinyinNoTone.contains(processedQuery) || 
-                      definitionLower.contains(processedQuery)) {
-                    results.add(charEntry);
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-      
-      // Remove duplicates
-      final uniqueResults = <String, CedictEntry>{};
-      for (final entry in results) {
-        uniqueResults[entry.simplified] = entry;
-      }
-      results.clear();
-      results.addAll(uniqueResults.values);
-      
-      // Sort results by relevance
-      results.sort((a, b) {
-        final aPinyinNoTone = _removeTones(a.pinyin).toLowerCase();
-        final bPinyinNoTone = _removeTones(b.pinyin).toLowerCase();
-        
-        // Exact pinyin matches come first
-        if (aPinyinNoTone == processedQuery && bPinyinNoTone != processedQuery) return -1;
-        if (bPinyinNoTone == processedQuery && aPinyinNoTone != processedQuery) return 1;
-        
-        // Then pinyin starts with query
-        if (aPinyinNoTone.startsWith(processedQuery) && !bPinyinNoTone.startsWith(processedQuery)) return -1;
-        if (bPinyinNoTone.startsWith(processedQuery) && !aPinyinNoTone.startsWith(processedQuery)) return 1;
-        
-        // Then by character length (single characters before words)
-        final aLen = a.simplified.length;
-        final bLen = b.simplified.length;
-        if (aLen != bLen) return aLen.compareTo(bLen);
-        
-        // Finally alphabetically
-        return a.pinyin.compareTo(b.pinyin);
-      });
+      // Search by pinyin or English using the full CEDICT dictionary
+      final searchResults = _cedictService.search(processedQuery, maxResults: 50);
+      results.addAll(searchResults);
     }
     
     // Load learned status for results
@@ -205,18 +133,6 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
     });
   }
   
-  String _removeTones(String pinyin) {
-    // Remove tone numbers and convert to basic letters
-    return pinyin
-        .replaceAll(RegExp(r'[āáǎàa]'), 'a')
-        .replaceAll(RegExp(r'[ēéěèe]'), 'e')
-        .replaceAll(RegExp(r'[īíǐìi]'), 'i')
-        .replaceAll(RegExp(r'[ōóǒòo]'), 'o')
-        .replaceAll(RegExp(r'[ūúǔùu]'), 'u')
-        .replaceAll(RegExp(r'[ǖǘǚǜü]'), 'u')
-        .replaceAll(RegExp(r'[0-9]'), '')
-        .replaceAll(' ', '');
-  }
   
   bool _isChineseCharacter(String char) {
     if (char.isEmpty) return false;
@@ -443,29 +359,49 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
                                 ),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: Text(
-                                entry.simplified,
-                                style: TextStyle(
-                                  fontSize: entry.simplified.length == 2 ? 20 : 16,
-                                  fontWeight: FontWeight.w500,
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(4.0),
+                                  child: Text(
+                                    entry.simplified.length > 4 
+                                        ? '${entry.simplified.substring(0, 3)}...' 
+                                        : entry.simplified,
+                                    style: TextStyle(
+                                      fontSize: entry.simplified.length == 2 ? 20 : 
+                                               entry.simplified.length == 3 ? 14 : 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
                                 ),
                               ),
                             ),
                       title: Row(
                         children: [
-                          Text(
-                            entry.simplified,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w500,
+                          Flexible(
+                            flex: 0,
+                            child: Text(
+                              entry.simplified.length > 7 
+                                  ? '${entry.simplified.substring(0, 6)}...' 
+                                  : entry.simplified,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Text(
-                            entry.pinyin,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Theme.of(context).colorScheme.primary,
+                          Expanded(
+                            child: Text(
+                              PinyinUtils.convertToneNumbersToMarks(entry.pinyin),
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
                             ),
                           ),
                           if (isLearned) ...[
@@ -485,6 +421,8 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 2,
                       ),
                       trailing: isLearned
                           ? TextButton.icon(
