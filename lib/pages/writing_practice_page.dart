@@ -1273,8 +1273,9 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     final canvasSize = box.size;
     final nextIndex = _getNextStrokeIndex();
     
-    // Production: removed debug print
-    // Production: removed debug print
+    final currentCharacter = widget.isWord ? _wordCharacters[_currentCharacterIndex] : widget.character;
+    print('\n\n🔍 VALIDATING STROKE for character: $currentCharacter, stroke index: $nextIndex');
+    print('Total strokes for this character: ${_characterStroke!.strokes.length}');
     
     if (nextIndex >= _characterStroke!.strokes.length) {
       // Production: removed debug print
@@ -1382,7 +1383,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       );
     } else {
       // All other strokes - use a balanced default tolerance
-      final tolerance = widget.mode == PracticeMode.testing ? 0.55 : 0.50;
+      final tolerance = widget.mode == PracticeMode.testing ? 0.65 : 0.60;
       isCorrect = StrokeValidator.validateStroke(
         _currentStroke,
         _characterStroke!.medians[nextIndex],
@@ -2883,9 +2884,15 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     if (_characterStroke == null || strokeIndex >= _characterStroke!.medians.length) return false;
     
     final medianPoints = _characterStroke!.medians[strokeIndex];
-    if (medianPoints.length < 3) return false;
+    if (medianPoints.length < 4) return false; // Need enough points to detect real curves
+    
+    // Check overall stroke direction first
+    final start = Offset(medianPoints.first[0], medianPoints.first[1]);
+    final end = Offset(medianPoints.last[0], medianPoints.last[1]);
+    final overallDirection = end - start;
     
     // Check for significant direction changes in the stroke
+    bool hasSignificantTurn = false;
     for (int i = 1; i < medianPoints.length - 1; i++) {
       final p1 = Offset(medianPoints[i-1][0], medianPoints[i-1][1]);
       final p2 = Offset(medianPoints[i][0], medianPoints[i][1]);
@@ -2894,15 +2901,37 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       final dir1 = p2 - p1;
       final dir2 = p3 - p2;
       
-      if (dir1.distance > 0 && dir2.distance > 0) {
+      // Both segments need meaningful length
+      if (dir1.distance > 20 && dir2.distance > 20) {
         final dot = (dir1.dx * dir2.dx + dir1.dy * dir2.dy) / (dir1.distance * dir2.distance);
-        if (dot < 0.5) { // Significant direction change (> 60 degrees)
-          return true;
+        if (dot < 0.0) { // Only count sharp turns (> 90 degrees)
+          hasSignificantTurn = true;
+          break;
         }
       }
     }
     
-    return false;
+    // Also check if the middle deviates significantly from a straight line
+    if (!hasSignificantTurn && medianPoints.length >= 5) {
+      final midIndex = medianPoints.length ~/ 2;
+      final midPoint = Offset(medianPoints[midIndex][0], medianPoints[midIndex][1]);
+      
+      // Project midpoint onto the straight line from start to end
+      if (overallDirection.distance > 0) {
+        final t = ((midPoint - start).dx * overallDirection.dx + 
+                   (midPoint - start).dy * overallDirection.dy) / 
+                   (overallDirection.distance * overallDirection.distance);
+        final projectedPoint = start + overallDirection * t.clamp(0.0, 1.0);
+        final deviation = (midPoint - projectedPoint).distance;
+        
+        // Only consider multi-directional if deviation is significant (> 15% of stroke length)
+        if (deviation > overallDirection.distance * 0.15) {
+          hasSignificantTurn = true;
+        }
+      }
+    }
+    
+    return hasSignificantTurn;
   }
   
   bool _isLongVerticalStroke(int strokeIndex) {

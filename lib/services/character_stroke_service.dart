@@ -321,7 +321,15 @@ class StrokeValidator {
     Size canvasSize,
     {double tolerance = 0.55, bool isMultiDirectional = false}  // Added isMultiDirectional flag
   ) {
-    if (userStroke.length < 2 || medianPoints.length < 2) return false;
+    print('\n\n=== STROKE VALIDATION START ===');
+    print('Canvas size: $canvasSize');
+    print('Base tolerance: $tolerance');
+    print('Is multi-directional: $isMultiDirectional');
+    
+    if (userStroke.length < 2 || medianPoints.length < 2) {
+      print('FAILED: Too few points - user: ${userStroke.length}, median: ${medianPoints.length}');
+      return false;
+    }
     
     // Check stroke size first
     double minX = double.infinity, maxX = -double.infinity;
@@ -338,13 +346,19 @@ class StrokeValidator {
     final strokeHeight = maxY - minY;
     final minSize = canvasSize.width * 0.005; // 0.5% of canvas - extremely lenient for small strokes
     
+    print('\nStroke bounds:');
+    print('  Width: $strokeWidth, Height: $strokeHeight');
+    print('  Min size threshold: $minSize');
+    
     // Reject strokes that are too small in both dimensions
     if (strokeWidth < minSize && strokeHeight < minSize) {
+      print('FAILED: Stroke too small in both dimensions');
       return false;
     }
     
     // Also reject if stroke has very few points (likely accidental tap)
     if (userStroke.length < 2) {
+      print('FAILED: Too few stroke points');
       return false;
     }
     
@@ -361,6 +375,14 @@ class StrokeValidator {
     // Match parsePath's offset calculation with upward adjustment
     final offsetY = (canvasSize.height - scaledSize) / 2 - (canvasSize.height * 0.07);
     
+    print('\nCoordinate transformation:');
+    print('  Padding: $padding');
+    print('  Draw size: $drawSize');
+    print('  Scale: $scale');
+    print('  Scaled size: $scaledSize');
+    print('  Offset X: $offsetX');
+    print('  Offset Y: $offsetY');
+    
     // Normalize coordinates (accounting for the centered position)
     final normalizedUser = userStroke.map((p) => Offset(
       (p.dx - offsetX) / scaledSize,
@@ -371,6 +393,12 @@ class StrokeValidator {
     final normalizedMedian = medianPoints.map((p) => 
       Offset(p[0] / 1024, (1024 - p[1]) / 1024) // Flip Y coordinate without clamping
     ).toList();
+    
+    print('\nFirst normalized points:');
+    print('  User first: ${normalizedUser.first}');
+    print('  User last: ${normalizedUser.last}');
+    print('  Median first: ${normalizedMedian.first}');
+    print('  Median last: ${normalizedMedian.last}');
     
     // Calculate stroke lengths for comparison
     double userLength = 0;
@@ -394,8 +422,8 @@ class StrokeValidator {
     final maxRatio = isLongVertical ? 8.0 : (isSmallStroke ? 6.0 : 4.5); // Very lenient for long verticals
     
     final lengthRatio = userLength / medianLength;
+    
     if (lengthRatio < minRatio || lengthRatio > maxRatio) {
-      // Very lenient now, only reject extreme cases
       return false; // Stroke is too short or too long
     }
     
@@ -417,17 +445,23 @@ class StrokeValidator {
     // More lenient tolerance for start/end points location
     final pointTolerance = isLongVertical ? 3.0 : (isMultiDirectional ? 2.5 : 2.3);
     if (startDist > locationTolerance * pointTolerance || endDist > locationTolerance * pointTolerance) {
-      // Production: removed debug print
       return false;
     }
     
-    // Direction validation - much stricter, especially for multidirectional
+    // Direction validation - more balanced
     final directionTolerance = isMultiDirectional 
-        ? (isSmallStroke ? tolerance * 0.50 : tolerance * 0.30)  // Very strict for multidirectional
-        : (isSmallStroke ? tolerance * 0.40 : tolerance * 0.30); // Strict for simple strokes
+        ? (isSmallStroke ? tolerance * 0.70 : tolerance * 0.60)  // More lenient for multidirectional
+        : (isSmallStroke ? tolerance * 0.50 : tolerance * 0.45); // Moderate for simple strokes
+    
+    print('\nCalling direction validation:');
+    print('  Direction tolerance: $directionTolerance');
+    print('  Is small stroke: $isSmallStroke');
+    
     if (!_validateStrokeDirection(normalizedUser, normalizedMedian, directionTolerance, isMultiDirectional)) {
+      print('FAILED: Direction validation failed');
       return false;
     }
+    print('Direction validation passed');
     
     // Check general path with stricter tolerance
     if (normalizedUser.length > 10 && normalizedMedian.length > 2) {
@@ -451,9 +485,13 @@ class StrokeValidator {
       
       // More lenient shape matching for multidirectional
       final requiredMatch = isMultiDirectional ? 0.20 : 0.50; // Much more lenient for multidirectional
-      if (matchedPoints < totalChecks * requiredMatch) return false;
+      if (matchedPoints < totalChecks * requiredMatch) {
+        print('FAILED: Not enough matched points in path check');
+        return false;
+      }
     }
     
+    print('\n=== STROKE VALIDATION COMPLETE: PASSED ===\n');
     return true;
   }
   
@@ -466,9 +504,11 @@ class StrokeValidator {
   ) {
     if (userStroke.length < 3 || medianPoints.length < 2) return true;
     
-    // Production: removed debug print
-    // Production: removed debug print
-    // Production: removed debug print
+    print('\n=== STROKE DIRECTION VALIDATION DEBUG ===');
+    print('User stroke points: ${userStroke.length}');
+    print('Median points: ${medianPoints.length}');
+    print('Tolerance: $tolerance');
+    print('isMultiDirectional: $isMultiDirectional');
     
     // If not already marked as multi-directional, check if this stroke has curves
     bool actuallyMultiDirectional = isMultiDirectional;
@@ -479,38 +519,75 @@ class StrokeValidator {
         final dir2 = medianPoints[i + 1] - medianPoints[i];
         if (dir1.distance > 0 && dir2.distance > 0) {
           final dot = (dir1.dx * dir2.dx + dir1.dy * dir2.dy) / (dir1.distance * dir2.distance);
-          if (dot < 0.5) { // Significant direction change (> 60 degrees)
+          // Only consider it multi-directional for sharp turns (> 90 degrees)
+          // This prevents diagonal strokes from being misclassified
+          if (dot < 0.0) { // Significant direction change (> 90 degrees)
             actuallyMultiDirectional = true;
+            print('Detected as multi-directional at segment $i, dot product: $dot');
             break;
           }
         }
       }
     }
     
-    // Production: removed debug print
+    // Calculate overall direction vectors
+    final medianDirection = medianPoints.last - medianPoints.first;
+    final userDirection = userStroke.last - userStroke.first;
     
-    // Simple direction check - just compare start and end positions
-    // This works for both simple and multi-directional strokes
-    final medianXDiff = medianPoints.last.dx - medianPoints.first.dx;
-    final userXDiff = userStroke.last.dx - userStroke.first.dx;
-    final medianYDiff = medianPoints.last.dy - medianPoints.first.dy;
-    final userYDiff = userStroke.last.dy - userStroke.first.dy;
+    print('\nMedian stroke:');
+    print('  Start: ${medianPoints.first}');
+    print('  End: ${medianPoints.last}');
+    print('  Direction vector: $medianDirection');
+    print('  Length: ${medianDirection.distance}');
     
-    // Validate X and Y movement
+    print('\nUser stroke:');
+    print('  Start: ${userStroke.first}');
+    print('  End: ${userStroke.last}');
+    print('  Direction vector: $userDirection');
+    print('  Length: ${userDirection.distance}');
     
-    // Check if primary movement direction matches
-    if (medianXDiff.abs() > medianYDiff.abs()) {
-      // Primarily horizontal stroke
-      if ((medianXDiff < 0) != (userXDiff < 0)) {
-        // Production: removed debug print
-        return false;
+    // For diagonal strokes, use vector angle comparison instead of separate X/Y checks
+    if (medianDirection.distance > 0 && userDirection.distance > 0) {
+      // Normalize the direction vectors
+      final normalizedMedian = medianDirection / medianDirection.distance;
+      final normalizedUser = userDirection / userDirection.distance;
+      
+      print('\nNormalized directions:');
+      print('  Median: $normalizedMedian');
+      print('  User: $normalizedUser');
+      
+      // Calculate dot product (cosine of angle between vectors)
+      final dotProduct = normalizedMedian.dx * normalizedUser.dx + 
+                        normalizedMedian.dy * normalizedUser.dy;
+      
+      print('\nDot product: $dotProduct');
+      
+      // For diagonal strokes (pie strokes), we need to be more lenient
+      // Check if this is a diagonal stroke
+      final isDiagonal = (medianDirection.dx.abs() > medianDirection.distance * 0.3 && 
+                         medianDirection.dy.abs() > medianDirection.distance * 0.3);
+      
+      print('Is diagonal stroke: $isDiagonal');
+      print('  X component ratio: ${medianDirection.dx.abs() / medianDirection.distance}');
+      print('  Y component ratio: ${medianDirection.dy.abs() / medianDirection.distance}');
+      
+      // Check if stroke is going in wrong direction
+      if (dotProduct < 0) {
+        print('FAILED: Stroke is going in opposite direction (dot product < 0)');
+        return false; // Stroke is going in opposite direction
       }
-    } else {
-      // Primarily vertical stroke
-      if ((medianYDiff < 0) != (userYDiff < 0)) {
-        // Production: removed debug print
-        return false;
+      
+      // Allow up to 60 degrees deviation for diagonal strokes, 45 degrees for others
+      final minDotProduct = isDiagonal ? 0.5 : 0.707; // cos(60°) vs cos(45°)
+      
+      print('Required min dot product: $minDotProduct (${isDiagonal ? "diagonal" : "straight"})');
+      
+      if (dotProduct < minDotProduct) {
+        print('FAILED: Direction is too far off (dot product $dotProduct < $minDotProduct)');
+        return false; // Direction is too far off
       }
+      
+      print('Direction validation PASSED');
     }
     
     // For multi-directional strokes, we need STRICT path checking
@@ -625,6 +702,7 @@ class StrokeValidator {
         
         if (!userHasDirectionChange) {
           // User drew a straight line instead of a curve/hook
+          print('FAILED: Multi-directional stroke requires direction change, but user stroke is straight');
           return false;
         }
       }
@@ -638,137 +716,6 @@ class StrokeValidator {
       }
       
       return true;
-    }
-    
-    // For simple strokes, check overall direction
-    final medianDirection = medianPoints.last - medianPoints.first;
-    final medianLength = medianDirection.distance;
-    
-    // Calculate the general direction of the user stroke
-    final userDirection = userStroke.last - userStroke.first;
-    
-    // Production: removed debug print
-    
-    // Normalize directions for comparison
-    final normalizedMedianDir = medianDirection / medianLength;
-    final normalizedUserDir = userDirection / userDirection.distance;
-    
-    // Production: removed debug print
-    
-    // Check if the directions are opposite (dot product < 0 means opposite)
-    final dotProduct = normalizedUserDir.dx * normalizedMedianDir.dx + 
-                      normalizedUserDir.dy * normalizedMedianDir.dy;
-    
-    // Reject strokes drawn in opposite direction (negative dot product)
-    if (dotProduct < 0) {
-      return false; // Completely opposite direction
-    }
-    
-    // Check if this is a primarily vertical or horizontal stroke
-    // Use angle-based detection for more accuracy
-    final angle = math.atan2(normalizedMedianDir.dy.abs(), normalizedMedianDir.dx.abs());
-    final isHorizontal = angle < math.pi / 4; // Less than 45 degrees from horizontal
-    final isVertical = angle > math.pi * 0.4; // More than 72 degrees from horizontal
-    
-    // Production: removed debug print
-    // Production: removed debug print
-    // Check X-direction
-    
-    // Check X-direction for any stroke with significant horizontal component
-    // Lower threshold to catch more strokes
-    if (normalizedMedianDir.dx.abs() > 0.3) { // If X component is significant
-      final medianGoesLeft = medianDirection.dx < 0;
-      final userGoesLeft = userDirection.dx < 0;
-      
-      // Production: removed debug print
-      // Production: removed debug print
-      // Production: removed debug print
-      // X-direction check
-      
-      // Must go in the same X direction
-      if (medianGoesLeft != userGoesLeft) {
-        // Production: removed debug print
-        return false;
-      }
-    }
-    
-    // Check Y-direction for any stroke with significant vertical component
-    if (normalizedMedianDir.dy.abs() > 0.3) { // If Y component is significant
-      final medianGoesDown = medianDirection.dy > 0; // Positive Y is down
-      final userGoesDown = userDirection.dy > 0;
-      
-      // Production: removed debug print
-      
-      // Must go in the same Y direction
-      if (medianGoesDown != userGoesDown) {
-        // Production: removed debug print
-        return false;
-      }
-    }
-    
-    // More lenient tolerance for direction
-    final directionThreshold = (isVertical || isHorizontal) ? 0.75 : 0.60;
-    
-    // Reject if stroke is not aligned enough with expected direction
-    if (dotProduct < directionThreshold) {
-      return false;
-    }
-    
-    // For shorter strokes, be even stricter about direction
-    final isShortStroke = medianLength < 0.3; // Short stroke threshold
-    
-    // Check start-to-middle direction
-    if (medianPoints.length >= 2 && userStroke.length >= 5) {
-      final medianMidIdx = medianPoints.length ~/ 2;
-      final userMidIdx = userStroke.length ~/ 2;
-      
-      final medianStartToMid = medianPoints[medianMidIdx] - medianPoints.first;
-      final userStartToMid = userStroke[userMidIdx] - userStroke.first;
-      
-      // Normalize
-      final normMedianSM = medianStartToMid / medianStartToMid.distance;
-      final normUserSM = userStartToMid / userStartToMid.distance;
-      
-      final midDotProduct = normUserSM.dx * normMedianSM.dx + 
-                           normUserSM.dy * normMedianSM.dy;
-      
-      // More balanced for multidirectional strokes
-      final threshold = isMultiDirectional 
-          ? (isShortStroke ? 0.65 : 0.55)  // More lenient for multidirectional
-          : (isShortStroke ? 0.70 : 0.60); // Strict for simple strokes
-      if (midDotProduct < threshold) {
-        return false;
-      }
-    }
-    
-    // For complex strokes, check multiple segments (especially strict for multi-directional)
-    if (medianPoints.length > 3 && userStroke.length > 10) {
-      // Check more points for better coverage
-      for (double fraction in [0.2, 0.4, 0.6, 0.8]) {
-        final medianIdx = (medianPoints.length * fraction).floor();
-        if (medianIdx >= medianPoints.length - 1) continue;
-        
-        // Check local direction at this point
-        final medianLocalDir = medianPoints[medianIdx + 1] - medianPoints[medianIdx];
-        
-        // Find corresponding point in user stroke
-        final userIdx = _findClosestPointIndex(medianPoints[medianIdx], userStroke);
-        if (userIdx == -1 || userIdx >= userStroke.length - 2) continue;
-        
-        // Get local direction in user stroke
-        final userLocalDir = userStroke[userIdx + 1] - userStroke[userIdx];
-        
-        // Check alignment
-        final localDot = (userLocalDir.dx * medianLocalDir.dx + 
-                         userLocalDir.dy * medianLocalDir.dy) / 
-                         (userLocalDir.distance * medianLocalDir.distance);
-        
-        // More lenient for multidirectional strokes
-        final threshold = isMultiDirectional ? -0.2 : 0.0; // Allow more variation for curves/hooks
-        if (localDot < threshold) {
-          return false;
-        }
-      }
     }
     
     return true;
