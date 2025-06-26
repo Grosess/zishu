@@ -416,10 +416,10 @@ class StrokeValidator {
     final isLongVertical = medianDirection.dy.abs() > medianDirection.dx.abs() * 1.5 && 
                           medianLength > 0.3; // Long vertical stroke (more lenient)
     
-    // Check if stroke length is reasonable - lenient on max length
+    // Check if stroke length is reasonable - very lenient on max length
     final isSmallStroke = medianLength < 0.15; // Small stroke in normalized space
-    final minRatio = isLongVertical ? 0.5 : (isSmallStroke ? 0.4 : 0.6); // Reasonable minimum
-    final maxRatio = isLongVertical ? 2.5 : (isSmallStroke ? 2.2 : 2.0); // Very lenient maximum
+    final minRatio = isLongVertical ? 0.4 : (isSmallStroke ? 0.3 : 0.5); // More lenient minimum
+    final maxRatio = isLongVertical ? 4.0 : (isSmallStroke ? 5.0 : 3.0); // Extremely lenient maximum for short strokes
     
     final lengthRatio = userLength / medianLength;
     
@@ -434,19 +434,25 @@ class StrokeValidator {
     final strokeSize = math.max(strokeWidth, strokeHeight) / canvasSize.width;
     final sizeFactor = strokeSize > 0.3 ? 1.6 : 1.5;
     
-    // Location tolerance - easier overall
+    // Check if this is a diagonal stroke (reuse medianDirection from above)
+    final isDiagonalStroke = (medianDirection.dx.abs() > medianDirection.distance * 0.3 && 
+                             medianDirection.dy.abs() > medianDirection.distance * 0.3);
+    
+    // Location tolerance - easier overall, especially for diagonals
     final locationTolerance = isLongVertical 
         ? tolerance * 0.6   // 60% for long vertical strokes
         : isMultiDirectional 
             ? tolerance * 0.7   // 70% for multi-directional (lenient)
-            : tolerance * 0.5;  // 50% for simple strokes (moderate)
+            : isDiagonalStroke
+                ? tolerance * 0.65  // 65% for diagonal strokes (more lenient)
+                : tolerance * 0.5;  // 50% for simple strokes (moderate)
     
     // Check key points with appropriate tolerance
     final startDist = (normalizedUser.first - normalizedMedian.first).distance;
     final endDist = (normalizedUser.last - normalizedMedian.last).distance;
     
     // Moderate tolerance for start/end points location
-    final pointTolerance = isLongVertical ? 1.5 : (isMultiDirectional ? 2.0 : 1.4);
+    final pointTolerance = isLongVertical ? 1.5 : (isMultiDirectional ? 2.0 : (isDiagonalStroke ? 1.6 : 1.4));
     
     print('Location check: startDist=$startDist, endDist=$endDist, maxAllowed=${locationTolerance * pointTolerance}');
     
@@ -586,8 +592,8 @@ class StrokeValidator {
         return false; // Stroke is going in opposite direction
       }
       
-      // Allow up to 60 degrees deviation for diagonal strokes, 45 degrees for others
-      final minDotProduct = isDiagonal ? 0.5 : 0.707; // cos(60°) vs cos(45°)
+      // Allow up to 75 degrees deviation for diagonal strokes, 45 degrees for others
+      final minDotProduct = isDiagonal ? 0.259 : 0.707; // cos(75°) vs cos(45°)
       
       print('Required min dot product: $minDotProduct (${isDiagonal ? "diagonal" : "straight"})');
       

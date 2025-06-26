@@ -2904,7 +2904,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       // Both segments need meaningful length
       if (dir1.distance > 20 && dir2.distance > 20) {
         final dot = (dir1.dx * dir2.dx + dir1.dy * dir2.dy) / (dir1.distance * dir2.distance);
-        if (dot < 0.0) { // Only count sharp turns (> 90 degrees)
+        if (dot < -0.5) { // Only count very sharp turns (> 120 degrees)
           hasSignificantTurn = true;
           break;
         }
@@ -2924,8 +2924,8 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         final projectedPoint = start + overallDirection * t.clamp(0.0, 1.0);
         final deviation = (midPoint - projectedPoint).distance;
         
-        // Only consider multi-directional if deviation is significant (> 15% of stroke length)
-        if (deviation > overallDirection.distance * 0.15) {
+        // Only consider multi-directional if deviation is very significant (> 25% of stroke length)
+        if (deviation > overallDirection.distance * 0.25) {
           hasSignificantTurn = true;
         }
       }
