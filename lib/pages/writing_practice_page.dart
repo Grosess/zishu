@@ -1403,9 +1403,19 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         tolerance: tolerance,
         isMultiDirectional: true,
       );
+    } else if (currentCharacter == '门' && nextIndex == 2) {
+      // Special case for 门 - the right vertical stroke (index 2) is very difficult
+      final tolerance = widget.mode == PracticeMode.testing ? 0.95 : 0.90;
+      isCorrect = StrokeValidator.validateStroke(
+        _currentStroke,
+        _characterStroke!.medians[nextIndex],
+        canvasSize,
+        tolerance: tolerance,
+        isMultiDirectional: false,
+      );
     } else if ((currentCharacter == '事' || currentCharacter == '中' || currentCharacter == '十' || 
                 currentCharacter == '丰' || currentCharacter == '串' || currentCharacter == '午' || 
-                currentCharacter == '年' || currentCharacter == '半') && 
+                currentCharacter == '年' || currentCharacter == '半' || currentCharacter == '门') && 
                 _isLongVerticalStroke(nextIndex)) {
       // Characters with prominent vertical strokes need extreme tolerance
       final tolerance = widget.mode == PracticeMode.testing ? 0.90 : 0.85;
