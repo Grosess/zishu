@@ -1345,8 +1345,8 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         isMultiDirectional: true,
       );
     } else if (_isMultiDirectionalStroke(nextIndex)) {
-      // Auto-detect multi-directional strokes and apply lenient tolerance
-      final tolerance = widget.mode == PracticeMode.testing ? 0.58 : 0.53;
+      // Auto-detect multi-directional strokes - more lenient
+      final tolerance = widget.mode == PracticeMode.testing ? 0.58 : 0.55;
       isCorrect = StrokeValidator.validateStroke(
         _currentStroke,
         _characterStroke!.medians[nextIndex],
@@ -1355,8 +1355,8 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         isMultiDirectional: true,
       );
     } else if (_isSimpleStroke(nextIndex)) {
-      // Simple strokes (straight lines) need more precision
-      final tolerance = widget.mode == PracticeMode.testing ? 0.32 : 0.27;
+      // Simple strokes (straight lines) - stricter
+      final tolerance = widget.mode == PracticeMode.testing ? 0.32 : 0.30;
       isCorrect = StrokeValidator.validateStroke(
         _currentStroke,
         _characterStroke!.medians[nextIndex],
@@ -1365,8 +1365,8 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         isMultiDirectional: false,
       );
     } else {
-      // Standard tolerance for most strokes - moderately strict
-      final tolerance = widget.mode == PracticeMode.testing ? 0.42 : 0.37;
+      // Standard tolerance for most strokes - stricter
+      final tolerance = widget.mode == PracticeMode.testing ? 0.38 : 0.35;
       isCorrect = StrokeValidator.validateStroke(
         _currentStroke,
         _characterStroke!.medians[nextIndex],

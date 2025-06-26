@@ -837,7 +837,7 @@ class MainScreen extends StatefulWidget {
 }
 
 class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
-  int _selectedIndex = 0;
+  int _selectedIndex = 1;  // Start on Sets tab
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ProfileService _profileService = ProfileService();
   

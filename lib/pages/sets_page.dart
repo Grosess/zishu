@@ -1144,26 +1144,71 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
       onPressed: () {
         showModalBottomSheet(
           context: context,
-          builder: (context) => Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.create_new_folder),
-                title: const Text('Create Folder'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showCreateFolderDialog();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.add_box),
-                title: const Text('Create Set'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showAddSetDialog();
-                },
-              ),
-            ],
+          builder: (bottomSheetContext) => Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Import option - made more prominent
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Theme.of(bottomSheetContext).colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Theme.of(bottomSheetContext).colorScheme.primary,
+                      width: 2,
+                    ),
+                  ),
+                  child: ListTile(
+                    leading: Icon(
+                      Icons.file_upload,
+                      color: Theme.of(bottomSheetContext).colorScheme.primary,
+                      size: 28,
+                    ),
+                    title: Text(
+                      'Import Characters',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        color: Theme.of(bottomSheetContext).colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                    subtitle: Text(
+                      'Import from text or file',
+                      style: TextStyle(
+                        color: Theme.of(bottomSheetContext).colorScheme.onPrimaryContainer.withOpacity(0.8),
+                      ),
+                    ),
+                    trailing: Icon(
+                      Icons.arrow_forward_ios,
+                      color: Theme.of(bottomSheetContext).colorScheme.primary,
+                    ),
+                    onTap: () {
+                      Navigator.pop(bottomSheetContext);
+                      _showImportDialog();
+                    },
+                  ),
+                ),
+                const Divider(indent: 16, endIndent: 16),
+                ListTile(
+                  leading: const Icon(Icons.create_new_folder),
+                  title: const Text('Create Folder'),
+                  onTap: () {
+                    Navigator.pop(bottomSheetContext);
+                    _showCreateFolderDialog();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.add_box),
+                  title: const Text('Create Set'),
+                  onTap: () {
+                    Navigator.pop(bottomSheetContext);
+                    _showAddSetDialog();
+                  },
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -1987,7 +2032,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
                   decoration: const InputDecoration(
                     labelText: 'Characters/Words',
                     hintText: 'e.g., 我，你，他 or 你好世界',
-                    helperText: 'Use commas for words. English filtered.',
+                    helperText: 'Use commas for words.',
                   ),
                   maxLines: 3,
                 ),
@@ -2220,6 +2265,333 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
       );
     }
   }
+  
+  Future<void> _showImportDialog() async {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Import Characters'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Choose how to import characters:',
+              style: TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 20),
+            // Import from text option
+            Card(
+              elevation: 2,
+              child: InkWell(
+                onTap: () {
+                  Navigator.pop(context);
+                  _showTextImportDialog();
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.text_fields,
+                        size: 32,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Import from Text',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            Text(
+                              'Paste Chinese text to create a set',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.arrow_forward_ios, size: 16),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Import from file option
+            Card(
+              elevation: 2,
+              child: InkWell(
+                onTap: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('File import coming soon!'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.file_copy,
+                        size: 32,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Import from File',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            Text(
+                              'Import from CSV or text files',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.arrow_forward_ios, size: 16),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Future<void> _showTextImportDialog() async {
+    final controller = TextEditingController();
+    final nameController = TextEditingController();
+    
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Import from Text'),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  labelText: 'Set Name',
+                  hintText: 'e.g. My Vocabulary',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: controller,
+                maxLines: 8,
+                decoration: InputDecoration(
+                  labelText: 'Chinese Text',
+                  hintText: 'Paste or type Chinese text here...',
+                  helperText: 'All Chinese characters will be extracted',
+                  border: const OutlineInputBorder(),
+                  counterText: '${controller.text.length} characters',
+                ),
+                onChanged: (text) {
+                  setState(() {}); // Update character count
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              if (controller.text.isNotEmpty && nameController.text.isNotEmpty) {
+                // Extract Chinese characters using regex
+                final chineseChars = RegExp(r'[\u4e00-\u9fa5]+')
+                    .allMatches(controller.text)
+                    .map((m) => m.group(0)!)
+                    .join();
+                
+                if (chineseChars.isNotEmpty) {
+                  // Create the set using existing method
+                  Navigator.pop(context);
+                  
+                  // Show loading
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (context) => const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                  
+                  // Validate and create set
+                  final validation = await _validator.validateSetString(chineseChars);
+                  
+                  if (!mounted) return;
+                  Navigator.pop(context); // Close loading
+                  
+                  if (validation.isValid) {
+                    final newSet = await _setManager.createSetFromString(
+                      chineseChars,
+                      nameController.text,
+                    );
+                    
+                    if (mounted) {
+                      setState(() {
+                        _customSets.add(newSet);
+                      });
+                    }
+                    
+                    await _saveCustomSetsToStorage();
+                    
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Created set "${nameController.text}" with ${newSet.characters.length} characters'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  } else {
+                    // Show validation errors (using existing validation dialog logic)
+                    _showValidationErrorDialog(validation, nameController.text, chineseChars);
+                  }
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('No Chinese characters found in the text'),
+                      backgroundColor: Colors.orange,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Import'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Future<void> _showValidationErrorDialog(ValidationSummary validation, String setName, String characters) async {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Some Characters Unavailable'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'The following characters are not in the MakeMeAHanzi database:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              ...validation.missingCharacters.map((char) => Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    char,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              )),
+              if (validation.validItems.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                const Text(
+                  'Valid characters that can be imported:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  children: validation.validItems.map((item) => Chip(
+                    label: Text(item),
+                    backgroundColor: Colors.green.withOpacity(0.2),
+                  )).toList(),
+                ),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          if (validation.validItems.isNotEmpty)
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                
+                final newSet = await _setManager.createSetFromString(
+                  validation.validItems.join(''),
+                  setName,
+                );
+                
+                if (mounted) {
+                  setState(() {
+                    _customSets.add(newSet);
+                  });
+                }
+                
+                await _saveCustomSetsToStorage();
+                
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Created set "$setName" with ${newSet.characters.length} characters'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              },
+              child: const Text('Import Valid Characters'),
+            ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _FolderCard extends StatelessWidget {
@@ -2334,6 +2706,7 @@ class _FolderCard extends StatelessWidget {
       ),
     );
   }
+  
 }
 
 class _CharacterSetSquareCard extends StatelessWidget {

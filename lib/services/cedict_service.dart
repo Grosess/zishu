@@ -149,6 +149,16 @@ class CedictService {
             } else if (!dict.containsKey(traditional)) {
               dict[traditional] = entry;
             }
+          } else if (traditional == '書' || simplified == '书') {
+            // For 書/书, prefer shu1 (book) over Shu1 (abbreviation)
+            if (pinyin == 'shu1') {
+              dict[traditional] = entry;
+              if (simplified != traditional) {
+                dict[simplified] = entry;
+              }
+            } else if (!dict.containsKey(traditional)) {
+              dict[traditional] = entry;
+            }
           } else if (!dict.containsKey(traditional)) {
             dict[traditional] = entry;
           } else {
@@ -255,9 +265,15 @@ class CedictService {
     // Remove content in parentheses
     def = def.replaceAll(RegExp(r'\([^)]*\)'), '');
     
-    // Remove "abbr. for" and "abbreviation for" phrases
-    def = def.replaceAll(RegExp(r'abbr\.\s+for\s+', caseSensitive: false), '');
-    def = def.replaceAll(RegExp(r'abbreviation\s+for\s+', caseSensitive: false), '');
+    // Replace "abbr. for X" with just "X"
+    def = def.replaceAllMapped(
+      RegExp(r'abbr\.\s+for\s+(.+)', caseSensitive: false),
+      (match) => match.group(1) ?? ''
+    );
+    def = def.replaceAllMapped(
+      RegExp(r'abbreviation\s+for\s+(.+)', caseSensitive: false),
+      (match) => match.group(1) ?? ''
+    );
     
     // Clean up whitespace
     def = def.trim().replaceAll(RegExp(r'\s+'), ' ');

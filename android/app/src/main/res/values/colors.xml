@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="splash_background">#FFD700</color>
+    <color name="splash_background">#424242</color>
     <color name="primary">#DC143C</color>
     <color name="primary_dark">#B91C1C</color>
     <color name="accent">#FFD700</color>

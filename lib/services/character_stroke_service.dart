@@ -398,26 +398,26 @@ class StrokeValidator {
     final strokeSize = math.max(strokeWidth, strokeHeight) / canvasSize.width;
     final sizeFactor = strokeSize > 0.3 ? 1.6 : 1.5;
     
-    // Location tolerance - moderately stricter for non-multidirectional strokes
+    // Location tolerance - more lenient for all
     final locationTolerance = isMultiDirectional 
-        ? tolerance * 0.50  // 50% for multi-directional (lenient)
-        : tolerance * 0.35; // 35% for simple strokes (moderate)
+        ? tolerance * 0.60  // 60% for multi-directional (lenient)
+        : tolerance * 0.50; // 50% for simple strokes (lenient)
     
     // Check key points with appropriate tolerance
     final startDist = (normalizedUser.first - normalizedMedian.first).distance;
     final endDist = (normalizedUser.last - normalizedMedian.last).distance;
     
-    // Moderately stricter tolerance for start/end points on non-multidirectional strokes
-    final pointTolerance = isMultiDirectional ? 2.5 : 1.8;
+    // More lenient tolerance for start/end points location
+    final pointTolerance = isMultiDirectional ? 2.5 : 2.3;
     if (startDist > locationTolerance * pointTolerance || endDist > locationTolerance * pointTolerance) {
       // Production: removed debug print
       return false;
     }
     
-    // Direction validation - moderately stricter for non-multidirectional strokes
+    // Direction validation - much stricter, especially for multidirectional
     final directionTolerance = isMultiDirectional 
-        ? (isSmallStroke ? tolerance * 0.7 : tolerance * 0.5)  // Original lenient values
-        : (isSmallStroke ? tolerance * 0.45 : tolerance * 0.35); // Moderate strictness for simple strokes
+        ? (isSmallStroke ? tolerance * 0.50 : tolerance * 0.30)  // Very strict for multidirectional
+        : (isSmallStroke ? tolerance * 0.40 : tolerance * 0.30); // Strict for simple strokes
     if (!_validateStrokeDirection(normalizedUser, normalizedMedian, directionTolerance, isMultiDirectional)) {
       return false;
     }
@@ -442,8 +442,8 @@ class StrokeValidator {
         }
       }
       
-      // Moderate shape matching for non-multidirectional strokes
-      final requiredMatch = isMultiDirectional ? 0.20 : 0.40; // 40% for simple strokes
+      // More lenient shape matching for multidirectional
+      final requiredMatch = isMultiDirectional ? 0.20 : 0.50; // Much more lenient for multidirectional
       if (matchedPoints < totalChecks * requiredMatch) return false;
     }
     
@@ -506,18 +506,130 @@ class StrokeValidator {
       }
     }
     
-    // For multi-directional strokes, we still need to check the path somewhat
+    // For multi-directional strokes, we need STRICT path checking
     if (isMultiDirectional) {
-      // Just check that start and end are reasonably close
+      // First verify that the median stroke actually has a significant curve/hook
+      if (medianPoints.length >= 3) {
+        // Check the expected curve in the median
+        final medianStart = medianPoints.first;
+        final medianMid = medianPoints[medianPoints.length ~/ 2];
+        final medianEnd = medianPoints.last;
+        
+        // Calculate if the median has a curve by checking if middle point deviates from straight line
+        final straightLine = medianEnd - medianStart;
+        final toMidpoint = medianMid - medianStart;
+        
+        // Project midpoint onto the straight line
+        double t = 0;
+        if (straightLine.distance > 0) {
+          t = (toMidpoint.dx * straightLine.dx + toMidpoint.dy * straightLine.dy) / 
+              (straightLine.distance * straightLine.distance);
+          t = t.clamp(0.0, 1.0);
+        }
+        
+        final projectedPoint = medianStart + straightLine * t;
+        final deviation = (medianMid - projectedPoint).distance;
+        
+        // If median doesn't have significant curve, this isn't really multidirectional
+        if (deviation < 0.05) {
+          isMultiDirectional = false;
+        }
+      }
+      
+      // Check that the stroke actually follows the curve/hook pattern
+      if (isMultiDirectional && medianPoints.length >= 3 && userStroke.length >= 10) {
+        // Sample fewer points along the stroke to ensure it follows the curve
+        final numCheckPoints = 3;
+        for (int i = 0; i < numCheckPoints; i++) {
+          final progress = i / (numCheckPoints - 1);
+          final medianIdx = (progress * (medianPoints.length - 1)).round();
+          final userIdx = (progress * (userStroke.length - 1)).round();
+          
+          if (medianIdx < medianPoints.length && userIdx < userStroke.length) {
+            // Check that user stroke point is near the corresponding median point
+            final dist = (userStroke[userIdx] - medianPoints[medianIdx]).distance;
+            if (dist > tolerance * 0.8) { // More lenient distance check for curve following
+              return false;
+            }
+          }
+        }
+        
+        // Check for required direction changes in user stroke
+        // For strokes like 与's second stroke, we need to detect the hook at the end
+        bool userHasDirectionChange = false;
+        double maxAngleChange = 0.0;
+        
+        // Check the overall path curvature
+        final startToMid = userStroke[userStroke.length ~/ 2] - userStroke.first;
+        final midToEnd = userStroke.last - userStroke[userStroke.length ~/ 2];
+        
+        if (startToMid.distance > 0.01 && midToEnd.distance > 0.01) {
+          // Normalize vectors
+          final normStartToMid = startToMid / startToMid.distance;
+          final normMidToEnd = midToEnd / midToEnd.distance;
+          
+          // Calculate angle change
+          final dot = normStartToMid.dx * normMidToEnd.dx + normStartToMid.dy * normMidToEnd.dy;
+          maxAngleChange = 1.0 - dot; // Convert to angle measure
+          
+          // For hooks and curves, we need significant angle change
+          if (maxAngleChange > 0.3) { // About 35 degrees minimum
+            userHasDirectionChange = true;
+          }
+        }
+        
+        // Also check for hooks specifically (sharp turns near the end)
+        if (!userHasDirectionChange && userStroke.length >= 10) {
+          final lastQuarter = userStroke.length * 3 ~/ 4;
+          final beforeHook = userStroke[lastQuarter] - userStroke[lastQuarter - 2];
+          final afterHook = userStroke.last - userStroke[lastQuarter];
+          
+          if (beforeHook.distance > 0.01 && afterHook.distance > 0.01) {
+            final hookDot = (beforeHook.dx * afterHook.dx + beforeHook.dy * afterHook.dy) / 
+                           (beforeHook.distance * afterHook.distance);
+            if (hookDot < 0.7) { // Detect hook at end
+              userHasDirectionChange = true;
+            }
+          }
+        }
+        
+        // Special check for strokes like 与's second stroke - vertical with hook
+        // Check if this is primarily a vertical stroke that should have a horizontal hook
+        if (!userHasDirectionChange) {
+          final overallDir = userStroke.last - userStroke.first;
+          final isPrimarilyVertical = overallDir.dy.abs() > overallDir.dx.abs() * 2;
+          
+          if (isPrimarilyVertical && medianPoints.length >= 3) {
+            // Check if median has a horizontal component at the end
+            final medianEndDir = medianPoints.last - medianPoints[medianPoints.length - 2];
+            final hasHorizontalEnd = medianEndDir.dx.abs() > medianEndDir.dy.abs() * 0.5;
+            
+            if (hasHorizontalEnd) {
+              // User stroke must also have horizontal component at end
+              final userEndDir = userStroke.last - userStroke[userStroke.length - 3];
+              final userHasHorizontalEnd = userEndDir.dx.abs() > userEndDir.dy.abs() * 0.3;
+              
+              if (!userHasHorizontalEnd) {
+                return false; // Straight down stroke when hook is required
+              }
+            }
+          }
+        }
+        
+        if (!userHasDirectionChange) {
+          // User drew a straight line instead of a curve/hook
+          return false;
+        }
+      }
+      
+      // Continue with existing endpoint checks
       final startDist = (userStroke.first - medianPoints.first).distance;
       final endDist = (userStroke.last - medianPoints.last).distance;
       
-      if (startDist > 0.45 || endDist > 0.45) {  // More lenient for multi-directional strokes
-        // Production: removed debug print
+      if (startDist > 0.45 || endDist > 0.45) {
         return false;
       }
       
-      // For multi-directional strokes, we've already checked the overall direction
       return true;
     }
     
@@ -613,15 +725,17 @@ class StrokeValidator {
       final midDotProduct = normUserSM.dx * normMedianSM.dx + 
                            normUserSM.dy * normMedianSM.dy;
       
-      // Stricter threshold for middle section
-      final threshold = isShortStroke ? 0.65 : 0.5; // Less variation allowed
+      // More balanced for multidirectional strokes
+      final threshold = isMultiDirectional 
+          ? (isShortStroke ? 0.65 : 0.55)  // More lenient for multidirectional
+          : (isShortStroke ? 0.70 : 0.60); // Strict for simple strokes
       if (midDotProduct < threshold) {
         return false;
       }
     }
     
-    // For complex strokes, check multiple segments (but not for multi-directional strokes)
-    if (medianPoints.length > 3 && userStroke.length > 10 && !isMultiDirectional) {
+    // For complex strokes, check multiple segments (especially strict for multi-directional)
+    if (medianPoints.length > 3 && userStroke.length > 10) {
       // Check more points for better coverage
       for (double fraction in [0.2, 0.4, 0.6, 0.8]) {
         final medianIdx = (medianPoints.length * fraction).floor();
@@ -642,8 +756,9 @@ class StrokeValidator {
                          userLocalDir.dy * medianLocalDir.dy) / 
                          (userLocalDir.distance * medianLocalDir.distance);
         
-        // Stricter for complex strokes
-        if (localDot < -0.2) { // Less variation allowed
+        // More lenient for multidirectional strokes
+        final threshold = isMultiDirectional ? -0.2 : 0.0; // Allow more variation for curves/hooks
+        if (localDot < threshold) {
           return false;
         }
       }
@@ -667,7 +782,7 @@ class StrokeValidator {
       }
     }
     
-    return minDist < 0.35 ? minIndex : -1; // Stricter matching
+    return minDist < 0.45 ? minIndex : -1; // More lenient location matching
   }
   
   static List<Offset> _normalizePoints(List<Offset> points, Size canvasSize) {
