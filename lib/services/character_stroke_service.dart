@@ -418,8 +418,8 @@ class StrokeValidator {
     
     // Check if stroke length is reasonable - moderately strict
     final isSmallStroke = medianLength < 0.15; // Small stroke in normalized space
-    final minRatio = isLongVertical ? 0.6 : (isSmallStroke ? 0.55 : 0.65); // More lenient minimum
-    final maxRatio = isLongVertical ? 1.7 : (isSmallStroke ? 1.6 : 1.5); // More lenient maximum
+    final minRatio = isLongVertical ? 0.6 : (isSmallStroke ? 0.45 : 0.65); // 45% for small strokes
+    final maxRatio = isLongVertical ? 1.7 : (isSmallStroke ? 1.65 : 1.5); // 165% for small strokes
     
     final lengthRatio = userLength / medianLength;
     
@@ -436,7 +436,7 @@ class StrokeValidator {
     
     // Location tolerance - much stricter for non-multidirectional strokes
     final locationTolerance = isLongVertical 
-        ? tolerance * 0.7  // 70% for long vertical strokes 
+        ? tolerance * 0.35  // 35% for long vertical strokes (still strict)
         : isMultiDirectional 
             ? tolerance * 0.60  // 60% for multi-directional (lenient)
             : tolerance * 0.25; // 25% for simple strokes (very strict)
@@ -446,7 +446,7 @@ class StrokeValidator {
     final endDist = (normalizedUser.last - normalizedMedian.last).distance;
     
     // Stricter tolerance for start/end points location
-    final pointTolerance = isLongVertical ? 2.0 : (isMultiDirectional ? 2.0 : 1.5);
+    final pointTolerance = isLongVertical ? 1.3 : (isMultiDirectional ? 1.8 : 1.2);
     
     print('Location check: startDist=$startDist, endDist=$endDist, maxAllowed=${locationTolerance * pointTolerance}');
     
