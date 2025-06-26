@@ -1371,8 +1371,8 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         isMultiDirectional: false,
       );
     } else if (_isMultiDirectionalStroke(nextIndex)) {
-      // Auto-detect multi-directional strokes - more lenient
-      final tolerance = widget.mode == PracticeMode.testing ? 0.58 : 0.55;
+      // Multi-directional strokes need special handling
+      final tolerance = widget.mode == PracticeMode.testing ? 0.65 : 0.60;
       isCorrect = StrokeValidator.validateStroke(
         _currentStroke,
         _characterStroke!.medians[nextIndex],
@@ -1380,39 +1380,9 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         tolerance: tolerance,
         isMultiDirectional: true,
       );
-    } else if (_isLongVerticalStroke(nextIndex)) {
-      // Long vertical strokes - extremely lenient
-      final tolerance = widget.mode == PracticeMode.testing ? 0.85 : 0.80;
-      isCorrect = StrokeValidator.validateStroke(
-        _currentStroke,
-        _characterStroke!.medians[nextIndex],
-        canvasSize,
-        tolerance: tolerance,
-        isMultiDirectional: false,
-      );
-    } else if (_isVerticalStroke(nextIndex)) {
-      // Any vertical stroke - more lenient than other simple strokes
-      final tolerance = widget.mode == PracticeMode.testing ? 0.50 : 0.45;
-      isCorrect = StrokeValidator.validateStroke(
-        _currentStroke,
-        _characterStroke!.medians[nextIndex],
-        canvasSize,
-        tolerance: tolerance,
-        isMultiDirectional: false,
-      );
-    } else if (_isSimpleStroke(nextIndex)) {
-      // Simple strokes (straight lines) - stricter
-      final tolerance = widget.mode == PracticeMode.testing ? 0.32 : 0.30;
-      isCorrect = StrokeValidator.validateStroke(
-        _currentStroke,
-        _characterStroke!.medians[nextIndex],
-        canvasSize,
-        tolerance: tolerance,
-        isMultiDirectional: false,
-      );
     } else {
-      // Standard tolerance for most strokes - stricter
-      final tolerance = widget.mode == PracticeMode.testing ? 0.38 : 0.35;
+      // All other strokes - use a balanced default tolerance
+      final tolerance = widget.mode == PracticeMode.testing ? 0.55 : 0.50;
       isCorrect = StrokeValidator.validateStroke(
         _currentStroke,
         _characterStroke!.medians[nextIndex],
@@ -1421,8 +1391,6 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         isMultiDirectional: false,
       );
     }
-    
-    // Production: removed debug print
     
     setState(() {
       if (isCorrect) {
@@ -2958,7 +2926,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     // Also check if it's the last stroke of the character (often the case for long verticals)
     final isLastStroke = strokeIndex == _characterStroke!.strokes.length - 1;
     
-    return isVertical && isLong && _isSimpleStroke(strokeIndex);
+    return isVertical && isLong;
   }
   
   bool _isVerticalStroke(int strokeIndex) {
@@ -2975,36 +2943,9 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     // Check if primarily vertical (very lenient check)
     final isVertical = direction.dy.abs() > direction.dx.abs();
     
-    return isVertical && _isSimpleStroke(strokeIndex);
+    return isVertical;
   }
   
-  bool _isSimpleStroke(int strokeIndex) {
-    if (_characterStroke == null || strokeIndex >= _characterStroke!.medians.length) return false;
-    
-    final medianPoints = _characterStroke!.medians[strokeIndex];
-    if (medianPoints.length < 2) return true;
-    
-    // Check if stroke is mostly straight
-    final start = Offset(medianPoints.first[0], medianPoints.first[1]);
-    final end = Offset(medianPoints.last[0], medianPoints.last[1]);
-    final directPath = end - start;
-    
-    // Calculate total path length
-    double totalLength = 0;
-    for (int i = 1; i < medianPoints.length; i++) {
-      final p1 = Offset(medianPoints[i-1][0], medianPoints[i-1][1]);
-      final p2 = Offset(medianPoints[i][0], medianPoints[i][1]);
-      totalLength += (p2 - p1).distance;
-    }
-    
-    // If the actual path is close to the direct distance, it's a simple stroke
-    final directDistance = directPath.distance;
-    if (directDistance > 0 && totalLength / directDistance < 1.1) {
-      return true;
-    }
-    
-    return false;
-  }
   
   void _startBounceAnimation(int strokeIndex) {
     _bounceController?.dispose();

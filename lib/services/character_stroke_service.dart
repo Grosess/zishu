@@ -470,9 +470,9 @@ class StrokeValidator {
     // Production: removed debug print
     // Production: removed debug print
     
-    // Check if this is a multi-directional stroke (hook, turn, etc.)
-    bool isMultiDirectional = false;
-    if (medianPoints.length >= 3) {
+    // If not already marked as multi-directional, check if this stroke has curves
+    bool actuallyMultiDirectional = isMultiDirectional;
+    if (!actuallyMultiDirectional && medianPoints.length >= 3) {
       // Check for significant direction changes in the median
       for (int i = 1; i < medianPoints.length - 1; i++) {
         final dir1 = medianPoints[i] - medianPoints[i - 1];
@@ -480,7 +480,7 @@ class StrokeValidator {
         if (dir1.distance > 0 && dir2.distance > 0) {
           final dot = (dir1.dx * dir2.dx + dir1.dy * dir2.dy) / (dir1.distance * dir2.distance);
           if (dot < 0.5) { // Significant direction change (> 60 degrees)
-            isMultiDirectional = true;
+            actuallyMultiDirectional = true;
             break;
           }
         }
@@ -514,7 +514,7 @@ class StrokeValidator {
     }
     
     // For multi-directional strokes, we need STRICT path checking
-    if (isMultiDirectional) {
+    if (actuallyMultiDirectional) {
       // First verify that the median stroke actually has a significant curve/hook
       if (medianPoints.length >= 3) {
         // Check the expected curve in the median
@@ -539,12 +539,12 @@ class StrokeValidator {
         
         // If median doesn't have significant curve, this isn't really multidirectional
         if (deviation < 0.05) {
-          isMultiDirectional = false;
+          actuallyMultiDirectional = false;
         }
       }
       
       // Check that the stroke actually follows the curve/hook pattern
-      if (isMultiDirectional && medianPoints.length >= 3 && userStroke.length >= 10) {
+      if (actuallyMultiDirectional && medianPoints.length >= 3 && userStroke.length >= 10) {
         // Sample fewer points along the stroke to ensure it follows the curve
         final numCheckPoints = 3;
         for (int i = 0; i < numCheckPoints; i++) {
