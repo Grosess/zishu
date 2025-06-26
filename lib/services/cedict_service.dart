@@ -255,6 +255,10 @@ class CedictService {
     // Remove content in parentheses
     def = def.replaceAll(RegExp(r'\([^)]*\)'), '');
     
+    // Remove "abbr. for" and "abbreviation for" phrases
+    def = def.replaceAll(RegExp(r'abbr\.\s+for\s+', caseSensitive: false), '');
+    def = def.replaceAll(RegExp(r'abbreviation\s+for\s+', caseSensitive: false), '');
+    
     // Clean up whitespace
     def = def.trim().replaceAll(RegExp(r'\s+'), ' ');
     

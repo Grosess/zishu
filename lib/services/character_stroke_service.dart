@@ -319,7 +319,7 @@ class StrokeValidator {
     List<Offset> userStroke,
     List<List<double>> medianPoints,
     Size canvasSize,
-    {double tolerance = 0.55}  // Increased from 0.42 for more leniency
+    {double tolerance = 0.55, bool isMultiDirectional = false}  // Added isMultiDirectional flag
   ) {
     if (userStroke.length < 2 || medianPoints.length < 2) return false;
     
@@ -394,24 +394,31 @@ class StrokeValidator {
       return false; // Stroke is too short or too long
     }
     
-    // Very lenient location tolerance - focus on direction over exact shape
+    // Location tolerance - stricter for non-multidirectional strokes
     final strokeSize = math.max(strokeWidth, strokeHeight) / canvasSize.width;
-    final sizeFactor = strokeSize > 0.3 ? 1.6 : 1.5; // More lenient for all strokes
-    final locationTolerance = tolerance * 0.50; // 50% of normalized space - much more lenient
+    final sizeFactor = strokeSize > 0.3 ? 1.6 : 1.5;
     
-    // Check key points with lenient tolerance
+    // Location tolerance - moderately stricter for non-multidirectional strokes
+    final locationTolerance = isMultiDirectional 
+        ? tolerance * 0.50  // 50% for multi-directional (lenient)
+        : tolerance * 0.35; // 35% for simple strokes (moderate)
+    
+    // Check key points with appropriate tolerance
     final startDist = (normalizedUser.first - normalizedMedian.first).distance;
     final endDist = (normalizedUser.last - normalizedMedian.last).distance;
     
-    // Check start and end points with very lenient tolerance
-    if (startDist > locationTolerance * 2.5 || endDist > locationTolerance * 2.5) {
+    // Moderately stricter tolerance for start/end points on non-multidirectional strokes
+    final pointTolerance = isMultiDirectional ? 2.5 : 1.8;
+    if (startDist > locationTolerance * pointTolerance || endDist > locationTolerance * pointTolerance) {
       // Production: removed debug print
       return false;
     }
     
-    // Direction validation - more lenient for small strokes
-    final directionTolerance = isSmallStroke ? tolerance * 0.7 : tolerance * 0.5;
-    if (!_validateStrokeDirection(normalizedUser, normalizedMedian, directionTolerance)) {
+    // Direction validation - moderately stricter for non-multidirectional strokes
+    final directionTolerance = isMultiDirectional 
+        ? (isSmallStroke ? tolerance * 0.7 : tolerance * 0.5)  // Original lenient values
+        : (isSmallStroke ? tolerance * 0.45 : tolerance * 0.35); // Moderate strictness for simple strokes
+    if (!_validateStrokeDirection(normalizedUser, normalizedMedian, directionTolerance, isMultiDirectional)) {
       return false;
     }
     
@@ -435,8 +442,9 @@ class StrokeValidator {
         }
       }
       
-      // Require only 20% of sampled points to match - very relaxed for shape
-      if (matchedPoints < totalChecks * 0.20) return false;
+      // Moderate shape matching for non-multidirectional strokes
+      final requiredMatch = isMultiDirectional ? 0.20 : 0.40; // 40% for simple strokes
+      if (matchedPoints < totalChecks * requiredMatch) return false;
     }
     
     return true;
@@ -447,6 +455,7 @@ class StrokeValidator {
     List<Offset> userStroke,
     List<Offset> medianPoints,
     double tolerance,
+    bool isMultiDirectional,
   ) {
     if (userStroke.length < 3 || medianPoints.length < 2) return true;
     

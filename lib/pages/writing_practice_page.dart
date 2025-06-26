@@ -791,6 +791,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                   Flexible(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: widget.characterSet == 'Tutorial' ? MainAxisAlignment.center : MainAxisAlignment.start,
                       children: [
                         AspectRatio(
                           aspectRatio: 1.0, // Force square
@@ -1331,24 +1332,47 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         _characterStroke!.medians[nextIndex],
         canvasSize,
         tolerance: tolerance,
+        isMultiDirectional: false,
       );
     } else if (currentCharacter == '马' || currentCharacter == '七') {
       // For multi-directional characters like 马 and 七, use more lenient tolerance
-      final tolerance = widget.mode == PracticeMode.testing ? 0.55 : 0.5;
+      final tolerance = widget.mode == PracticeMode.testing ? 0.6 : 0.55;
       isCorrect = StrokeValidator.validateStroke(
         _currentStroke,
         _characterStroke!.medians[nextIndex],
         canvasSize,
         tolerance: tolerance,
+        isMultiDirectional: true,
+      );
+    } else if (_isMultiDirectionalStroke(nextIndex)) {
+      // Auto-detect multi-directional strokes and apply lenient tolerance
+      final tolerance = widget.mode == PracticeMode.testing ? 0.58 : 0.53;
+      isCorrect = StrokeValidator.validateStroke(
+        _currentStroke,
+        _characterStroke!.medians[nextIndex],
+        canvasSize,
+        tolerance: tolerance,
+        isMultiDirectional: true,
+      );
+    } else if (_isSimpleStroke(nextIndex)) {
+      // Simple strokes (straight lines) need more precision
+      final tolerance = widget.mode == PracticeMode.testing ? 0.32 : 0.27;
+      isCorrect = StrokeValidator.validateStroke(
+        _currentStroke,
+        _characterStroke!.medians[nextIndex],
+        canvasSize,
+        tolerance: tolerance,
+        isMultiDirectional: false,
       );
     } else {
-      // Standard tolerance for most strokes - stricter but achievable
-      final tolerance = widget.mode == PracticeMode.testing ? 0.4 : 0.35; // Match the default tolerance
+      // Standard tolerance for most strokes - moderately strict
+      final tolerance = widget.mode == PracticeMode.testing ? 0.42 : 0.37;
       isCorrect = StrokeValidator.validateStroke(
         _currentStroke,
         _characterStroke!.medians[nextIndex],
         canvasSize,
         tolerance: tolerance,
+        isMultiDirectional: false,
       );
     }
     
@@ -2821,6 +2845,60 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     
     // Return normalized deviation (0.0 to 1.0)
     return (totalDeviation / samples / canvasSize.width).clamp(0.0, 0.3);
+  }
+  
+  bool _isMultiDirectionalStroke(int strokeIndex) {
+    if (_characterStroke == null || strokeIndex >= _characterStroke!.medians.length) return false;
+    
+    final medianPoints = _characterStroke!.medians[strokeIndex];
+    if (medianPoints.length < 3) return false;
+    
+    // Check for significant direction changes in the stroke
+    for (int i = 1; i < medianPoints.length - 1; i++) {
+      final p1 = Offset(medianPoints[i-1][0], medianPoints[i-1][1]);
+      final p2 = Offset(medianPoints[i][0], medianPoints[i][1]);
+      final p3 = Offset(medianPoints[i+1][0], medianPoints[i+1][1]);
+      
+      final dir1 = p2 - p1;
+      final dir2 = p3 - p2;
+      
+      if (dir1.distance > 0 && dir2.distance > 0) {
+        final dot = (dir1.dx * dir2.dx + dir1.dy * dir2.dy) / (dir1.distance * dir2.distance);
+        if (dot < 0.5) { // Significant direction change (> 60 degrees)
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  }
+  
+  bool _isSimpleStroke(int strokeIndex) {
+    if (_characterStroke == null || strokeIndex >= _characterStroke!.medians.length) return false;
+    
+    final medianPoints = _characterStroke!.medians[strokeIndex];
+    if (medianPoints.length < 2) return true;
+    
+    // Check if stroke is mostly straight
+    final start = Offset(medianPoints.first[0], medianPoints.first[1]);
+    final end = Offset(medianPoints.last[0], medianPoints.last[1]);
+    final directPath = end - start;
+    
+    // Calculate total path length
+    double totalLength = 0;
+    for (int i = 1; i < medianPoints.length; i++) {
+      final p1 = Offset(medianPoints[i-1][0], medianPoints[i-1][1]);
+      final p2 = Offset(medianPoints[i][0], medianPoints[i][1]);
+      totalLength += (p2 - p1).distance;
+    }
+    
+    // If the actual path is close to the direct distance, it's a simple stroke
+    final directDistance = directPath.distance;
+    if (directDistance > 0 && totalLength / directDistance < 1.1) {
+      return true;
+    }
+    
+    return false;
   }
   
   void _startBounceAnimation(int strokeIndex) {
