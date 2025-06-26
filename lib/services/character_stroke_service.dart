@@ -416,10 +416,10 @@ class StrokeValidator {
     final isLongVertical = medianDirection.dy.abs() > medianDirection.dx.abs() * 1.5 && 
                           medianLength > 0.3; // Long vertical stroke (more lenient)
     
-    // Check if stroke length is reasonable - moderately strict
+    // Check if stroke length is reasonable - lenient on max length
     final isSmallStroke = medianLength < 0.15; // Small stroke in normalized space
-    final minRatio = isLongVertical ? 0.6 : (isSmallStroke ? 0.45 : 0.65); // 45% for small strokes
-    final maxRatio = isLongVertical ? 1.7 : (isSmallStroke ? 1.65 : 1.5); // 165% for small strokes
+    final minRatio = isLongVertical ? 0.5 : (isSmallStroke ? 0.4 : 0.6); // Reasonable minimum
+    final maxRatio = isLongVertical ? 2.5 : (isSmallStroke ? 2.2 : 2.0); // Very lenient maximum
     
     final lengthRatio = userLength / medianLength;
     
@@ -434,12 +434,12 @@ class StrokeValidator {
     final strokeSize = math.max(strokeWidth, strokeHeight) / canvasSize.width;
     final sizeFactor = strokeSize > 0.3 ? 1.6 : 1.5;
     
-    // Location tolerance - balanced for accuracy without being too difficult
+    // Location tolerance - easier overall
     final locationTolerance = isLongVertical 
-        ? tolerance * 0.5   // 50% for long vertical strokes
+        ? tolerance * 0.6   // 60% for long vertical strokes
         : isMultiDirectional 
-            ? tolerance * 0.65  // 65% for multi-directional (lenient)
-            : tolerance * 0.4;  // 40% for simple strokes (moderate)
+            ? tolerance * 0.7   // 70% for multi-directional (lenient)
+            : tolerance * 0.5;  // 50% for simple strokes (moderate)
     
     // Check key points with appropriate tolerance
     final startDist = (normalizedUser.first - normalizedMedian.first).distance;
@@ -491,8 +491,8 @@ class StrokeValidator {
         }
       }
       
-      // Moderate shape matching requirements
-      final requiredMatch = isMultiDirectional ? 0.20 : 0.60; // 60% for simple strokes
+      // Easier shape matching requirements
+      final requiredMatch = isMultiDirectional ? 0.20 : 0.50; // 50% for simple strokes
       print('Path match: $matchedPoints/$totalChecks points within tolerance (${(matchedPoints.toDouble()/totalChecks*100).toStringAsFixed(1)}%), required: ${(requiredMatch*100).toStringAsFixed(0)}%');
       if (matchedPoints < totalChecks * requiredMatch) {
         print('FAILED: Not enough matched points in path check');
