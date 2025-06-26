@@ -1379,48 +1379,6 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Import option - made more prominent
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Theme.of(bottomSheetContext).colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Theme.of(bottomSheetContext).colorScheme.primary,
-                      width: 2,
-                    ),
-                  ),
-                  child: ListTile(
-                    leading: Icon(
-                      Icons.file_upload,
-                      color: Theme.of(bottomSheetContext).colorScheme.primary,
-                      size: 28,
-                    ),
-                    title: Text(
-                      'Import Characters',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        color: Theme.of(bottomSheetContext).colorScheme.onPrimaryContainer,
-                      ),
-                    ),
-                    subtitle: Text(
-                      'Import from text or file',
-                      style: TextStyle(
-                        color: Theme.of(bottomSheetContext).colorScheme.onPrimaryContainer.withOpacity(0.8),
-                      ),
-                    ),
-                    trailing: Icon(
-                      Icons.arrow_forward_ios,
-                      color: Theme.of(bottomSheetContext).colorScheme.primary,
-                    ),
-                    onTap: () {
-                      Navigator.pop(bottomSheetContext);
-                      _showImportDialog();
-                    },
-                  ),
-                ),
-                const Divider(indent: 16, endIndent: 16),
                 ListTile(
                   leading: const Icon(Icons.create_new_folder),
                   title: const Text('Create Folder'),
@@ -1525,66 +1483,92 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
                 crossAxisCount = ((width - 32) / (200 + 16)).floor();
               }
               
-              return GridView.builder(
+              return CustomScrollView(
                 controller: _builtInScrollController,
-                padding: const EdgeInsets.all(16),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: crossAxisCount,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  childAspectRatio: 1.0,
-                ),
-                itemCount: _filteredSets.length,
-                itemBuilder: (context, index) {
-                  final set = _filteredSets[index];
-                  final isSelected = _selectedSetIds.contains(set.id);
-                  final isAdded = _addedSetIds.contains(set.id);
-                  
-                  return Stack(
-                    children: [
-                      _CharacterSetSquareCard(
-                        set: set,
-                        isLoading: false,
-                        isCustom: false,
-                        progress: _setProgress[set.id] ?? 0.0,
-                        onTap: () => _toggleSetSelection(set.id),
-                        onLongPress: null,
-                        onMenuTap: null,
+                slivers: [
+                  SliverPadding(
+                    padding: const EdgeInsets.all(16),
+                    sliver: SliverGrid(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        childAspectRatio: 1.0,
                       ),
-                      // Checkbox overlay
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: GestureDetector(
-                          onTap: () => _toggleSetSelection(set.id),
-                          child: Container(
-                            width: 24,
-                            height: 24,
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                width: 2,
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final set = _filteredSets[index];
+                          final isSelected = _selectedSetIds.contains(set.id);
+                          final isAdded = _addedSetIds.contains(set.id);
+                          
+                          return Stack(
+                            children: [
+                              _CharacterSetSquareCard(
+                                set: set,
+                                isLoading: false,
+                                isCustom: false,
+                                progress: _setProgress[set.id] ?? 0.0,
+                                onTap: () => _toggleSetSelection(set.id),
+                                onLongPress: null,
+                                onMenuTap: null,
                               ),
-                              borderRadius: BorderRadius.circular(4),
-                              color: isSelected 
-                                  ? Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                                      ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2
-                                      : Theme.of(context).colorScheme.primary
-                                  : Colors.transparent,
-                            ),
-                            child: isSelected 
-                                ? Icon(
-                                    Icons.check,
-                                    size: 18,
-                                    color: Theme.of(context).colorScheme.onPrimary,
-                                  )
-                                : null,
+                              // Checkbox overlay
+                              Positioned(
+                                top: 8,
+                                right: 8,
+                                child: GestureDetector(
+                                  onTap: () => _toggleSetSelection(set.id),
+                                  child: Container(
+                                    width: 24,
+                                    height: 24,
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                        width: 2,
+                                      ),
+                                      borderRadius: BorderRadius.circular(4),
+                                      color: isSelected 
+                                          ? Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                              ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2
+                                              : Theme.of(context).colorScheme.primary
+                                          : Colors.transparent,
+                                    ),
+                                    child: isSelected 
+                                        ? Icon(
+                                            Icons.check,
+                                            size: 18,
+                                            color: Theme.of(context).colorScheme.onPrimary,
+                                          )
+                                        : null,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                        childCount: _filteredSets.length,
+                      ),
+                    ),
+                  ),
+                  // "More coming soon" message
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+                      child: Center(
+                        child: Text(
+                          'More coming soon...',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2
+                                : Theme.of(context).colorScheme.primary,
                           ),
                         ),
                       ),
-                    ],
-                  );
-                },
+                    ),
+                  ),
+                ],
               );
             },
           ),

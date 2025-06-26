@@ -72,7 +72,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   List<Offset> _currentStroke = [];
   Timer? _updateTimer;
   List<Offset> _pendingPoints = [];
-  static const _updateInterval = Duration(milliseconds: 16); // 60 FPS
+  static const _updateInterval = Duration(milliseconds: 8); // 120 FPS for smoother strokes
   
   // Stroke validation
   final List<int> _completedStrokeIndices = [];
@@ -536,10 +536,14 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     
     setState(() {
       _isLoadingCharacter = false;
+      
+      // CRITICAL: Clear all state variables first
       _completedStrokeIndices.clear();
-      _wrongAttempts.clear();
       _userStrokes.clear();
-      _currentStroke.clear(); // Clear current stroke
+      _currentStroke.clear();
+      _wrongAttempts.clear();
+      
+      // Reset UI state
       _testingCharacterRevealed = false;
       _learningStage = 0;
       _showHintPath = false;
@@ -548,8 +552,13 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       _missedStrokes = 0;
       _practiceStartTime = DateTime.now();
       _showManualGrading = false;
-      _showSuccess = false; // Reset success state
+      
+      print('🔄 RESET STATE: Character=$currentCharacter, ManualGrading=$_showManualGrading');
+      _showSuccess = false;
       _autoGradedAsCorrect = false;
+      _strokeDeviation = 0.0;
+      
+      // Cancel timers
       _autoProceedTimer?.cancel();
       _progressTimer?.cancel();
       _timerProgress = 1.0;
@@ -558,7 +567,6 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         _wrongAttempts.addAll(List.filled(_characterStroke!.strokes.length, 0));
       } else {
         // If character not found, show error and skip
-        // Production: removed debug print
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _showMissingCharacterDialog();
         });
@@ -955,14 +963,20 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                             }
                           },
                           onPanStart: (details) {
+                            final currentChar = widget.isWord ? _wordCharacters[_currentWordCharacterIndex] : widget.character;
+                            print('👆 PAN START: Character=$currentChar, ManualGrading=$_showManualGrading');
+                            print('👆 CompletedIndices=${_completedStrokeIndices.length}, ExpectedNext=${_getNextStrokeIndex()}');
+                            
                             // Don't start drawing if manual grading is showing
                             if (_showManualGrading) {
+                              print('👆 BLOCKED: Manual grading is showing');
                               return;
                             }
                             
                             // Initialize stroke
                             _currentStroke = [details.localPosition];
                             _pendingPoints.clear();
+                            print('👆 Started new stroke at ${details.localPosition}');
                             
                             // Start update timer for smooth rendering
                             _updateTimer?.cancel();
@@ -984,11 +998,21 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                           },
                           onPanUpdate: (details) {
                             if (!_showManualGrading) {
-                              // Add to pending points instead of updating immediately
-                              _pendingPoints.add(details.localPosition);
+                              // Add to pending points with higher density for smoother curves
+                              final lastPoint = _currentStroke.isNotEmpty ? _currentStroke.last : 
+                                               (_pendingPoints.isNotEmpty ? _pendingPoints.last : null);
+                              
+                              // Only add if point is far enough from last point to avoid duplicate points
+                              if (lastPoint == null || (details.localPosition - lastPoint).distance > 1.0) {
+                                _pendingPoints.add(details.localPosition);
+                              }
                             }
                           },
                           onPanEnd: (details) {
+                            final currentChar = widget.isWord ? _wordCharacters[_currentWordCharacterIndex] : widget.character;
+                            print('👆 PAN END: Character=$currentChar, ManualGrading=$_showManualGrading');
+                            print('👆 CurrentStroke length: ${_currentStroke.length}');
+                            
                             if (!_showManualGrading) {
                               // Cancel timer and flush pending points
                               _updateTimer?.cancel();
@@ -1000,7 +1024,11 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                                   _pendingPoints.clear();
                                 }
                               });
+                              
+                              print('👆 Calling _handleStrokeEnd() with ${_currentStroke.length} points');
                               _handleStrokeEnd();
+                            } else {
+                              print('👆 BLOCKED: Manual grading is showing, not calling _handleStrokeEnd()');
                             }
                           },
                           child: _strokeType == StrokeType.classic && _classicStrokeAnimation != null
@@ -1259,26 +1287,43 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   }
 
   void _handleStrokeEnd() {
+    print('🔍 _handleStrokeEnd() ENTRY: strokeEmpty=${_currentStroke.isEmpty}, characterStroke=${_characterStroke != null ? "loaded" : "NULL"}');
+    
     if (_currentStroke.isEmpty || _characterStroke == null) {
-      // Production: removed debug print
+      print('❌ EARLY RETURN: strokeEmpty=${_currentStroke.isEmpty}, characterStroke=${_characterStroke == null ? "NULL" : "loaded"}');
       return;
     }
     
     final RenderBox? box = _canvasKey.currentContext?.findRenderObject() as RenderBox?;
     if (box == null) {
-      // Production: removed debug print
+      print('❌ EARLY RETURN: RenderBox is NULL');
       return;
     }
     
     final canvasSize = box.size;
-    final nextIndex = _getNextStrokeIndex();
+    print('🔍 Canvas size: $canvasSize');
     
-    final currentCharacter = widget.isWord ? _wordCharacters[_currentCharacterIndex] : widget.character;
+    final nextIndex = _getNextStrokeIndex();
+    print('🔍 Got nextIndex: $nextIndex');
+    
+    print('🔍 Widget.isWord: ${widget.isWord}');
+    if (widget.isWord) {
+      print('🔍 _currentCharacterIndex: $_currentCharacterIndex, _currentWordCharacterIndex: $_currentWordCharacterIndex');
+      print('🔍 _wordCharacters.length: ${_wordCharacters.length}');
+      print('🔍 _wordCharacters: $_wordCharacters');
+    }
+    
+    // FIXED: Use same character lookup logic as gesture detection
+    final currentCharacter = widget.isWord ? _wordCharacters[_currentWordCharacterIndex] : widget.character;
+    print('🔍 Current character: $currentCharacter');
+    
     print('\n\n🔍 VALIDATING STROKE for character: $currentCharacter, stroke index: $nextIndex');
     print('Total strokes for this character: ${_characterStroke!.strokes.length}');
+    print('🔍 CompletedIndices: $_completedStrokeIndices');
+    print('🔍 NextIndex: $nextIndex, StrokeLength: ${_characterStroke!.strokes.length}');
     
     if (nextIndex >= _characterStroke!.strokes.length) {
-      // Production: removed debug print
+      print('❌ EARLY RETURN: nextIndex ($nextIndex) >= strokeLength (${_characterStroke!.strokes.length})');
       setState(() => _currentStroke.clear());
       return;
     }
@@ -1393,8 +1438,13 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       );
     }
     
+    final currentCharacterName = widget.isWord ? _wordCharacters[_currentWordCharacterIndex] : widget.character;
+    print('🔍 STATE UPDATE: Character=$currentCharacterName, StrokeIndex=$nextIndex, IsCorrect=$isCorrect');
+    print('🔍 Before setState: CompletedIndices=${_completedStrokeIndices.length}, UserStrokes=${_userStrokes.length}');
+    
     setState(() {
       if (isCorrect) {
+        print('✅ Adding stroke $nextIndex to completed indices');
         // Calculate deviation for animation
         _strokeDeviation = _calculateStrokeDeviation(_currentStroke, _characterStroke!.medians[nextIndex], canvasSize);
         
@@ -1402,13 +1452,17 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         _userStrokes.add(List.from(_currentStroke));
         _showHintPath = false; // Hide hint after successful stroke
         
+        print('✅ After adding: CompletedIndices=${_completedStrokeIndices.length}/${_characterStroke!.strokes.length}');
+        
         // Trigger bounce animation
         _startBounceAnimation(nextIndex);
         
         if (_completedStrokeIndices.length == _characterStroke!.strokes.length) {
+          print('🎉 Character complete! All strokes done for $currentCharacterName');
           _onCharacterComplete();
         }
       } else {
+        print('❌ Stroke $nextIndex failed validation');
         _wrongAttempts[nextIndex]++;
         _missedStrokes++;
         
@@ -1422,7 +1476,17 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         
         // Removed snackbar notification to prevent render overflow
       }
+      
+      print('🧹 Clearing current stroke (${_currentStroke.length} points)');
       _currentStroke.clear();
+      print('🔍 After setState: CompletedIndices=${_completedStrokeIndices.length}, UserStrokes=${_userStrokes.length}');
+    });
+    
+    // Force UI update after a frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        print('🔄 Post-frame: CompletedIndices=${_completedStrokeIndices.length}, Expected next stroke: ${_getNextStrokeIndex()}');
+      }
     });
   }
   
@@ -1584,6 +1648,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     setState(() {
       _showSuccess = true;
       _showManualGrading = true;
+      print('🎯 SET MANUAL GRADING: Character=$currentCharacter, ManualGrading=$_showManualGrading');
     });
     
     // Force a rebuild to ensure buttons are shown
@@ -1665,6 +1730,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     // Don't immediately hide the success state - keep it visible
     setState(() {
       _showManualGrading = false;
+      print('✅ CLEAR MANUAL GRADING: Character=$currentCharacter, ManualGrading=$_showManualGrading, WasCorrect=$wasCorrect');
     });
     
     Future.delayed(const Duration(milliseconds: 300), () async {
@@ -1703,6 +1769,24 @@ class _WritingPracticePageState extends State<WritingPracticePage>
             _wordCharacterResults[_currentWordCharacterIndex] = wasCorrect;
             _currentWordCharacterIndex++;
             _learningStage = 0; // Reset to stage 0 for new character
+            
+            // Clear all visual state immediately
+            _completedStrokeIndices.clear();
+            _userStrokes.clear();
+            _currentStroke.clear();
+            _showSuccess = false;
+            _showManualGrading = false;
+            _autoGradedAsCorrect = false;
+            _testingCharacterRevealed = false;
+            _showHintPath = false;
+            _showFullCharacter = false;
+            _usedHint = false;
+            _missedStrokes = 0;
+            _strokeDeviation = 0.0;
+            _autoProceedTimer?.cancel();
+            _progressTimer?.cancel();
+            _timerProgress = 1.0;
+            
             _loadCharacterData();
           });
         } else if (widget.allCharacters != null &&
@@ -1736,6 +1820,24 @@ class _WritingPracticePageState extends State<WritingPracticePage>
             _currentWordCharacterIndex = 0;
             _wordCharacterResults.clear(); // Clear results for new word
             _learningStage = 0; // Reset to stage 0 for new character
+            
+            // Clear all visual state immediately
+            _completedStrokeIndices.clear();
+            _userStrokes.clear();
+            _currentStroke.clear();
+            _showSuccess = false;
+            _showManualGrading = false;
+            _autoGradedAsCorrect = false;
+            _testingCharacterRevealed = false;
+            _showHintPath = false;
+            _showFullCharacter = false;
+            _usedHint = false;
+            _missedStrokes = 0;
+            _strokeDeviation = 0.0;
+            _autoProceedTimer?.cancel();
+            _progressTimer?.cancel();
+            _timerProgress = 1.0;
+            
             final nextItem = widget.allCharacters![_currentCharacterIndex];
             if (_dictionary.isMultiCharacterItem(nextItem)) {
               _wordCharacters = _dictionary.splitIntoCharacters(nextItem);
@@ -1826,6 +1928,24 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         setState(() {
           _currentCharacterIndex++;
           _learningStage = 0; // Reset to stage 0 for new character
+          
+          // Clear all visual state immediately
+          _completedStrokeIndices.clear();
+          _userStrokes.clear();
+          _currentStroke.clear();
+          _showSuccess = false;
+          _showManualGrading = false;
+          _autoGradedAsCorrect = false;
+          _testingCharacterRevealed = false;
+          _showHintPath = false;
+          _showFullCharacter = false;
+          _usedHint = false;
+          _missedStrokes = 0;
+          _strokeDeviation = 0.0;
+          _autoProceedTimer?.cancel();
+          _progressTimer?.cancel();
+          _timerProgress = 1.0;
+          
           if (widget.isWord) {
             final nextItem = widget.allCharacters![_currentCharacterIndex];
             if (_dictionary.isMultiCharacterItem(nextItem)) {
@@ -3263,6 +3383,32 @@ class CurrentStrokePainter extends CustomPainter {
       return;
     }
     
+    // Create smoothed path for higher quality
+    final path = Path();
+    
+    if (currentStroke.length == 2) {
+      // Simple line for two points
+      path.moveTo(currentStroke[0].dx, currentStroke[0].dy);
+      path.lineTo(currentStroke[1].dx, currentStroke[1].dy);
+    } else {
+      // Smooth curve for multiple points
+      path.moveTo(currentStroke[0].dx, currentStroke[0].dy);
+      
+      for (int i = 1; i < currentStroke.length - 1; i++) {
+        final cp1 = currentStroke[i];
+        final cp2 = Offset(
+          (currentStroke[i].dx + currentStroke[i + 1].dx) / 2,
+          (currentStroke[i].dy + currentStroke[i + 1].dy) / 2,
+        );
+        path.quadraticBezierTo(cp1.dx, cp1.dy, cp2.dx, cp2.dy);
+      }
+      
+      // Final point
+      if (currentStroke.length > 2) {
+        path.lineTo(currentStroke.last.dx, currentStroke.last.dy);
+      }
+    }
+    
     final paint = Paint()
       ..color = strokeColor
       ..strokeWidth = strokeWidth
@@ -3270,8 +3416,7 @@ class CurrentStrokePainter extends CustomPainter {
       ..strokeJoin = StrokeJoin.round
       ..style = PaintingStyle.stroke;
     
-    // Use drawPoints for better performance
-    canvas.drawPoints(ui.PointMode.polygon, currentStroke, paint);
+    canvas.drawPath(path, paint);
   }
   
   void _paintDynamicStroke(Canvas canvas, Size size) {
