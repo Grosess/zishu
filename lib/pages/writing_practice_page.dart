@@ -1321,7 +1321,20 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     bool isCorrect;
     
     // Special handling for problematic characters
-    if (currentCharacter == '女' && (nextIndex == 1 || nextIndex == 2)) {
+    if (currentCharacter == '中' && nextIndex == _characterStroke!.strokes.length - 1) {
+      // Last stroke of 中 is the long vertical - use extremely simple validation
+      isCorrect = _validateZhongLastStroke(_currentStroke, canvasSize);
+    } else if (currentCharacter == '中') {
+      // Other strokes of 中 - still very lenient
+      final tolerance = widget.mode == PracticeMode.testing ? 0.95 : 0.90;
+      isCorrect = StrokeValidator.validateStroke(
+        _currentStroke,
+        _characterStroke!.medians[nextIndex],
+        canvasSize,
+        tolerance: tolerance,
+        isMultiDirectional: false,
+      );
+    } else if (currentCharacter == '女' && (nextIndex == 1 || nextIndex == 2)) {
       // For 女 strokes 1 and 2, use special validation
       isCorrect = _validateNvStroke(_currentStroke, _characterStroke!.medians[nextIndex], canvasSize);
     } else if (currentCharacter == '我' && (nextIndex == 1 || nextIndex == 4)) {
@@ -1344,6 +1357,19 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         tolerance: tolerance,
         isMultiDirectional: true,
       );
+    } else if ((currentCharacter == '事' || currentCharacter == '中' || currentCharacter == '十' || 
+                currentCharacter == '丰' || currentCharacter == '串' || currentCharacter == '午' || 
+                currentCharacter == '年' || currentCharacter == '半') && 
+                _isLongVerticalStroke(nextIndex)) {
+      // Characters with prominent vertical strokes need extreme tolerance
+      final tolerance = widget.mode == PracticeMode.testing ? 0.90 : 0.85;
+      isCorrect = StrokeValidator.validateStroke(
+        _currentStroke,
+        _characterStroke!.medians[nextIndex],
+        canvasSize,
+        tolerance: tolerance,
+        isMultiDirectional: false,
+      );
     } else if (_isMultiDirectionalStroke(nextIndex)) {
       // Auto-detect multi-directional strokes - more lenient
       final tolerance = widget.mode == PracticeMode.testing ? 0.58 : 0.55;
@@ -1353,6 +1379,26 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         canvasSize,
         tolerance: tolerance,
         isMultiDirectional: true,
+      );
+    } else if (_isLongVerticalStroke(nextIndex)) {
+      // Long vertical strokes - extremely lenient
+      final tolerance = widget.mode == PracticeMode.testing ? 0.85 : 0.80;
+      isCorrect = StrokeValidator.validateStroke(
+        _currentStroke,
+        _characterStroke!.medians[nextIndex],
+        canvasSize,
+        tolerance: tolerance,
+        isMultiDirectional: false,
+      );
+    } else if (_isVerticalStroke(nextIndex)) {
+      // Any vertical stroke - more lenient than other simple strokes
+      final tolerance = widget.mode == PracticeMode.testing ? 0.50 : 0.45;
+      isCorrect = StrokeValidator.validateStroke(
+        _currentStroke,
+        _characterStroke!.medians[nextIndex],
+        canvasSize,
+        tolerance: tolerance,
+        isMultiDirectional: false,
       );
     } else if (_isSimpleStroke(nextIndex)) {
       // Simple strokes (straight lines) - stricter
@@ -2595,6 +2641,24 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   }
   
   // Special validation for 女 strokes 1 and 2 - more balanced validation
+  bool _validateZhongLastStroke(List<Offset> userStroke, Size canvasSize) {
+    if (userStroke.length < 2) return false;
+    
+    // Extremely simple validation for 中's last vertical stroke
+    final start = userStroke.first;
+    final end = userStroke.last;
+    final direction = end - start;
+    
+    // Just check if it's going downward and has some length
+    final isDownward = direction.dy > 0; // Going down
+    final isLongEnough = direction.distance > canvasSize.height * 0.1; // Just 10% of canvas height
+    
+    // Extremely lenient vertical check - just needs to be more vertical than horizontal
+    final isVerticalish = direction.dy.abs() > direction.dx.abs() * 0.5;
+    
+    return isDownward && isLongEnough && isVerticalish;
+  }
+  
   bool _validateNvStroke(List<Offset> userStroke, List<List<double>> medianPoints, Size canvasSize) {
     if (userStroke.length < 10 || medianPoints.length < 3) return false;
     
@@ -2871,6 +2935,47 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     }
     
     return false;
+  }
+  
+  bool _isLongVerticalStroke(int strokeIndex) {
+    if (_characterStroke == null || strokeIndex >= _characterStroke!.medians.length) return false;
+    
+    final medianPoints = _characterStroke!.medians[strokeIndex];
+    if (medianPoints.length < 2) return false;
+    
+    // Check if stroke is vertical and long
+    final start = Offset(medianPoints.first[0], medianPoints.first[1]);
+    final end = Offset(medianPoints.last[0], medianPoints.last[1]);
+    final direction = end - start;
+    
+    // Check if primarily vertical (more lenient check)
+    final isVertical = direction.dy.abs() > direction.dx.abs() * 1.5;
+    
+    // Check if it's long (more than 20% of expected character height)
+    final strokeLength = direction.distance;
+    final isLong = strokeLength > 200; // Much lower threshold to catch more vertical strokes
+    
+    // Also check if it's the last stroke of the character (often the case for long verticals)
+    final isLastStroke = strokeIndex == _characterStroke!.strokes.length - 1;
+    
+    return isVertical && isLong && _isSimpleStroke(strokeIndex);
+  }
+  
+  bool _isVerticalStroke(int strokeIndex) {
+    if (_characterStroke == null || strokeIndex >= _characterStroke!.medians.length) return false;
+    
+    final medianPoints = _characterStroke!.medians[strokeIndex];
+    if (medianPoints.length < 2) return false;
+    
+    // Check if stroke is vertical
+    final start = Offset(medianPoints.first[0], medianPoints.first[1]);
+    final end = Offset(medianPoints.last[0], medianPoints.last[1]);
+    final direction = end - start;
+    
+    // Check if primarily vertical (very lenient check)
+    final isVertical = direction.dy.abs() > direction.dx.abs();
+    
+    return isVertical && _isSimpleStroke(strokeIndex);
   }
   
   bool _isSimpleStroke(int strokeIndex) {

@@ -383,10 +383,15 @@ class StrokeValidator {
       medianLength += (normalizedMedian[i] - normalizedMedian[i-1]).distance;
     }
     
+    // Check if this is a long vertical stroke first
+    final medianDirection = normalizedMedian.last - normalizedMedian.first;
+    final isLongVertical = medianDirection.dy.abs() > medianDirection.dx.abs() * 1.5 && 
+                          medianLength > 0.3; // Long vertical stroke (more lenient)
+    
     // Check if stroke length is reasonable (very relaxed for size flexibility)
     final isSmallStroke = medianLength < 0.15; // Small stroke in normalized space
-    final minRatio = isSmallStroke ? 0.10 : 0.20; // Much more forgiving on minimum size
-    final maxRatio = isSmallStroke ? 6.0 : 4.5; // Much more forgiving on maximum size
+    final minRatio = isLongVertical ? 0.05 : (isSmallStroke ? 0.10 : 0.20); // Extremely lenient for long verticals
+    final maxRatio = isLongVertical ? 8.0 : (isSmallStroke ? 6.0 : 4.5); // Very lenient for long verticals
     
     final lengthRatio = userLength / medianLength;
     if (lengthRatio < minRatio || lengthRatio > maxRatio) {
@@ -398,17 +403,19 @@ class StrokeValidator {
     final strokeSize = math.max(strokeWidth, strokeHeight) / canvasSize.width;
     final sizeFactor = strokeSize > 0.3 ? 1.6 : 1.5;
     
-    // Location tolerance - more lenient for all
-    final locationTolerance = isMultiDirectional 
-        ? tolerance * 0.60  // 60% for multi-directional (lenient)
-        : tolerance * 0.50; // 50% for simple strokes (lenient)
+    // Location tolerance - extra lenient for long verticals
+    final locationTolerance = isLongVertical 
+        ? tolerance * 1.0  // 100% for long vertical strokes (maximum leniency)
+        : isMultiDirectional 
+            ? tolerance * 0.60  // 60% for multi-directional (lenient)
+            : tolerance * 0.50; // 50% for simple strokes (lenient)
     
     // Check key points with appropriate tolerance
     final startDist = (normalizedUser.first - normalizedMedian.first).distance;
     final endDist = (normalizedUser.last - normalizedMedian.last).distance;
     
     // More lenient tolerance for start/end points location
-    final pointTolerance = isMultiDirectional ? 2.5 : 2.3;
+    final pointTolerance = isLongVertical ? 3.0 : (isMultiDirectional ? 2.5 : 2.3);
     if (startDist > locationTolerance * pointTolerance || endDist > locationTolerance * pointTolerance) {
       // Production: removed debug print
       return false;
