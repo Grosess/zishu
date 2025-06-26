@@ -416,14 +416,17 @@ class StrokeValidator {
     final isLongVertical = medianDirection.dy.abs() > medianDirection.dx.abs() * 1.5 && 
                           medianLength > 0.3; // Long vertical stroke (more lenient)
     
-    // Check if stroke length is reasonable (very relaxed for size flexibility)
+    // Check if stroke length is reasonable - moderately strict
     final isSmallStroke = medianLength < 0.15; // Small stroke in normalized space
-    final minRatio = isLongVertical ? 0.05 : (isSmallStroke ? 0.10 : 0.20); // Extremely lenient for long verticals
-    final maxRatio = isLongVertical ? 8.0 : (isSmallStroke ? 6.0 : 4.5); // Very lenient for long verticals
+    final minRatio = isLongVertical ? 0.6 : (isSmallStroke ? 0.55 : 0.65); // More lenient minimum
+    final maxRatio = isLongVertical ? 1.7 : (isSmallStroke ? 1.6 : 1.5); // More lenient maximum
     
     final lengthRatio = userLength / medianLength;
     
+    print('Length check: ratio=$lengthRatio, min=$minRatio, max=$maxRatio');
+    
     if (lengthRatio < minRatio || lengthRatio > maxRatio) {
+      print('FAILED: Stroke length ratio $lengthRatio out of range [$minRatio, $maxRatio]');
       return false; // Stroke is too short or too long
     }
     
@@ -431,20 +434,24 @@ class StrokeValidator {
     final strokeSize = math.max(strokeWidth, strokeHeight) / canvasSize.width;
     final sizeFactor = strokeSize > 0.3 ? 1.6 : 1.5;
     
-    // Location tolerance - extra lenient for long verticals
+    // Location tolerance - much stricter for non-multidirectional strokes
     final locationTolerance = isLongVertical 
-        ? tolerance * 1.0  // 100% for long vertical strokes (maximum leniency)
+        ? tolerance * 0.7  // 70% for long vertical strokes 
         : isMultiDirectional 
             ? tolerance * 0.60  // 60% for multi-directional (lenient)
-            : tolerance * 0.50; // 50% for simple strokes (lenient)
+            : tolerance * 0.25; // 25% for simple strokes (very strict)
     
     // Check key points with appropriate tolerance
     final startDist = (normalizedUser.first - normalizedMedian.first).distance;
     final endDist = (normalizedUser.last - normalizedMedian.last).distance;
     
-    // More lenient tolerance for start/end points location
-    final pointTolerance = isLongVertical ? 3.0 : (isMultiDirectional ? 2.5 : 2.3);
+    // Stricter tolerance for start/end points location
+    final pointTolerance = isLongVertical ? 2.0 : (isMultiDirectional ? 2.0 : 1.5);
+    
+    print('Location check: startDist=$startDist, endDist=$endDist, maxAllowed=${locationTolerance * pointTolerance}');
+    
     if (startDist > locationTolerance * pointTolerance || endDist > locationTolerance * pointTolerance) {
+      print('FAILED: Start/end points too far - start: $startDist, end: $endDist, max allowed: ${locationTolerance * pointTolerance}');
       return false;
     }
     
@@ -477,14 +484,16 @@ class StrokeValidator {
         final dist = (normalizedUser[userIndex] - normalizedMedian[medianIndex]).distance;
         totalChecks++;
         
-        // Count how many points are within tolerance (apply size factor for larger strokes)
-        if (dist <= locationTolerance * sizeFactor * 1.5) {
+        // Count how many points are within tolerance - stricter for non-multidirectional
+        final pathTolerance = isMultiDirectional ? locationTolerance * sizeFactor * 1.5 : locationTolerance * sizeFactor;
+        if (dist <= pathTolerance) {
           matchedPoints++;
         }
       }
       
-      // More lenient shape matching for multidirectional
-      final requiredMatch = isMultiDirectional ? 0.20 : 0.50; // Much more lenient for multidirectional
+      // Stricter shape matching for non-multidirectional
+      final requiredMatch = isMultiDirectional ? 0.20 : 0.70; // Strict for simple strokes
+      print('Path match: $matchedPoints/$totalChecks points within tolerance (${(matchedPoints.toDouble()/totalChecks*100).toStringAsFixed(1)}%), required: ${(requiredMatch*100).toStringAsFixed(0)}%');
       if (matchedPoints < totalChecks * requiredMatch) {
         print('FAILED: Not enough matched points in path check');
         return false;
