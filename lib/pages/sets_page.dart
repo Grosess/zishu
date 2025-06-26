@@ -50,6 +50,14 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
   String? _selectedFolderId;
   bool _controllersInitialized = false;
   final Set<String> _expandedFolderIds = {}; // Track which folders are expanded
+  
+  // Search and multi-select functionality
+  final TextEditingController _searchController = TextEditingController();
+  List<CharacterSet> _additionalSets = []; // Additional sets that can be added
+  List<CharacterSet> _filteredSets = [];
+  final Set<String> _selectedSetIds = {};
+  final Set<String> _addedSetIds = {}; // Track which sets have been added to built-in
+  bool _isSearchMode = false;
 
   @override
   void initState() {
@@ -57,6 +65,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
     // Initialize controllers with saved tab index
     _initializeWithSavedState();
     _loadCharacterSets();
+    _loadAdditionalSets();
     _initializeProcessor();
     _loadFolders();
     _initializeCedict();
@@ -65,6 +74,9 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
     
     // Check if there's a pending set to show (from recent sets)
     _checkPendingSetToShow();
+    
+    // Initialize search functionality
+    _searchController.addListener(_onSearchChanged);
   }
   
   Future<void> _initializeWithSavedState() async {
@@ -305,6 +317,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
     _tabController?.dispose();
     _builtInScrollController.dispose();
     _customScrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
   
@@ -323,6 +336,113 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
         curve: Curves.easeOutCubic,
       );
     }
+  }
+  
+  void _onSearchChanged() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      if (query.isEmpty) {
+        _filteredSets = List.from(_additionalSets);
+      } else {
+        _filteredSets = _additionalSets.where((set) {
+          return set.name.toLowerCase().contains(query) ||
+                 (set.description?.toLowerCase().contains(query) ?? false) ||
+                 set.characters.any((char) => char.toLowerCase().contains(query));
+        }).toList();
+      }
+    });
+  }
+  
+  void _updateAddedSets() {
+    _addedSetIds.clear();
+    // Check which additional sets are already in built-in sets
+    for (final additionalSet in _additionalSets) {
+      // Check if any built-in set has the same ID
+      for (final builtInSet in _characterSets) {
+        if (builtInSet.id == additionalSet.id) {
+          _addedSetIds.add(additionalSet.id);
+          _selectedSetIds.add(additionalSet.id); // Also mark as selected
+          break;
+        }
+      }
+    }
+  }
+  
+  bool _setsHaveSameCharacters(CharacterSet set1, CharacterSet set2) {
+    if (set1.characters.length != set2.characters.length) return false;
+    final chars1 = Set<String>.from(set1.characters);
+    final chars2 = Set<String>.from(set2.characters);
+    return chars1.difference(chars2).isEmpty;
+  }
+  
+  void _toggleSetSelection(String setId) async {
+    setState(() {
+      if (_selectedSetIds.contains(setId)) {
+        _selectedSetIds.remove(setId);
+        // If this set was already added, remove it from built-in sets
+        if (_addedSetIds.contains(setId)) {
+          _characterSets.removeWhere((s) => s.id == setId);
+          _addedSetIds.remove(setId);
+        }
+      } else {
+        _selectedSetIds.add(setId);
+        // If not already added, add it to built-in sets immediately
+        if (!_addedSetIds.contains(setId)) {
+          final setToAdd = _additionalSets.firstWhere((s) => s.id == setId);
+          _characterSets.add(setToAdd);
+          _addedSetIds.add(setId);
+        }
+      }
+    });
+    
+    // Save the changes
+    await _saveBuiltInSetsToStorage();
+    await _loadSetProgress();
+    _preloadSetIconCharacters();
+  }
+  
+  Future<void> _addSelectedSets() async {
+    final selectedSets = _additionalSets.where((set) => 
+      _selectedSetIds.contains(set.id) && !_addedSetIds.contains(set.id)
+    ).toList();
+    
+    if (selectedSets.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No new sets to add'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    
+    // Add each selected set to built-in sets
+    for (final set in selectedSets) {
+      _characterSets.add(set);
+      _addedSetIds.add(set.id);
+    }
+    
+    // Save updated built-in sets
+    await _saveBuiltInSetsToStorage();
+    
+    // Close search mode
+    setState(() {
+      _isSearchMode = false;
+      _searchController.clear();
+    });
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Added ${selectedSets.length} sets'),
+        backgroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+            ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+            : Theme.of(context).colorScheme.primary,
+      ),
+    );
+    
+    // Reload progress and preload icons
+    await _loadSetProgress();
+    _preloadSetIconCharacters();
   }
 
   Future<void> _initializeProcessor() async {
@@ -401,6 +521,8 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
         // Production: removed debug print
         setState(() {
           _characterSets = sets;
+          _filteredSets = List.from(sets); // Initialize filtered sets
+          _updateAddedSets(); // Track which sets are already added
         });
       }
       
@@ -425,7 +547,9 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
       if (_characterSets.isEmpty) {
         setState(() {
           _characterSets = _setManager.getAllSets();
+          _filteredSets = List.from(_characterSets);
           _isLoading = false;
+          _updateAddedSets();
         });
       }
       
@@ -434,6 +558,94 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
       
       // Try to preload even with default sets
       _preloadSetIconCharacters();
+    }
+  }
+  
+  Future<void> _loadAdditionalSets() async {
+    try {
+      // Load additional sets from a separate JSON file
+      final String jsonString = await rootBundle.loadString('assets/additional_sets.json');
+      final Map<String, dynamic> jsonData = jsonDecode(jsonString);
+      final List<dynamic> setsData = jsonData['sets'] ?? [];
+      
+      final additionalSets = <CharacterSet>[];
+      
+      for (final setData in setsData) {
+        try {
+          final isWordSet = setData['isWordSet'] ?? false;
+          
+          List<String> characters;
+          if (isWordSet) {
+            characters = (setData['characters'] as String).split(',').map((s) => s.trim()).toList();
+          } else {
+            characters = (setData['characters'] as String).split('');
+          }
+          
+          final set = CharacterSet(
+            id: setData['id'],
+            name: setData['name'],
+            characters: characters,
+            description: setData['description'],
+            isWordSet: isWordSet,
+            icon: setData['icon'],
+          );
+          
+          additionalSets.add(set);
+        } catch (e) {
+          // Skip invalid sets
+        }
+      }
+      
+      setState(() {
+        _additionalSets = additionalSets;
+        _filteredSets = List.from(additionalSets);
+      });
+      
+      // Load previously added sets
+      await _loadAddedBuiltInSets();
+      
+      // Update which sets are already added
+      _updateAddedSets();
+    } catch (e) {
+      // If loading fails, use empty list
+      setState(() {
+        _additionalSets = [];
+        _filteredSets = [];
+      });
+    }
+  }
+  
+  Future<void> _saveBuiltInSetsToStorage() async {
+    // Save the current state of built-in sets to SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    final addedSetIds = <String>[];
+    
+    // Find which additional sets have been added to built-in
+    for (final set in _characterSets) {
+      // Check if this set originally came from additional sets
+      if (_additionalSets.any((s) => s.id == set.id)) {
+        addedSetIds.add(set.id);
+      }
+    }
+    
+    await prefs.setStringList('added_builtin_sets', addedSetIds);
+  }
+  
+  Future<void> _loadAddedBuiltInSets() async {
+    // Load previously added sets on app start
+    final prefs = await SharedPreferences.getInstance();
+    final addedSetIds = prefs.getStringList('added_builtin_sets') ?? [];
+    
+    // Add the sets from additional sets that were previously added
+    for (final setId in addedSetIds) {
+      final additionalSet = _additionalSets.firstWhere(
+        (s) => s.id == setId,
+        orElse: () => CharacterSet(id: '', name: '', characters: []),
+      );
+      
+      if (additionalSet.id.isNotEmpty && !_characterSets.any((s) => s.id == additionalSet.id)) {
+        _characterSets.add(additionalSet);
+      }
     }
   }
   
@@ -1102,7 +1314,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
               controller: _tabController!,
               children: [
                 // Built-in sets tab
-                _buildSetsGrid(_characterSets, isCustomTab: false),
+                _isSearchMode ? _buildSearchableSets() : _buildSetsGrid(_characterSets, isCustomTab: false),
                 // Custom sets tab
                 _customSets.isEmpty && _folders.isEmpty
                     ? _buildEmptyCustomSets()
@@ -1122,7 +1334,25 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
         },
         child: _currentTabIndex == 1 
             ? _buildFloatingActionButton()
-            : const SizedBox.shrink(),
+            : _currentTabIndex == 0
+                ? FloatingActionButton(
+                    key: ValueKey(_isSearchMode ? 'close' : 'search'),
+                    onPressed: () {
+                      setState(() {
+                        _isSearchMode = !_isSearchMode;
+                        if (!_isSearchMode) {
+                          _searchController.clear();
+                        }
+                      });
+                    },
+                    backgroundColor: _isSearchMode 
+                        ? Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                            ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2
+                            : Theme.of(context).colorScheme.secondaryContainer
+                        : null,
+                    child: Icon(_isSearchMode ? Icons.close : Icons.search),
+                  )
+                : null,
       ),
     );
   }
@@ -1243,6 +1473,123 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildSearchableSets() {
+    return Column(
+      children: [
+        // Search bar
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _searchController,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    hintText: 'Search additional sets to add...',
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _searchController.clear();
+                            },
+                          )
+                        : null,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        
+        // Sets grid with checkboxes
+        Expanded(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth;
+              int crossAxisCount = 2;
+              
+              if (width > 600) crossAxisCount = 3;
+              if (width > 900) crossAxisCount = 4;
+              if (width > 1200) crossAxisCount = 5;
+              
+              final cardWidth = (width - 32 - (crossAxisCount - 1) * 16) / crossAxisCount;
+              if (cardWidth > 200) {
+                crossAxisCount = ((width - 32) / (200 + 16)).floor();
+              }
+              
+              return GridView.builder(
+                controller: _builtInScrollController,
+                padding: const EdgeInsets.all(16),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 1.0,
+                ),
+                itemCount: _filteredSets.length,
+                itemBuilder: (context, index) {
+                  final set = _filteredSets[index];
+                  final isSelected = _selectedSetIds.contains(set.id);
+                  final isAdded = _addedSetIds.contains(set.id);
+                  
+                  return Stack(
+                    children: [
+                      _CharacterSetSquareCard(
+                        set: set,
+                        isLoading: false,
+                        isCustom: false,
+                        progress: _setProgress[set.id] ?? 0.0,
+                        onTap: () => _toggleSetSelection(set.id),
+                        onLongPress: null,
+                        onMenuTap: null,
+                      ),
+                      // Checkbox overlay
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: GestureDetector(
+                          onTap: () => _toggleSetSelection(set.id),
+                          child: Container(
+                            width: 24,
+                            height: 24,
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                width: 2,
+                              ),
+                              borderRadius: BorderRadius.circular(4),
+                              color: isSelected 
+                                  ? Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                      ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2
+                                      : Theme.of(context).colorScheme.primary
+                                  : Colors.transparent,
+                            ),
+                            child: isSelected 
+                                ? Icon(
+                                    Icons.check,
+                                    size: 18,
+                                    color: Theme.of(context).colorScheme.onPrimary,
+                                  )
+                                : null,
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -1522,6 +1869,18 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
               _showMarkAllAsLearnedDialog(set);
             },
           ),
+          // Show remove option for built-in sets that were added from additional sets
+          if (!_customSets.contains(set) && _additionalSets.any((s) => s.id == set.id)) ...[
+            const Divider(height: 1),
+            ListTile(
+              leading: const Icon(Icons.remove_circle, color: Colors.orange),
+              title: const Text('Remove from Built-in', style: TextStyle(color: Colors.orange)),
+              onTap: () {
+                Navigator.pop(context);
+                _removeFromBuiltIn(set);
+              },
+            ),
+          ],
           if (_customSets.contains(set)) ...[
             const Divider(height: 1),
             ListTile(
@@ -2210,6 +2569,47 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
     );
   }
   
+  Future<void> _removeFromBuiltIn(CharacterSet set) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remove from Built-in'),
+        content: Text('Remove "${set.name}" from built-in sets?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.orange,
+            ),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+    
+    if (confirmed == true) {
+      setState(() {
+        _characterSets.removeWhere((s) => s.id == set.id);
+        _addedSetIds.remove(set.id);
+        _selectedSetIds.remove(set.id);
+      });
+      
+      await _saveBuiltInSetsToStorage();
+      await _loadSetProgress();
+      _preloadSetIconCharacters();
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Removed "${set.name}" from built-in sets'),
+        ),
+      );
+    }
+  }
+  
   Future<void> _showDeleteDialog(CharacterSet set) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -2255,6 +2655,15 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
     
     setState(() {
       _customSets.remove(set);
+      
+      // Find corresponding built-in set and update tracking
+      for (final builtInSet in _characterSets) {
+        if (_setsHaveSameCharacters(builtInSet, set)) {
+          _addedSetIds.remove(builtInSet.id);
+          _selectedSetIds.remove(builtInSet.id);
+          break;
+        }
+      }
     });
     
     if (mounted) {

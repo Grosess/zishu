@@ -1,0 +1,22 @@
+{
+  "sets": [
+    {
+      "id": "numbers",
+      "name": "Numbers",
+      "characters": "零,一,二,三,四,五,六,七,八,九,十,百,千,万,亿,两,几,第,半,倍,分之,点",
+      "description": "Essential number characters and related terms",
+      "difficulty": "beginner",
+      "isWordSet": true,
+      "icon": "一"
+    },
+    {
+      "id": "school_terms",
+      "name": "School Terms",
+      "characters": "老师,同学,学生,校长,班长,学校,教室,课室,办公室,图书馆,学习,课本,作业,考试,数学,语文,英文,科学,历史,地理,上课,下课,举手,回答,听讲,笔,本子,黑板,书包,课表",
+      "description": "Common school-related vocabulary",
+      "difficulty": "beginner",
+      "isWordSet": true,
+      "icon": "学"
+    }
+  ]
+}
