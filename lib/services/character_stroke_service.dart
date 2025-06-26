@@ -434,19 +434,19 @@ class StrokeValidator {
     final strokeSize = math.max(strokeWidth, strokeHeight) / canvasSize.width;
     final sizeFactor = strokeSize > 0.3 ? 1.6 : 1.5;
     
-    // Location tolerance - much stricter for non-multidirectional strokes
+    // Location tolerance - balanced for accuracy without being too difficult
     final locationTolerance = isLongVertical 
-        ? tolerance * 0.35  // 35% for long vertical strokes (still strict)
+        ? tolerance * 0.5   // 50% for long vertical strokes
         : isMultiDirectional 
-            ? tolerance * 0.60  // 60% for multi-directional (lenient)
-            : tolerance * 0.25; // 25% for simple strokes (very strict)
+            ? tolerance * 0.65  // 65% for multi-directional (lenient)
+            : tolerance * 0.4;  // 40% for simple strokes (moderate)
     
     // Check key points with appropriate tolerance
     final startDist = (normalizedUser.first - normalizedMedian.first).distance;
     final endDist = (normalizedUser.last - normalizedMedian.last).distance;
     
-    // Stricter tolerance for start/end points location
-    final pointTolerance = isLongVertical ? 1.3 : (isMultiDirectional ? 1.8 : 1.2);
+    // Moderate tolerance for start/end points location
+    final pointTolerance = isLongVertical ? 1.5 : (isMultiDirectional ? 2.0 : 1.4);
     
     print('Location check: startDist=$startDist, endDist=$endDist, maxAllowed=${locationTolerance * pointTolerance}');
     
@@ -491,8 +491,8 @@ class StrokeValidator {
         }
       }
       
-      // Stricter shape matching for non-multidirectional
-      final requiredMatch = isMultiDirectional ? 0.20 : 0.70; // Strict for simple strokes
+      // Moderate shape matching requirements
+      final requiredMatch = isMultiDirectional ? 0.20 : 0.60; // 60% for simple strokes
       print('Path match: $matchedPoints/$totalChecks points within tolerance (${(matchedPoints.toDouble()/totalChecks*100).toStringAsFixed(1)}%), required: ${(requiredMatch*100).toStringAsFixed(0)}%');
       if (matchedPoints < totalChecks * requiredMatch) {
         print('FAILED: Not enough matched points in path check');
