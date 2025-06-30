@@ -1173,13 +1173,23 @@ class _WritingPracticePageState extends State<WritingPracticePage>
               children: [
                 // Erase button
                 TextButton.icon(
-                  onPressed: _completedStrokeIndices.isEmpty ? null : () {
+                  onPressed: (_completedStrokeIndices.isEmpty && !_showSuccess) ? null : () {
                     setState(() {
                       _completedStrokeIndices.clear();
                       _wrongAttempts.fillRange(0, _wrongAttempts.length, 0);
                       _userStrokes.clear();
                       _showHintPath = false;
                       _showFullCharacter = false;
+                      _showSuccess = false;
+                      _showManualGrading = false;
+                      _autoGradedAsCorrect = false;
+                      _usedHint = false;
+                      _missedStrokes = 0;
+                      _currentStroke.clear();
+                      _currentStrokeTimestamps.clear();
+                      _autoProceedTimer?.cancel();
+                      _progressTimer?.cancel();
+                      _timerProgress = 1.0;
                     });
                   },
                   icon: const Icon(Icons.clear),
@@ -1392,8 +1402,8 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       // Last stroke of 中 is the long vertical - use extremely simple validation
       isCorrect = _validateZhongLastStroke(_currentStroke, canvasSize);
     } else if (currentCharacter == '中') {
-      // Other strokes of 中 - still very lenient
-      final tolerance = widget.mode == PracticeMode.testing ? 0.95 : 0.90;
+      // Other strokes of 中 - extremely lenient
+      final tolerance = 0.55;  // Strict tolerance for both modes
       isCorrect = StrokeValidator.validateStroke(
         _currentStroke,
         _characterStroke!.medians[nextIndex],
@@ -1405,8 +1415,8 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       // For 女 strokes 1 and 2, use special validation
       isCorrect = _validateNvStroke(_currentStroke, _characterStroke!.medians[nextIndex], canvasSize);
     } else if (currentCharacter == '我' && (nextIndex == 1 || nextIndex == 4)) {
-      // For 我, strokes 1 and 4 are particularly challenging - use slightly more tolerance
-      final tolerance = widget.mode == PracticeMode.testing ? 0.5 : 0.45;
+      // For 我, strokes 1 and 4 - use high tolerance
+      final tolerance = 0.45;
       isCorrect = StrokeValidator.validateStroke(
         _currentStroke,
         _characterStroke!.medians[nextIndex],
@@ -1416,7 +1426,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       );
     } else if (currentCharacter == '马' || currentCharacter == '七') {
       // For multi-directional characters like 马 and 七, use more lenient tolerance
-      final tolerance = widget.mode == PracticeMode.testing ? 0.6 : 0.55;
+      final tolerance = 0.45;
       isCorrect = StrokeValidator.validateStroke(
         _currentStroke,
         _characterStroke!.medians[nextIndex],
@@ -1426,7 +1436,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       );
     } else if (currentCharacter == '门' && nextIndex == 2) {
       // Special case for 门 - the right vertical stroke (index 2) is very difficult
-      final tolerance = widget.mode == PracticeMode.testing ? 0.95 : 0.90;
+      final tolerance = 0.60;
       isCorrect = StrokeValidator.validateStroke(
         _currentStroke,
         _characterStroke!.medians[nextIndex],
@@ -1439,7 +1449,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                 currentCharacter == '年' || currentCharacter == '半' || currentCharacter == '门') && 
                 _isLongVerticalStroke(nextIndex)) {
       // Characters with prominent vertical strokes need extreme tolerance
-      final tolerance = widget.mode == PracticeMode.testing ? 0.90 : 0.85;
+      final tolerance = 0.50;
       isCorrect = StrokeValidator.validateStroke(
         _currentStroke,
         _characterStroke!.medians[nextIndex],
@@ -1449,7 +1459,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       );
     } else if (_isMultiDirectionalStroke(nextIndex)) {
       // Multi-directional strokes need special handling
-      final tolerance = widget.mode == PracticeMode.testing ? 0.65 : 0.60;
+      final tolerance = 0.45;
       isCorrect = StrokeValidator.validateStroke(
         _currentStroke,
         _characterStroke!.medians[nextIndex],
@@ -1458,8 +1468,8 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         isMultiDirectional: true,
       );
     } else {
-      // All other strokes - use a balanced default tolerance
-      final tolerance = widget.mode == PracticeMode.testing ? 0.65 : 0.60;
+      // All other strokes - use high default tolerance
+      final tolerance = 0.45;
       isCorrect = StrokeValidator.validateStroke(
         _currentStroke,
         _characterStroke!.medians[nextIndex],

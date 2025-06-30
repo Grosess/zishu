@@ -319,7 +319,7 @@ class StrokeValidator {
     List<Offset> userStroke,
     List<List<double>> medianPoints,
     Size canvasSize,
-    {double tolerance = 0.55, bool isMultiDirectional = false}  // Added isMultiDirectional flag
+    {double tolerance = 0.45, bool isMultiDirectional = false}  // Strict tolerance
   ) {
     print('\n\n=== STROKE VALIDATION START ===');
     print('Canvas size: $canvasSize');
@@ -416,10 +416,10 @@ class StrokeValidator {
     final isLongVertical = medianDirection.dy.abs() > medianDirection.dx.abs() * 1.5 && 
                           medianLength > 0.3; // Long vertical stroke (more lenient)
     
-    // Check if stroke length is reasonable - very lenient on max length
+    // Check if stroke length is reasonable - EXTREMELY lenient
     final isSmallStroke = medianLength < 0.15; // Small stroke in normalized space
-    final minRatio = isLongVertical ? 0.4 : (isSmallStroke ? 0.3 : 0.5); // More lenient minimum
-    final maxRatio = isLongVertical ? 4.0 : (isSmallStroke ? 5.0 : 3.0); // Extremely lenient maximum for short strokes
+    final minRatio = 0.7; // Can be 30% shorter
+    final maxRatio = 1.5; // Can be 50% longer
     
     final lengthRatio = userLength / medianLength;
     
@@ -438,21 +438,15 @@ class StrokeValidator {
     final isDiagonalStroke = (medianDirection.dx.abs() > medianDirection.distance * 0.3 && 
                              medianDirection.dy.abs() > medianDirection.distance * 0.3);
     
-    // Location tolerance - easier overall, especially for diagonals
-    final locationTolerance = isLongVertical 
-        ? tolerance * 0.6   // 60% for long vertical strokes
-        : isMultiDirectional 
-            ? tolerance * 0.7   // 70% for multi-directional (lenient)
-            : isDiagonalStroke
-                ? tolerance * 0.65  // 65% for diagonal strokes (more lenient)
-                : tolerance * 0.5;  // 50% for simple strokes (moderate)
+    // Location tolerance - strict
+    final locationTolerance = tolerance * 0.7;  // 70% of base tolerance for all strokes
     
     // Check key points with appropriate tolerance
     final startDist = (normalizedUser.first - normalizedMedian.first).distance;
     final endDist = (normalizedUser.last - normalizedMedian.last).distance;
     
-    // Moderate tolerance for start/end points location
-    final pointTolerance = isLongVertical ? 1.5 : (isMultiDirectional ? 2.0 : (isDiagonalStroke ? 1.6 : 1.4));
+    // Strict tolerance for start/end points location
+    final pointTolerance = 1.2;  // Strict for all strokes
     
     print('Location check: startDist=$startDist, endDist=$endDist, maxAllowed=${locationTolerance * pointTolerance}');
     
@@ -461,10 +455,8 @@ class StrokeValidator {
       return false;
     }
     
-    // Direction validation - more balanced
-    final directionTolerance = isMultiDirectional 
-        ? (isSmallStroke ? tolerance * 0.70 : tolerance * 0.60)  // More lenient for multidirectional
-        : (isSmallStroke ? tolerance * 0.50 : tolerance * 0.45); // Moderate for simple strokes
+    // Direction validation - strict
+    final directionTolerance = tolerance * 0.6;  // 60% of base tolerance for all strokes
     
     print('\nCalling direction validation:');
     print('  Direction tolerance: $directionTolerance');
@@ -497,8 +489,8 @@ class StrokeValidator {
         }
       }
       
-      // Easier shape matching requirements
-      final requiredMatch = isMultiDirectional ? 0.20 : 0.50; // 50% for simple strokes
+      // Strict shape matching requirements
+      final requiredMatch = 0.7; // Need 70% of points to match
       print('Path match: $matchedPoints/$totalChecks points within tolerance (${(matchedPoints.toDouble()/totalChecks*100).toStringAsFixed(1)}%), required: ${(requiredMatch*100).toStringAsFixed(0)}%');
       if (matchedPoints < totalChecks * requiredMatch) {
         print('FAILED: Not enough matched points in path check');
