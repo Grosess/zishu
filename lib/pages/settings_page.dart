@@ -25,7 +25,7 @@ class _SettingsPageState extends State<SettingsPage> {
   String _duotoneBackground = 'white';
   String _duotoneColor = 'green';
   double _strokeWidth = 8.0;
-  String _strokeColor = 'ink';
+  String _strokeColor = 'primary';
   String _hintColor = 'primary';
   bool _showStrokeAnimation = true;
   bool _showRadicalAnalysis = false;
@@ -77,11 +77,11 @@ class _SettingsPageState extends State<SettingsPage> {
     _strokeWidth = _prefs.getDouble('stroke_width') ?? 8.0; // Default 8.0
     // Clamp to valid range (3.0 - 10.0)
     _strokeWidth = _strokeWidth.clamp(3.0, 10.0);
-    _strokeColor = _prefs.getString('stroke_color') ?? 'ink';
+    _strokeColor = _prefs.getString('stroke_color') ?? 'primary';
     _hintColor = _prefs.getString('hint_color') ?? _prefs.getString('stroke_color') ?? 'primary';
     _showStrokeAnimation = _prefs.getBool('show_stroke_animation') ?? true;
     _showRadicalAnalysis = _prefs.getBool('show_radical_analysis') ?? true;
-    final strokeTypeString = _prefs.getString('stroke_type') ?? 'ink';
+    final strokeTypeString = _prefs.getString('stroke_type') ?? 'classic';
     _strokeType = StrokeType.values.firstWhere(
       (type) => type.name == strokeTypeString,
       orElse: () => StrokeType.classic,
@@ -595,7 +595,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       const SizedBox(width: 8),
                       Text(_themeMode == 'duotone'
                         ? 'Using Duotone Foreground'
-                        : _strokeColor == 'ink' ? 'Ink (Auto)' : _strokeColor == 'primary' ? 'Theme Color' : _strokeColor.substring(0, 1).toUpperCase() + _strokeColor.substring(1)),
+                        : _strokeColor == 'primary' ? 'Theme Color' : _strokeColor.substring(0, 1).toUpperCase() + _strokeColor.substring(1)),
                     ],
                   ),
                   trailing: Icon(Icons.chevron_right,
@@ -611,7 +611,6 @@ class _SettingsPageState extends State<SettingsPage> {
                         content: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            _buildColorOption('Ink (Auto)', 'ink', isStroke: true),
                             _buildColorOption('Theme Color', 'primary', isStroke: true),
                             _buildColorOption('Red', 'red', isStroke: true),
                             _buildColorOption('Green', 'green', isStroke: true),

@@ -174,7 +174,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         _showGrid = prefs.getBool('show_grid') ?? true;
         _showGuide = prefs.getBool('show_guide') ?? true;
         _strokeWidth = prefs.getDouble('stroke_width') ?? 8.0;
-        final strokeColorString = prefs.getString('stroke_color') ?? 'ink';
+        final strokeColorString = prefs.getString('stroke_color') ?? 'primary';
         final themeMode = prefs.getString('theme_mode') ?? 'system';
         // Force ink color for rice paper theme
         _strokeColor = (themeMode == 'duotone') 
@@ -184,7 +184,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         _hintColor = (themeMode == 'duotone')
             ? null // Use theme foreground color in duotone mode
             : _getColorFromString(hintColorString);
-        final strokeTypeString = prefs.getString('stroke_type') ?? 'ink';
+        final strokeTypeString = prefs.getString('stroke_type') ?? 'classic';
         _strokeType = StrokeType.values.firstWhere(
           (type) => type.name == strokeTypeString,
           orElse: () => StrokeType.classic,
@@ -248,7 +248,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       _showGrid = prefs.getBool('show_grid') ?? true;
       _showGuide = prefs.getBool('show_guide') ?? true;
       _strokeWidth = prefs.getDouble('stroke_width') ?? 8.0;
-      final strokeColorString = prefs.getString('stroke_color') ?? 'ink';
+      final strokeColorString = prefs.getString('stroke_color') ?? 'primary';
       final themeMode = prefs.getString('theme_mode') ?? 'system';
       // Force ink color for rice paper theme
       _strokeColor = (themeMode == 'duotone') 
@@ -258,7 +258,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       _hintColor = (themeMode == 'duotone')
           ? null // Use theme foreground color in duotone mode
           : _getColorFromString(hintColorString);
-      final strokeTypeString = prefs.getString('stroke_type') ?? 'ink';
+      final strokeTypeString = prefs.getString('stroke_type') ?? 'classic';
       _strokeType = StrokeType.values.firstWhere(
         (type) => type.name == strokeTypeString,
         orElse: () => StrokeType.classic,
@@ -2563,7 +2563,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                 color: index == _currentWordCharacterIndex
                     ? Theme.of(context).colorScheme.primary
                     : index < _currentWordCharacterIndex
-                        ? (_wordCharacterResults[index] == true 
+                        ? (widget.mode == PracticeMode.learning || _wordCharacterResults[index] == true 
                             ? (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                                 ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
                                 : Theme.of(context).colorScheme.primary)
@@ -2575,7 +2575,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
               ),
               borderRadius: BorderRadius.circular(12),
               color: index < _currentWordCharacterIndex
-                  ? (_wordCharacterResults[index] == true 
+                  ? (widget.mode == PracticeMode.learning || _wordCharacterResults[index] == true 
                       ? (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                           ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.1)
                           : Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3))
@@ -3747,39 +3747,35 @@ class CurrentStrokePainter extends CustomPainter {
     final sizeFactor = 1.0 - normalizedSpeed;
     final dotRadius = minDotSize + (maxDotSize - minDotSize) * sizeFactor;
     
-    // Time-based color: newest dots are very light blue, then fade to darker blue
+    // Time-based color: newest dots are very light (almost white), then fade to stroke color
     final Color dotColor;
     
-    if (ageMs < 50) {
-      // Very new (< 50ms): very light blue (almost white)
-      dotColor = const Color(0xFFE3F2FD);
+    if (ageMs < 20) {
+      // Very new (< 20ms): very light version of stroke color
+      dotColor = Color.lerp(
+        Colors.white,
+        strokeColor,
+        0.2,  // 80% white, 20% stroke color
+      )!;
+    } else if (ageMs < 80) {
+      // Recent (20-80ms): fade to lighter stroke color
+      final t = (ageMs - 20) / 60;
+      dotColor = Color.lerp(
+        Color.lerp(Colors.white, strokeColor, 0.2)!,  // Very light
+        Color.lerp(Colors.white, strokeColor, 0.5)!,  // Light
+        t,
+      )!;
     } else if (ageMs < 200) {
-      // Recent (50-200ms): fade to light blue
-      final t = (ageMs - 50) / 150;
+      // Medium age (80-200ms): fade to full stroke color
+      final t = (ageMs - 80) / 120;
       dotColor = Color.lerp(
-        const Color(0xFFE3F2FD),  // Very light blue
-        const Color(0xFF90CAF9),  // Light blue
-        t,
-      )!;
-    } else if (ageMs < 500) {
-      // Medium age (200-500ms): fade to medium blue
-      final t = (ageMs - 200) / 300;
-      dotColor = Color.lerp(
-        const Color(0xFF90CAF9),  // Light blue
-        const Color(0xFF42A5F5),  // Medium blue
-        t,
-      )!;
-    } else if (ageMs < 1000) {
-      // Older (500ms-1s): fade to darker blue
-      final t = (ageMs - 500) / 500;
-      dotColor = Color.lerp(
-        const Color(0xFF42A5F5),  // Medium blue
-        const Color(0xFF1976D2),  // Darker blue
+        Color.lerp(Colors.white, strokeColor, 0.5)!,  // Light
+        strokeColor,  // Full stroke color
         t,
       )!;
     } else {
-      // Old (>1s): dark blue
-      dotColor = const Color(0xFF1565C0);  // Dark blue
+      // Old (>200ms): stay at stroke color
+      dotColor = strokeColor;
     }
     
     // Main dot
