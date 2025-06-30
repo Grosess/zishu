@@ -3648,9 +3648,16 @@ class CurrentStrokePainter extends CustomPainter {
   void _paintClassicStroke(Canvas canvas, Size size) {
     if (currentStroke.isEmpty) return;
     
-    // Draw as circles with dramatic size and color variation
+    // Track when the stroke started
+    final currentTime = DateTime.now().millisecondsSinceEpoch;
+    final strokeStartTime = currentTime - (currentStroke.length * 16); // Approximate 60fps
+    
+    // Draw as circles with size variation and time-based color
     final dotSpacing = strokeWidth * 0.2; // Small spacing for smooth but visible dots
     double accumulatedDistance = 0.0;
+    
+    // Store dots with their creation time
+    final List<(Offset, double, int)> dotsToRender = []; // position, speed, timestamp
     
     for (int i = 0; i < currentStroke.length; i++) {
       if (i == 0) {
@@ -3663,7 +3670,8 @@ class CurrentStrokePainter extends CustomPainter {
             initialSpeed = (initialSpeed + (currentStroke[2] - currentStroke[1]).distance) / 2.0;
           }
         }
-        _drawClassicDot(canvas, currentStroke[i], initialSpeed, 0.0);
+        final timestamp = strokeStartTime + (i * 16);
+        dotsToRender.add((currentStroke[i], initialSpeed, timestamp));
       } else {
         final distance = (currentStroke[i] - currentStroke[i-1]).distance;
         accumulatedDistance += distance;
@@ -3677,24 +3685,32 @@ class CurrentStrokePainter extends CustomPainter {
           // Calculate speed (distance between consecutive points)
           final speed = distance;
           
-          // Calculate progress for color (0 = start, 1 = end)
-          final progress = (i - 1 + t) / (currentStroke.length - 1.0);
+          // Estimate timestamp for this dot
+          final timestamp = strokeStartTime + ((i - 1 + t) * 16).round();
           
-          _drawClassicDot(canvas, interpolatedPos, speed, progress);
+          dotsToRender.add((interpolatedPos, speed, timestamp));
           accumulatedDistance -= dotSpacing;
         }
       }
     }
     
-    // Always draw the last dot
+    // Always add the last dot
     if (currentStroke.length > 1) {
       final lastSpeed = (currentStroke.last - currentStroke[currentStroke.length - 2]).distance;
-      _drawClassicDot(canvas, currentStroke.last, lastSpeed, 1.0);
+      final timestamp = strokeStartTime + ((currentStroke.length - 1) * 16);
+      dotsToRender.add((currentStroke.last, lastSpeed, timestamp));
     }
+    
+    // Now render all dots with time-based coloring
+    for (final (position, speed, timestamp) in dotsToRender) {
+      final age = currentTime - timestamp; // How old is this dot in milliseconds
+      _drawClassicDot(canvas, position, speed, age.toDouble());
+    }
+    
     return;
   }
   
-  void _drawClassicDot(Canvas canvas, Offset position, double speed, double progress) {
+  void _drawClassicDot(Canvas canvas, Offset position, double speed, double ageMs) {
     // Subtle size variation based on speed
     final maxDotSize = strokeWidth * 0.7;  // Slightly larger when slow
     final minDotSize = strokeWidth * 0.4;  // Slightly smaller when fast
@@ -3706,30 +3722,34 @@ class CurrentStrokePainter extends CustomPainter {
     final sizeFactor = 1.0 - normalizedSpeed;
     final dotRadius = minDotSize + (maxDotSize - minDotSize) * sizeFactor;
     
-    // Subtle color gradient from light blue to darker blue
+    // Time-based color: newest dots are white, then fade to blue
     final Color dotColor;
-    if (progress < 0.3) {
-      // Start with very light blue
-      dotColor = const Color(0xFFE3F2FD);
-    } else if (progress < 0.6) {
-      // Fade to medium blue
-      final t = (progress - 0.3) / 0.3;
+    
+    if (ageMs < 100) {
+      // Very new (< 100ms): white
+      dotColor = Colors.white;
+    } else if (ageMs < 300) {
+      // Recent (100-300ms): fade from white to light blue
+      final t = (ageMs - 100) / 200;
       dotColor = Color.lerp(
-        const Color(0xFFE3F2FD),  // Very light blue
-        const Color(0xFF64B5F6),  // Medium blue
+        Colors.white,
+        const Color(0xFFBBDEFB),  // Light blue
+        t,
+      )!;
+    } else if (ageMs < 1000) {
+      // Medium age (300ms-1s): fade from light blue to medium blue
+      final t = (ageMs - 300) / 700;
+      dotColor = Color.lerp(
+        const Color(0xFFBBDEFB),  // Light blue
+        const Color(0xFF42A5F5),  // Medium blue
         t,
       )!;
     } else {
-      // Fade to darker blue
-      final t = (progress - 0.6) / 0.4;
-      dotColor = Color.lerp(
-        const Color(0xFF64B5F6),  // Medium blue
-        const Color(0xFF1976D2),  // Darker blue
-        t,
-      )!;
+      // Old (>1s): solid blue
+      dotColor = const Color(0xFF2196F3);  // Blue
     }
     
-    // Main dot with slight blur for smoothness
+    // Main dot
     final paint = Paint()
       ..color = dotColor
       ..style = PaintingStyle.fill
