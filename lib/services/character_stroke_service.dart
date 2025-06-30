@@ -418,8 +418,8 @@ class StrokeValidator {
     
     // Check if stroke length is reasonable - EXTREMELY lenient
     final isSmallStroke = medianLength < 0.15; // Small stroke in normalized space
-    final minRatio = 0.7; // Can be 30% shorter
-    final maxRatio = 1.5; // Can be 50% longer
+    final minRatio = 0.3; // Can be 70% shorter
+    final maxRatio = 3.0; // Can be 3x longer
     
     final lengthRatio = userLength / medianLength;
     
