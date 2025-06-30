@@ -114,6 +114,17 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
       // Search by pinyin or English using the full CEDICT dictionary
       final searchResults = _cedictService.search(processedQuery, maxResults: 100);
       
+      // Deduplicate results - keep only unique characters
+      final uniqueResults = <CedictEntry>[];
+      final seenCharacters = <String>{};
+      
+      for (final entry in searchResults) {
+        if (!seenCharacters.contains(entry.simplified)) {
+          uniqueResults.add(entry);
+          seenCharacters.add(entry.simplified);
+        }
+      }
+      
       // Get characters from predefined sets for prioritization
       await _setManager.loadPredefinedSets();
       final allSets = _setManager.getAllSets();
@@ -158,8 +169,8 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
         }
       }
       
-      // Sort search results by priority
-      searchResults.sort((a, b) {
+      // Sort deduplicated results by priority
+      uniqueResults.sort((a, b) {
         final aPriority = characterPriority[a.simplified] ?? 999;
         final bPriority = characterPriority[b.simplified] ?? 999;
         
@@ -178,7 +189,7 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
       });
       
       // Take only the first 50 results after sorting
-      results.addAll(searchResults.take(50));
+      results.addAll(uniqueResults.take(50));
     }
     
     // Load learned status for results
@@ -472,20 +483,6 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
                             ),
                       title: Row(
                         children: [
-                          Flexible(
-                            flex: 0,
-                            child: Text(
-                              entry.simplified.length > 7 
-                                  ? '${entry.simplified.substring(0, 6)}...' 
-                                  : entry.simplified,
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               PinyinUtils.convertToneNumbersToMarks(entry.pinyin),
