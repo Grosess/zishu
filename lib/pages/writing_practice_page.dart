@@ -1398,7 +1398,17 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     bool isCorrect;
     
     // Special handling for problematic characters
-    if (currentCharacter == '中' && nextIndex == _characterStroke!.strokes.length - 1) {
+    if (currentCharacter == '一' || (currentCharacter == '二' || currentCharacter == '三')) {
+      // For horizontal stroke characters, use lenient validation
+      final tolerance = 0.60;
+      isCorrect = StrokeValidator.validateStroke(
+        _currentStroke,
+        _characterStroke!.medians[nextIndex],
+        canvasSize,
+        tolerance: tolerance,
+        isMultiDirectional: false,
+      );
+    } else if (currentCharacter == '中' && nextIndex == _characterStroke!.strokes.length - 1) {
       // Last stroke of 中 is the long vertical - use extremely simple validation
       isCorrect = _validateZhongLastStroke(_currentStroke, canvasSize);
     } else if (currentCharacter == '中') {
@@ -1411,9 +1421,16 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         tolerance: tolerance,
         isMultiDirectional: false,
       );
-    } else if (currentCharacter == '女' && (nextIndex == 1 || nextIndex == 2)) {
-      // For 女 strokes 1 and 2, use special validation
-      isCorrect = _validateNvStroke(_currentStroke, _characterStroke!.medians[nextIndex], canvasSize);
+    } else if (currentCharacter == '女' && nextIndex == 1) {
+      // For 女 stroke 1 (second stroke - diagonal pie stroke), use very lenient validation
+      final tolerance = 0.65;
+      isCorrect = StrokeValidator.validateStroke(
+        _currentStroke,
+        _characterStroke!.medians[nextIndex],
+        canvasSize,
+        tolerance: tolerance,
+        isMultiDirectional: true, // Treat as multi-directional for the slight curve
+      );
     } else if (currentCharacter == '我' && (nextIndex == 1 || nextIndex == 4)) {
       // For 我, strokes 1 and 4 - use high tolerance
       final tolerance = 0.45;
@@ -1456,6 +1473,26 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         canvasSize,
         tolerance: tolerance,
         isMultiDirectional: false,
+      );
+    } else if (_isHorizontalStroke(nextIndex)) {
+      // Horizontal strokes need lenient validation
+      final tolerance = 0.55;
+      isCorrect = StrokeValidator.validateStroke(
+        _currentStroke,
+        _characterStroke!.medians[nextIndex],
+        canvasSize,
+        tolerance: tolerance,
+        isMultiDirectional: false,
+      );
+    } else if (_isDiagonalStroke(nextIndex)) {
+      // Diagonal strokes (pie strokes) need more lenient validation
+      final tolerance = 0.60;
+      isCorrect = StrokeValidator.validateStroke(
+        _currentStroke,
+        _characterStroke!.medians[nextIndex],
+        canvasSize,
+        tolerance: tolerance,
+        isMultiDirectional: true, // Treat as multi-directional for potential slight curves
       );
     } else if (_isMultiDirectionalStroke(nextIndex)) {
       // Multi-directional strokes need special handling
@@ -3233,6 +3270,44 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     final isVertical = direction.dy.abs() > direction.dx.abs();
     
     return isVertical;
+  }
+  
+  bool _isDiagonalStroke(int strokeIndex) {
+    if (_characterStroke == null || strokeIndex >= _characterStroke!.medians.length) return false;
+    
+    final medianPoints = _characterStroke!.medians[strokeIndex];
+    if (medianPoints.length < 2) return false;
+    
+    // Check if stroke is diagonal
+    final start = Offset(medianPoints.first[0], medianPoints.first[1]);
+    final end = Offset(medianPoints.last[0], medianPoints.last[1]);
+    final direction = end - start;
+    
+    // Check if it's diagonal (both dx and dy are significant)
+    final isDiagonal = direction.dx.abs() > direction.distance * 0.3 && 
+                      direction.dy.abs() > direction.distance * 0.3;
+    
+    // Check if it's top-right to bottom-left (pie stroke)
+    final isPieStroke = direction.dx < 0 && direction.dy > 0;
+    
+    return isDiagonal && isPieStroke;
+  }
+  
+  bool _isHorizontalStroke(int strokeIndex) {
+    if (_characterStroke == null || strokeIndex >= _characterStroke!.medians.length) return false;
+    
+    final medianPoints = _characterStroke!.medians[strokeIndex];
+    if (medianPoints.length < 2) return false;
+    
+    // Check if stroke is horizontal
+    final start = Offset(medianPoints.first[0], medianPoints.first[1]);
+    final end = Offset(medianPoints.last[0], medianPoints.last[1]);
+    final direction = end - start;
+    
+    // Check if primarily horizontal
+    final isHorizontal = direction.dx.abs() > direction.dy.abs() * 2.0;
+    
+    return isHorizontal;
   }
   
   
