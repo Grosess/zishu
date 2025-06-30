@@ -3,10 +3,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 
 enum StrokeType {
-  simple,
-  dynamic,
-  neon,
-  gradient,
   invisible,
   classic,
 }
@@ -28,12 +24,12 @@ class _SettingsPageState extends State<SettingsPage> {
   String _accentColor = 'blue';
   String _duotoneBackground = 'white';
   String _duotoneColor = 'green';
-  double _strokeWidth = 4.0;
+  double _strokeWidth = 8.0;
   String _strokeColor = 'ink';
   String _hintColor = 'primary';
   bool _showStrokeAnimation = true;
   bool _showRadicalAnalysis = false;
-  StrokeType _strokeType = StrokeType.simple;
+  StrokeType _strokeType = StrokeType.classic;
   int _dailyLearnGoal = 10;
 
   @override
@@ -78,7 +74,9 @@ class _SettingsPageState extends State<SettingsPage> {
     // Validate duotone colors synchronously
     _validateDuotoneColorsSync();
     
-    _strokeWidth = _prefs.getDouble('stroke_width') ?? 4.0; // Default 4.0
+    _strokeWidth = _prefs.getDouble('stroke_width') ?? 8.0; // Default 8.0
+    // Clamp to valid range (3.0 - 10.0)
+    _strokeWidth = _strokeWidth.clamp(3.0, 10.0);
     _strokeColor = _prefs.getString('stroke_color') ?? 'ink';
     _hintColor = _prefs.getString('hint_color') ?? _prefs.getString('stroke_color') ?? 'primary';
     _showStrokeAnimation = _prefs.getBool('show_stroke_animation') ?? true;
@@ -86,7 +84,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final strokeTypeString = _prefs.getString('stroke_type') ?? 'ink';
     _strokeType = StrokeType.values.firstWhere(
       (type) => type.name == strokeTypeString,
-      orElse: () => StrokeType.simple,
+      orElse: () => StrokeType.classic,
     );
     _dailyLearnGoal = _prefs.getInt('daily_learn_goal') ?? 10;
     
@@ -558,9 +556,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     width: 200,
                     child: Slider(
                       value: _strokeWidth,
-                      min: 2.0,
+                      min: 3.0,
                       max: 10.0,
-                      divisions: 16,
+                      divisions: 14,
                       label: _strokeWidth.toStringAsFixed(1),
                       onChanged: (value) {
                         setState(() {
@@ -649,12 +647,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         content: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            _buildStrokeTypeOption('Simple', StrokeType.simple, 'Clean minimal strokes'),
                             _buildStrokeTypeOption('Classic', StrokeType.classic, 'Smooth calligraphy brush'),
-                            _buildStrokeTypeOption('Dynamic', StrokeType.dynamic, 'Width varies with speed'),
-                            _buildStrokeTypeOption('Neon Glow', StrokeType.neon, 'Glowing electric effect'),
-                            if (_themeMode != 'duotone')
-                              _buildStrokeTypeOption('Rainbow', StrokeType.gradient, 'Colorful gradient strokes'),
                             _buildStrokeTypeOption('Invisible', StrokeType.invisible, 'No visual feedback'),
                           ],
                         ),
@@ -760,14 +753,6 @@ class _SettingsPageState extends State<SettingsPage> {
   
   String _getStrokeTypeLabel(StrokeType type) {
     switch (type) {
-      case StrokeType.simple:
-        return 'Simple';
-      case StrokeType.dynamic:
-        return 'Dynamic';
-      case StrokeType.neon:
-        return 'Neon Glow';
-      case StrokeType.gradient:
-        return 'Rainbow';
       case StrokeType.invisible:
         return 'Invisible';
       case StrokeType.classic:
@@ -785,23 +770,11 @@ class _SettingsPageState extends State<SettingsPage> {
           _strokeType = type;
           // Set optimal stroke width for each type
           switch (type) {
-            case StrokeType.simple:
-              _strokeWidth = 4.0;
-              break;
-            case StrokeType.dynamic:
-              _strokeWidth = 6.0; // Base width for dynamic
-              break;
-            case StrokeType.neon:
-              _strokeWidth = 6.0; // Thicker for glow effect
-              break;
-            case StrokeType.gradient:
-              _strokeWidth = 8.0; // Wider to show gradient
-              break;
             case StrokeType.invisible:
-              _strokeWidth = 4.0; // Default width (won't be visible anyway)
+              _strokeWidth = 8.0; // Default width (won't be visible anyway)
               break;
             case StrokeType.classic:
-              _strokeWidth = 8.0; // Optimal width for classic brush strokes
+              _strokeWidth = 8.0; // Default size for classic effect
               break;
           }
         });

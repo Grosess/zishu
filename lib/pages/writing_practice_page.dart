@@ -119,7 +119,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   double _strokeWidth = 8.0;
   Color? _strokeColor;  // For drawing strokes
   Color? _hintColor;    // For hints
-  StrokeType _strokeType = StrokeType.simple;
+  StrokeType _strokeType = StrokeType.classic;
   
   // Session statistics
   final List<String> _incorrectItems = [];
@@ -186,7 +186,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         final strokeTypeString = prefs.getString('stroke_type') ?? 'ink';
         _strokeType = StrokeType.values.firstWhere(
           (type) => type.name == strokeTypeString,
-          orElse: () => StrokeType.simple,
+          orElse: () => StrokeType.classic,
         );
         // Show radical analysis in learning mode if enabled (default true)
         final savedSetting = prefs.getBool('show_radical_analysis') ?? true;
@@ -263,7 +263,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       final strokeTypeString = prefs.getString('stroke_type') ?? 'ink';
       _strokeType = StrokeType.values.firstWhere(
         (type) => type.name == strokeTypeString,
-        orElse: () => StrokeType.simple,
+        orElse: () => StrokeType.classic,
       );
       // Load the setting but always show in learning mode
       final savedSetting = prefs.getBool('show_radical_analysis') ?? true;
@@ -3457,7 +3457,7 @@ class CurrentStrokePainter extends CustomPainter {
     required this.currentStroke,
     required this.strokeColor,
     this.strokeWidth = 4.0,
-    this.strokeType = StrokeType.simple,
+    this.strokeType = StrokeType.classic,
     this.isDarkMode = false,
     this.isDuotone = false,
     this.accentColor,
@@ -3468,20 +3468,8 @@ class CurrentStrokePainter extends CustomPainter {
     if (currentStroke.isEmpty) return;
     
     switch (strokeType) {
-      case StrokeType.dynamic:
-        _paintDynamicStroke(canvas, size);
-        break;
-      case StrokeType.neon:
-        _paintNeonStroke(canvas, size);
-        break;
-      case StrokeType.gradient:
-        _paintGradientStroke(canvas, size);
-        break;
       case StrokeType.invisible:
         // Don't paint anything for invisible strokes
-        break;
-      case StrokeType.simple:
-        _paintSimpleStroke(canvas, size);
         break;
       case StrokeType.classic:
         _paintClassicStroke(canvas, size);
@@ -3489,373 +3477,6 @@ class CurrentStrokePainter extends CustomPainter {
     }
   }
   
-  void _paintSimpleStroke(Canvas canvas, Size size) {
-    if (currentStroke.length < 2) {
-      // Draw single point
-      canvas.drawCircle(currentStroke.first, strokeWidth / 2, Paint()..color = strokeColor);
-      return;
-    }
-    
-    // Create smoothed path for higher quality
-    final path = Path();
-    
-    if (currentStroke.length == 2) {
-      // Simple line for two points
-      path.moveTo(currentStroke[0].dx, currentStroke[0].dy);
-      path.lineTo(currentStroke[1].dx, currentStroke[1].dy);
-    } else {
-      // Smooth curve for multiple points
-      path.moveTo(currentStroke[0].dx, currentStroke[0].dy);
-      
-      for (int i = 1; i < currentStroke.length - 1; i++) {
-        final cp1 = currentStroke[i];
-        final cp2 = Offset(
-          (currentStroke[i].dx + currentStroke[i + 1].dx) / 2,
-          (currentStroke[i].dy + currentStroke[i + 1].dy) / 2,
-        );
-        path.quadraticBezierTo(cp1.dx, cp1.dy, cp2.dx, cp2.dy);
-      }
-      
-      // Final point
-      if (currentStroke.length > 2) {
-        path.lineTo(currentStroke.last.dx, currentStroke.last.dy);
-      }
-    }
-    
-    final paint = Paint()
-      ..color = strokeColor
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round
-      ..style = PaintingStyle.stroke;
-    
-    canvas.drawPath(path, paint);
-  }
-  
-  void _paintDynamicStroke(Canvas canvas, Size size) {
-    if (currentStroke.length < 2) {
-      _paintSimpleStroke(canvas, size);
-      return;
-    }
-    
-    // Optimize by sampling points instead of processing all
-    final step = currentStroke.length > 50 ? 2 : 1;
-    
-    // Pre-calculate speeds for sampled points only
-    final speeds = <double>[];
-    double minSpeed = double.infinity;
-    double maxSpeed = 0.0;
-    
-    for (int i = step; i < currentStroke.length; i += step) {
-      final distance = (currentStroke[i] - currentStroke[i-step]).distance;
-      speeds.add(distance);
-      if (distance < minSpeed) minSpeed = distance;
-      if (distance > maxSpeed) maxSpeed = distance;
-    }
-    
-    final speedRange = maxSpeed - minSpeed;
-    if (speedRange < 0.01) {
-      // All similar speeds, use simple stroke
-      _paintSimpleStroke(canvas, size);
-      return;
-    }
-    
-    // Draw with dynamic width
-    int speedIndex = 0;
-    for (int i = step; i < currentStroke.length; i += step) {
-      final p1 = currentStroke[i - step];
-      final p2 = currentStroke[i];
-      
-      final normalizedSpeed = (speeds[speedIndex] - minSpeed) / speedRange;
-      final widthMultiplier = 1.5 - (normalizedSpeed * 1.2);
-      
-      final paint = Paint()
-        ..color = strokeColor
-        ..strokeWidth = strokeWidth * widthMultiplier
-        ..strokeCap = StrokeCap.round
-        ..style = PaintingStyle.stroke;
-      
-      canvas.drawLine(p1, p2, paint);
-      speedIndex++;
-    }
-  }
-  
-  void _paintSmoothStroke(Canvas canvas, Size size) {
-    if (currentStroke.length < 2) {
-      _paintSimpleStroke(canvas, size);
-      return;
-    }
-    
-    // Build the brush stroke as a filled shape with strong tapering
-    final strokePath = Path();
-    
-    if (currentStroke.length >= 2) {
-      // Calculate perpendicular offsets for each point
-      final leftPoints = <Offset>[];
-      final rightPoints = <Offset>[];
-      
-      for (int i = 0; i < currentStroke.length; i++) {
-        // Get direction
-        Offset direction;
-        if (i == 0) {
-          direction = currentStroke[1] - currentStroke[0];
-        } else if (i == currentStroke.length - 1) {
-          direction = currentStroke[i] - currentStroke[i - 1];
-        } else {
-          // Average of before and after for smoother curves
-          direction = currentStroke[i + 1] - currentStroke[i - 1];
-        }
-        
-        // Normalize direction
-        final length = direction.distance;
-        if (length > 0) {
-          direction = direction / length;
-        }
-        
-        // Calculate perpendicular
-        final perpendicular = Offset(-direction.dy, direction.dx);
-        
-        // Calculate width with strong tapering at ends
-        double widthMultiplier = 1.0;
-        final position = i / (currentStroke.length - 1.0);
-        
-        // Strong taper at both ends, full in middle
-        if (position < 0.15) {
-          // Start taper - very thin to full
-          widthMultiplier = math.sin(position / 0.15 * math.pi / 2) * 0.9 + 0.1;
-        } else if (position > 0.85) {
-          // End taper - full to very thin
-          widthMultiplier = math.sin((1.0 - position) / 0.15 * math.pi / 2) * 0.9 + 0.1;
-        } else {
-          // Middle - full width
-          widthMultiplier = 1.0;
-        }
-        
-        final halfWidth = strokeWidth * widthMultiplier * 0.7;
-        
-        // Create offset points
-        leftPoints.add(currentStroke[i] + perpendicular * halfWidth);
-        rightPoints.add(currentStroke[i] - perpendicular * halfWidth);
-      }
-      
-      // Build smooth path
-      strokePath.moveTo(leftPoints.first.dx, leftPoints.first.dy);
-      
-      // Left side with bezier curves
-      for (int i = 1; i < leftPoints.length - 1; i++) {
-        final cp1 = leftPoints[i];
-        final cp2 = Offset(
-          (leftPoints[i].dx + leftPoints[i + 1].dx) / 2,
-          (leftPoints[i].dy + leftPoints[i + 1].dy) / 2,
-        );
-        strokePath.quadraticBezierTo(cp1.dx, cp1.dy, cp2.dx, cp2.dy);
-      }
-      strokePath.lineTo(leftPoints.last.dx, leftPoints.last.dy);
-      
-      // Smooth curve at the end
-      if (rightPoints.length > 2) {
-        final endCurve = Offset(
-          (leftPoints.last.dx + rightPoints.last.dx) / 2,
-          (leftPoints.last.dy + rightPoints.last.dy) / 2,
-        );
-        strokePath.quadraticBezierTo(
-          endCurve.dx, endCurve.dy,
-          rightPoints.last.dx, rightPoints.last.dy,
-        );
-      } else {
-        strokePath.lineTo(rightPoints.last.dx, rightPoints.last.dy);
-      }
-      
-      // Right side (reverse)
-      for (int i = rightPoints.length - 2; i > 0; i--) {
-        final cp1 = rightPoints[i];
-        final cp2 = Offset(
-          (rightPoints[i].dx + rightPoints[i - 1].dx) / 2,
-          (rightPoints[i].dy + rightPoints[i - 1].dy) / 2,
-        );
-        strokePath.quadraticBezierTo(cp1.dx, cp1.dy, cp2.dx, cp2.dy);
-      }
-      
-      // Smooth curve at the start
-      if (leftPoints.length > 2) {
-        final startCurve = Offset(
-          (rightPoints.first.dx + leftPoints.first.dx) / 2,
-          (rightPoints.first.dy + leftPoints.first.dy) / 2,
-        );
-        strokePath.quadraticBezierTo(
-          startCurve.dx, startCurve.dy,
-          leftPoints.first.dx, leftPoints.first.dy,
-        );
-      } else {
-        strokePath.lineTo(leftPoints.first.dx, leftPoints.first.dy);
-      }
-      
-      strokePath.close();
-    }
-    
-    // Subtle shadow for depth (skip for rice paper theme)
-    if (!isDuotone) {
-      final shadowPaint = Paint()
-        ..color = (isDarkMode ? Colors.black : Colors.grey[700]!).withValues(alpha: 0.15)
-        ..style = PaintingStyle.fill
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
-      
-      canvas.save();
-      canvas.translate(1, 1.5);
-      canvas.drawPath(strokePath, shadowPaint);
-      canvas.restore();
-    }
-    
-    // Main ink stroke - full opacity, solid fill
-    final inkPaint = Paint()
-      ..color = strokeColor
-      ..style = PaintingStyle.fill;
-    
-    canvas.drawPath(strokePath, inkPaint);
-    
-    // Add subtle texture only at the ends
-    if (currentStroke.length > 10) {
-      final texturePaint = Paint()
-        ..color = strokeColor.withValues(alpha: 0.2)
-        ..strokeWidth = 0.3
-        ..style = PaintingStyle.stroke;
-      
-      // Texture at start (first 15%)
-      final startEnd = (currentStroke.length * 0.15).round();
-      for (int i = 0; i < startEnd && i < currentStroke.length - 1; i += 2) {
-        final p1 = currentStroke[i];
-        final p2 = currentStroke[math.min(i + 2, currentStroke.length - 1)];
-        
-        // Slight random offset for organic texture
-        final offset = (i % 3 - 1) * 0.3;
-        canvas.drawLine(
-          Offset(p1.dx + offset, p1.dy),
-          Offset(p2.dx + offset, p2.dy),
-          texturePaint,
-        );
-      }
-      
-      // Texture at end (last 15%)
-      final endStart = (currentStroke.length * 0.85).round();
-      for (int i = endStart; i < currentStroke.length - 1; i += 2) {
-        final p1 = currentStroke[i];
-        final p2 = currentStroke[math.min(i + 2, currentStroke.length - 1)];
-        
-        final offset = (i % 3 - 1) * 0.3;
-        canvas.drawLine(
-          Offset(p1.dx + offset, p1.dy),
-          Offset(p2.dx + offset, p2.dy),
-          texturePaint,
-        );
-      }
-    }
-  }
-  
-  void _paintNeonStroke(Canvas canvas, Size size) {
-    if (currentStroke.length < 2) {
-      _paintSimpleStroke(canvas, size);
-      return;
-    }
-    
-    final path = Path();
-    path.moveTo(currentStroke.first.dx, currentStroke.first.dy);
-    
-    // Smooth path with bezier curves
-    for (int i = 1; i < currentStroke.length - 1; i++) {
-      final p1 = currentStroke[i];
-      final p2 = currentStroke[i + 1];
-      final ep = Offset((p1.dx + p2.dx) / 2, (p1.dy + p2.dy) / 2);
-      path.quadraticBezierTo(p1.dx, p1.dy, ep.dx, ep.dy);
-    }
-    if (currentStroke.length > 1) {
-      path.lineTo(currentStroke.last.dx, currentStroke.last.dy);
-    }
-    
-    // Outer glow layers
-    for (int i = 3; i >= 1; i--) {
-      final glowPaint = Paint()
-        ..color = strokeColor.withValues(alpha: 0.15 * (4 - i))
-        ..strokeWidth = strokeWidth * (1 + i * 0.5)
-        ..strokeCap = StrokeCap.round
-        ..style = PaintingStyle.stroke
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, i * 2.0);
-      canvas.drawPath(path, glowPaint);
-    }
-    
-    // Bright core
-    final corePaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.9)
-      ..strokeWidth = strokeWidth * 0.5
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
-    canvas.drawPath(path, corePaint);
-    
-    // Main stroke
-    final mainPaint = Paint()
-      ..color = strokeColor
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
-    canvas.drawPath(path, mainPaint);
-  }
-  
-  void _paintGradientStroke(Canvas canvas, Size size) {
-    if (currentStroke.length < 2) {
-      _paintSimpleStroke(canvas, size);
-      return;
-    }
-    
-    // Create rainbow gradient colors
-    final colors = [
-      Colors.red,
-      Colors.orange,
-      Colors.yellow,
-      Colors.green,
-      Colors.blue,
-      Colors.indigo,
-      Colors.purple,
-    ];
-    
-    // Draw segments with gradient
-    for (int i = 1; i < currentStroke.length; i++) {
-      final p1 = currentStroke[i - 1];
-      final p2 = currentStroke[i];
-      
-      // Calculate color based on position
-      final progress = i / currentStroke.length;
-      final colorIndex = (progress * (colors.length - 1)).floor();
-      final localProgress = (progress * (colors.length - 1)) - colorIndex;
-      
-      final color = Color.lerp(
-        colors[colorIndex],
-        colors[(colorIndex + 1).clamp(0, colors.length - 1)],
-        localProgress,
-      )!;
-      
-      final paint = Paint()
-        ..color = color
-        ..strokeWidth = strokeWidth
-        ..strokeCap = StrokeCap.round
-        ..style = PaintingStyle.stroke;
-      
-      canvas.drawLine(p1, p2, paint);
-    }
-    
-    // Add shimmer effect
-    final path = Path();
-    path.moveTo(currentStroke.first.dx, currentStroke.first.dy);
-    for (final point in currentStroke) {
-      path.lineTo(point.dx, point.dy);
-    }
-    
-    final shimmerPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.3)
-      ..strokeWidth = strokeWidth * 0.3
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1);
-    canvas.drawPath(path, shimmerPaint);
-  }
   
   void _paintInkStroke(Canvas canvas, Size size) {
     if (currentStroke.length < 2) {
@@ -4027,202 +3648,222 @@ class CurrentStrokePainter extends CustomPainter {
   void _paintClassicStroke(Canvas canvas, Size size) {
     if (currentStroke.isEmpty) return;
     
-    // For single point, draw a tapered dot
-    if (currentStroke.length < 2) {
-      final gradient = RadialGradient(
-        colors: [
-          strokeColor,
-          strokeColor.withValues(alpha: 0.6),
-        ],
-      );
-      final paint = Paint()
-        ..shader = gradient.createShader(
-          Rect.fromCircle(center: currentStroke.first, radius: strokeWidth * 0.6),
-        )
-        ..style = PaintingStyle.fill;
-      canvas.drawCircle(currentStroke.first, strokeWidth * 0.6, paint);
-      return;
-    }
+    // Draw as circles with dramatic size and color variation
+    final dotSpacing = strokeWidth * 0.2; // Small spacing for smooth but visible dots
+    double accumulatedDistance = 0.0;
     
-    // Use cubic interpolation for smoother curves
-    final smoothPoints = <Offset>[];
-    smoothPoints.add(currentStroke.first);
-    
-    // Add interpolated points for smoother curves
-    for (int i = 1; i < currentStroke.length - 1; i++) {
-      final p0 = currentStroke[i - 1];
-      final p1 = currentStroke[i];
-      final p2 = currentStroke[i + 1];
-      
-      // Add the actual point
-      smoothPoints.add(p1);
-      
-      // Add interpolated point for smoother curve
-      if ((p1 - p0).distance > 5 && (p2 - p1).distance > 5) {
-        final mid1 = Offset((p0.dx + p1.dx) / 2, (p0.dy + p1.dy) / 2);
-        final mid2 = Offset((p1.dx + p2.dx) / 2, (p1.dy + p2.dy) / 2);
-        final control = p1;
-        
-        // Cubic bezier interpolation
-        for (double t = 0.2; t <= 0.8; t += 0.2) {
-          final u = 1 - t;
-          final interpolated = Offset(
-            u * u * mid1.dx + 2 * u * t * control.dx + t * t * mid2.dx,
-            u * u * mid1.dy + 2 * u * t * control.dy + t * t * mid2.dy,
-          );
-          smoothPoints.add(interpolated);
-        }
-      }
-    }
-    smoothPoints.add(currentStroke.last);
-    
-    // Calculate velocities for width variation
-    final velocities = <double>[];
-    for (int i = 0; i < smoothPoints.length; i++) {
+    for (int i = 0; i < currentStroke.length; i++) {
       if (i == 0) {
-        velocities.add(0.1);
+        // Calculate initial speed from first few points if available
+        double initialSpeed = 0.0;
+        if (currentStroke.length > 1) {
+          initialSpeed = (currentStroke[1] - currentStroke[0]).distance;
+          if (currentStroke.length > 2) {
+            // Average with second segment for better estimate
+            initialSpeed = (initialSpeed + (currentStroke[2] - currentStroke[1]).distance) / 2.0;
+          }
+        }
+        _drawClassicDot(canvas, currentStroke[i], initialSpeed, 0.0);
       } else {
-        final dist = (smoothPoints[i] - smoothPoints[i - 1]).distance;
-        velocities.add(math.min(dist / 10.0, 1.0));
-      }
-    }
-    
-    // Build the stroke path with variable width
-    final strokePath = Path();
-    final leftPoints = <Offset>[];
-    final rightPoints = <Offset>[];
-    
-    for (int i = 0; i < smoothPoints.length; i++) {
-      final point = smoothPoints[i];
-      
-      // Calculate width with taper at ends
-      double widthMultiplier = 1.0;
-      final progress = i / (smoothPoints.length - 1);
-      
-      // Strong taper at start and end
-      if (progress < 0.1) {
-        widthMultiplier = progress / 0.1 * 0.3 + 0.1;
-      } else if (progress > 0.9) {
-        widthMultiplier = (1.0 - progress) / 0.1 * 0.3 + 0.1;
-      } else {
-        // Vary width based on velocity in the middle
-        widthMultiplier = 1.2 - velocities[i] * 0.4;
-      }
-      
-      final width = strokeWidth * widthMultiplier;
-      
-      // Calculate perpendicular direction
-      Offset direction;
-      if (i == 0) {
-        direction = smoothPoints[1] - smoothPoints[0];
-      } else if (i == smoothPoints.length - 1) {
-        direction = smoothPoints[i] - smoothPoints[i - 1];
-      } else {
-        direction = smoothPoints[i + 1] - smoothPoints[i - 1];
-      }
-      
-      if (direction.distance > 0) {
-        direction = direction / direction.distance;
-        final perpendicular = Offset(-direction.dy, direction.dx);
+        final distance = (currentStroke[i] - currentStroke[i-1]).distance;
+        accumulatedDistance += distance;
         
-        leftPoints.add(point + perpendicular * width * 0.5);
-        rightPoints.add(point - perpendicular * width * 0.5);
+        // Draw dots at regular intervals
+        while (accumulatedDistance >= dotSpacing) {
+          // Interpolate position
+          final t = 1.0 - (accumulatedDistance - dotSpacing) / distance;
+          final interpolatedPos = Offset.lerp(currentStroke[i-1], currentStroke[i], t)!;
+          
+          // Calculate speed (distance between consecutive points)
+          final speed = distance;
+          
+          // Calculate progress for color (0 = start, 1 = end)
+          final progress = (i - 1 + t) / (currentStroke.length - 1.0);
+          
+          _drawClassicDot(canvas, interpolatedPos, speed, progress);
+          accumulatedDistance -= dotSpacing;
+        }
       }
     }
     
-    // Build the smooth path
-    if (leftPoints.isNotEmpty && rightPoints.isNotEmpty) {
-      strokePath.moveTo(leftPoints.first.dx, leftPoints.first.dy);
-      
-      // Draw left side with cubic beziers
-      for (int i = 1; i < leftPoints.length - 1; i += 2) {
-        if (i + 1 < leftPoints.length) {
-          strokePath.quadraticBezierTo(
-            leftPoints[i].dx, leftPoints[i].dy,
-            leftPoints[i + 1].dx, leftPoints[i + 1].dy,
-          );
-        }
-      }
-      
-      // Connect to right side with smooth curve at the tip
-      final tipPoint = smoothPoints.last;
-      strokePath.quadraticBezierTo(
-        tipPoint.dx, tipPoint.dy,
-        rightPoints.last.dx, rightPoints.last.dy,
-      );
-      
-      // Draw right side back
-      for (int i = rightPoints.length - 2; i >= 1; i -= 2) {
-        if (i - 1 >= 0) {
-          strokePath.quadraticBezierTo(
-            rightPoints[i].dx, rightPoints[i].dy,
-            rightPoints[i - 1].dx, rightPoints[i - 1].dy,
-          );
-        }
-      }
-      
-      // Close path with smooth curve at the start
-      strokePath.quadraticBezierTo(
-        smoothPoints.first.dx, smoothPoints.first.dy,
-        leftPoints.first.dx, leftPoints.first.dy,
-      );
-      
-      // Create gradient for dynamic tip color with time-based accent
-      final tipProgress = math.min(20.0 / smoothPoints.length, 0.3);
-      
-      // Calculate time-based blend factor (oscillates between 0.3 and 0.7)
-      final timeBlend = 0.5 + 0.2 * math.sin(DateTime.now().millisecondsSinceEpoch / 300.0);
-      
-      // Blend stroke color with accent color for the tip
-      final tipColor = Color.lerp(
-        strokeColor,
-        accentColor ?? strokeColor,
-        timeBlend,
+    // Always draw the last dot
+    if (currentStroke.length > 1) {
+      final lastSpeed = (currentStroke.last - currentStroke[currentStroke.length - 2]).distance;
+      _drawClassicDot(canvas, currentStroke.last, lastSpeed, 1.0);
+    }
+    return;
+  }
+  
+  void _drawClassicDot(Canvas canvas, Offset position, double speed, double progress) {
+    // Subtle size variation based on speed
+    final maxDotSize = strokeWidth * 0.7;  // Slightly larger when slow
+    final minDotSize = strokeWidth * 0.4;  // Slightly smaller when fast
+    
+    // Less sensitive speed normalization
+    final normalizedSpeed = math.min(speed / 10.0, 1.0);  // Much less sensitive
+    
+    // Use linear interpolation for gentle changes
+    final sizeFactor = 1.0 - normalizedSpeed;
+    final dotRadius = minDotSize + (maxDotSize - minDotSize) * sizeFactor;
+    
+    // Subtle color gradient from light blue to darker blue
+    final Color dotColor;
+    if (progress < 0.3) {
+      // Start with very light blue
+      dotColor = const Color(0xFFE3F2FD);
+    } else if (progress < 0.6) {
+      // Fade to medium blue
+      final t = (progress - 0.3) / 0.3;
+      dotColor = Color.lerp(
+        const Color(0xFFE3F2FD),  // Very light blue
+        const Color(0xFF64B5F6),  // Medium blue
+        t,
       )!;
-      
-      final gradientColors = [
-        strokeColor,
-        strokeColor,
-        Color.lerp(strokeColor, tipColor, 0.3)!,
-        Color.lerp(strokeColor, tipColor, 0.6)!,
-        tipColor,
-      ];
-      
-      final gradient = LinearGradient(
-        begin: Alignment(
-          (smoothPoints.first.dx - smoothPoints.last.dx) / size.width,
-          (smoothPoints.first.dy - smoothPoints.last.dy) / size.height,
-        ),
-        end: Alignment(
-          (smoothPoints.last.dx - smoothPoints.first.dx) / size.width,
-          (smoothPoints.last.dy - smoothPoints.first.dy) / size.height,
-        ),
-        colors: gradientColors,
-        stops: const [0.0, 0.5, 0.7, 0.85, 1.0],
-      );
-      
-      // Draw main stroke with gradient
-      final paint = Paint()
-        ..shader = gradient.createShader(strokePath.getBounds())
+    } else {
+      // Fade to darker blue
+      final t = (progress - 0.6) / 0.4;
+      dotColor = Color.lerp(
+        const Color(0xFF64B5F6),  // Medium blue
+        const Color(0xFF1976D2),  // Darker blue
+        t,
+      )!;
+    }
+    
+    // Main dot with slight blur for smoothness
+    final paint = Paint()
+      ..color = dotColor
+      ..style = PaintingStyle.fill
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 0.5);
+    
+    canvas.drawCircle(position, dotRadius, paint);
+  }
+  
+  void _paintDotsStroke(Canvas canvas, Size size) {
+    if (currentStroke.isEmpty) return;
+    
+    // First, smooth the stroke points
+    final smoothedPoints = <Offset>[];
+    final smoothedSpeeds = <double>[];
+    
+    // Apply smoothing to reduce choppiness
+    const smoothingFactor = 0.15; // How much to smooth (0 = no smoothing, 1 = maximum smoothing)
+    
+    for (int i = 0; i < currentStroke.length; i++) {
+      if (i == 0 || i == currentStroke.length - 1) {
+        // Keep start and end points exact
+        smoothedPoints.add(currentStroke[i]);
+        if (i == 0) {
+          smoothedSpeeds.add(0.0);
+        } else {
+          final distance = (currentStroke[i] - currentStroke[i-1]).distance;
+          smoothedSpeeds.add(distance);
+        }
+      } else {
+        // Smooth intermediate points
+        final prevPoint = smoothedPoints.isEmpty ? currentStroke[i-1] : smoothedPoints.last;
+        final targetPoint = currentStroke[i];
+        
+        // Weighted average for position
+        final smoothedPoint = Offset(
+          prevPoint.dx + (targetPoint.dx - prevPoint.dx) * (1 - smoothingFactor),
+          prevPoint.dy + (targetPoint.dy - prevPoint.dy) * (1 - smoothingFactor),
+        );
+        
+        smoothedPoints.add(smoothedPoint);
+        
+        // Calculate and smooth speeds
+        final distance = (smoothedPoint - prevPoint).distance;
+        final prevSpeed = smoothedSpeeds.isEmpty ? distance : smoothedSpeeds.last;
+        final smoothedSpeed = prevSpeed + (distance - prevSpeed) * (1 - smoothingFactor);
+        smoothedSpeeds.add(smoothedSpeed);
+      }
+    }
+    
+    // Draw dots along the smoothed path
+    final dotSpacing = strokeWidth * 0.15; // Much smaller spacing for more dots
+    double accumulatedDistance = 0.0;
+    
+    for (int i = 0; i < smoothedPoints.length; i++) {
+      if (i == 0) {
+        // Always draw the first dot
+        _drawDot(canvas, smoothedPoints[i], smoothedSpeeds[i], 0.0);
+      } else {
+        final distance = (smoothedPoints[i] - smoothedPoints[i-1]).distance;
+        accumulatedDistance += distance;
+        
+        // Draw dots at regular intervals
+        while (accumulatedDistance >= dotSpacing) {
+          // Interpolate position and speed
+          final t = 1.0 - (accumulatedDistance - dotSpacing) / distance;
+          final interpolatedPos = Offset.lerp(smoothedPoints[i-1], smoothedPoints[i], t)!;
+          final interpolatedSpeed = smoothedSpeeds[i-1] + (smoothedSpeeds[i] - smoothedSpeeds[i-1]) * t;
+          
+          // Calculate progress along stroke for color fade
+          final progress = i / (smoothedPoints.length - 1.0);
+          
+          _drawDot(canvas, interpolatedPos, interpolatedSpeed, progress);
+          accumulatedDistance -= dotSpacing;
+        }
+      }
+    }
+    
+    // Always draw the last dot
+    if (smoothedPoints.isNotEmpty) {
+      _drawDot(canvas, smoothedPoints.last, smoothedSpeeds.last, 1.0);
+    }
+  }
+  
+  void _drawDot(Canvas canvas, Offset position, double speed, double progress) {
+    // Calculate dot size based on speed (slower = MUCH bigger)
+    final maxDotSize = strokeWidth * 5.0;  // EXTREMELY large max size (75 pixels with default width)
+    final minDotSize = strokeWidth * 0.05;  // TINY min size (0.75 pixels)
+    
+    // Normalize speed (typical range 0-10 pixels per frame)
+    // Make it MUCH more sensitive to speed changes
+    final normalizedSpeed = math.min(speed / 2.0, 1.0);  // Very sensitive to speed
+    
+    // Invert and apply cubic curve for EXTREME size changes
+    final sizeFactor = math.pow(1.0 - normalizedSpeed, 3.0).toDouble();  // Cubic for extreme effect
+    final dotRadius = minDotSize + (maxDotSize - minDotSize) * sizeFactor;
+    
+    // Time-based color fade from bright white to deep blue
+    final timeProgress = 1.0 - progress;  // Invert so 1.0 is newest
+    
+    // Use pure colors for maximum contrast
+    final dotColor = timeProgress > 0.5 
+      ? Color.lerp(
+          const Color(0xFF0000FF),  // Deep blue for old dots
+          const Color(0xFF4080FF),  // Medium blue for middle
+          (timeProgress - 0.5) * 2.0,
+        )!
+      : Color.lerp(
+          const Color(0xFF4080FF),  // Medium blue for middle
+          const Color(0xFFFFFFFF),  // Pure white for newest dots
+          timeProgress * 2.0,
+        )!;
+    
+    // Draw the dot with a soft edge
+    final paint = Paint()
+      ..color = dotColor
+      ..style = PaintingStyle.fill
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, dotRadius * 0.2);  // More blur for larger dots
+    
+    canvas.drawCircle(position, dotRadius, paint);
+    
+    // Add a bright white highlight for the newest dots
+    if (timeProgress > 0.7) {
+      final highlightPaint = Paint()
+        ..color = Colors.white.withOpacity((timeProgress - 0.7) * 3.33)
         ..style = PaintingStyle.fill
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 0.5);
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.0);
       
-      canvas.drawPath(strokePath, paint);
-      
-      // Add subtle edge softening
-      final edgePaint = Paint()
-        ..color = strokeColor.withValues(alpha: 0.1)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.0);
-      
-      canvas.drawPath(strokePath, edgePaint);
+      canvas.drawCircle(position, dotRadius * 0.5, highlightPaint);
     }
   }
   
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    // Always repaint for classic stroke to animate the tip color
+    // Always repaint for animated stroke types
     if (strokeType == StrokeType.classic) return true;
     
     if (oldDelegate is CurrentStrokePainter) {
