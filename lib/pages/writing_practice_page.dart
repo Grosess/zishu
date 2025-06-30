@@ -545,7 +545,16 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       
       // Reset UI state
       _testingCharacterRevealed = false;
-      _learningStage = 0;
+      // For learning mode with multi-character words, preserve the learning stage
+      if (widget.mode == PracticeMode.learning && widget.isWord && _wordCharacters.length > 1) {
+        // Don't reset learning stage when cycling through characters
+        print('📚 PRESERVING learning stage: $_learningStage');
+      } else if (!widget.isWord || widget.mode != PracticeMode.learning) {
+        // Reset for single characters or testing mode
+        print('📚 RESET: Setting learning stage to 0 (was $_learningStage)');
+        _learningStage = 0;
+      }
+      print('📚 LOAD CHARACTER: Stage=$_learningStage, CharIndex=$_currentWordCharacterIndex');
       _showHintPath = false;
       _showFullCharacter = false;
       _usedHint = false;
@@ -876,7 +885,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                         // Character guide based on learning stage
                         if (_characterStroke != null && (
                           _showFullCharacter || // Manual show all
-                          (widget.mode == PracticeMode.learning && _learningStage == 1) // Stage 1: show filled character
+                          (widget.mode == PracticeMode.learning && (_learningStage == 0 || _learningStage == 1)) // Stage 0 and 1: show filled character
                         ))
                           CustomPaint(
                             size: Size.infinite,
@@ -1570,51 +1579,35 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         if (mounted) {
           // For multi-character words, check if we need to move to next character
           if (widget.isWord && _wordCharacters.length > 1) {
-            if (_currentWordCharacterIndex < _wordCharacters.length - 1) {
-              // Track the result for this character
-              _wordCharacterResults[_currentWordCharacterIndex] = wasCorrect;
-              
-              // Move to next character in the word
-              setState(() {
-                _currentWordCharacterIndex++;
-                _completedStrokeIndices.clear();
-                _wrongAttempts.fillRange(0, _wrongAttempts.length, 0);
-                _userStrokes.clear();
-                _showHintPath = false;
-                _showFullCharacter = false;
-                _usedHint = false;
-                _missedStrokes = 0;
-                _showSuccess = false;
-                _showManualGrading = false;
-                _testingCharacterRevealed = false;
-                _strokeDeviation = 0.0;
-                _autoGradedAsCorrect = false;
-                _loadCharacterData();
-              });
-            } else {
-              // Track the result for the last character
-              _wordCharacterResults[_currentWordCharacterIndex] = wasCorrect;
-              
-              // Completed the word, increment practice count and reset to first character
-              _practiceCount++;
-              setState(() {
-                _currentWordCharacterIndex = 0;
-                _wordCharacterResults.clear(); // Clear results for new round
-                _completedStrokeIndices.clear();
-                _wrongAttempts.fillRange(0, _wrongAttempts.length, 0);
-                _userStrokes.clear();
-                _showHintPath = false;
-                _showFullCharacter = false;
-                _usedHint = false;
-                _missedStrokes = 0;
-                _showSuccess = false;
-                _showManualGrading = false;
-                _testingCharacterRevealed = false;
-                _strokeDeviation = 0.0;
-                _autoGradedAsCorrect = false;
-                _loadCharacterData();
-              });
-            }
+            // Always move to next character, cycling through (1→2→1→2 pattern)
+            final nextCharacterIndex = (_currentWordCharacterIndex + 1) % _wordCharacters.length;
+            
+            // Track the result for this character
+            _wordCharacterResults[_currentWordCharacterIndex] = wasCorrect;
+            
+            // Increment practice count each time we complete any character
+            _practiceCount++;
+            
+            setState(() {
+              _currentWordCharacterIndex = nextCharacterIndex;
+              // Clear results if we're starting a new cycle
+              if (nextCharacterIndex == 0) {
+                _wordCharacterResults.clear();
+              }
+              _completedStrokeIndices.clear();
+              _wrongAttempts.fillRange(0, _wrongAttempts.length, 0);
+              _userStrokes.clear();
+              _showHintPath = false;
+              _showFullCharacter = false;
+              _usedHint = false;
+              _missedStrokes = 0;
+              _showSuccess = false;
+              _showManualGrading = false;
+              _testingCharacterRevealed = false;
+              _strokeDeviation = 0.0;
+              _autoGradedAsCorrect = false;
+              _loadCharacterData();
+            });
           } else {
             // Single character, just reset
             _practiceCount++;
@@ -1746,19 +1739,50 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     Future.delayed(const Duration(milliseconds: 300), () async {
       // In learning mode, check if we should advance to next stage or next character
       if (widget.mode == PracticeMode.learning && _learningStage < 2) {
-        // Advance to next stage for the same character
-        setState(() {
-          _learningStage++;
-          _completedStrokeIndices.clear();
-          _wrongAttempts.fillRange(0, _wrongAttempts.length, 0);
-          _userStrokes.clear();
-          _showHintPath = false;
-          _showFullCharacter = false;
-          _usedHint = false;
-          _missedStrokes = 0;
-          _showManualGrading = false;
-          _showSuccess = false;
-        });
+        print('📚 LEARNING MODE: Current stage $_learningStage, word=$currentCharacter, charIndex=$_currentWordCharacterIndex');
+        
+        // For multi-character words, cycle through characters even in the same stage
+        if (widget.isWord && _wordCharacters.length > 1) {
+          final nextCharacterIndex = (_currentWordCharacterIndex + 1) % _wordCharacters.length;
+          print('📚 LEARNING MODE: Next character index will be $nextCharacterIndex');
+          
+          setState(() {
+            _currentWordCharacterIndex = nextCharacterIndex;
+            
+            // If we completed a full cycle (back to first character)
+            if (nextCharacterIndex == 0) {
+              // Advance stage after completing one full cycle
+              print('📚 LEARNING MODE: Completed cycle at stage $_learningStage, advancing to next stage');
+              _learningStage++;
+              print('📚 LEARNING MODE: Now at stage $_learningStage');
+            }
+            
+            _completedStrokeIndices.clear();
+            _wrongAttempts.fillRange(0, _wrongAttempts.length, 0);
+            _userStrokes.clear();
+            _showHintPath = false;
+            _showFullCharacter = false;
+            _usedHint = false;
+            _missedStrokes = 0;
+            _showManualGrading = false;
+            _showSuccess = false;
+            _loadCharacterData();
+          });
+        } else {
+          // Single character - advance to next stage
+          setState(() {
+            _learningStage++;
+            _completedStrokeIndices.clear();
+            _wrongAttempts.fillRange(0, _wrongAttempts.length, 0);
+            _userStrokes.clear();
+            _showHintPath = false;
+            _showFullCharacter = false;
+            _usedHint = false;
+            _missedStrokes = 0;
+            _showManualGrading = false;
+            _showSuccess = false;
+          });
+        }
         return;
       }
       
@@ -1771,8 +1795,87 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       }
       
       // Auto-progress to next character (testing mode or completed all stages in learning)
-      if (widget.isWord && _wordCharacters.length > 1) {
-        // Handle multi-character word progression
+      if (widget.isWord && _wordCharacters.length > 1 && widget.allCharacters != null && widget.allCharacters!.length == 1) {
+        // Handle learning mode completion
+        if (widget.mode == PracticeMode.learning && _learningStage == 2) {
+          final nextCharacterIndex = (_currentWordCharacterIndex + 1) % _wordCharacters.length;
+          
+          // Check if we've completed a full cycle at stage 2
+          if (nextCharacterIndex == 0) {
+            print('📚 LEARNING MODE: Completed all stages for word');
+            
+            // Mark as learned
+            if (wasCorrect) {
+              if (_wordCharacters.length > 1) {
+                await _learningService.markWordAsLearned(widget.character);
+              } else {
+                await _learningService.markCharacterAsLearned(widget.character);
+              }
+            }
+            
+            // Exit practice
+            if (mounted) {
+              Navigator.pop(context);
+            }
+            return;
+          } else {
+            // Continue to next character in stage 2
+            setState(() {
+              _currentWordCharacterIndex = nextCharacterIndex;
+              _completedStrokeIndices.clear();
+              _wrongAttempts.fillRange(0, _wrongAttempts.length, 0);
+              _userStrokes.clear();
+              _showHintPath = false;
+              _showFullCharacter = false;
+              _usedHint = false;
+              _missedStrokes = 0;
+              _showManualGrading = false;
+              _showSuccess = false;
+              _loadCharacterData();
+            });
+            return;
+          }
+        }
+        
+        // For testing mode or continuous practice
+        final nextCharacterIndex = (_currentWordCharacterIndex + 1) % _wordCharacters.length;
+        
+        setState(() {
+          // Track the result for this character
+          _wordCharacterResults[_currentWordCharacterIndex] = wasCorrect;
+          _currentWordCharacterIndex = nextCharacterIndex;
+          
+          // Clear results if we're starting a new cycle
+          if (nextCharacterIndex == 0) {
+            _wordCharacterResults.clear();
+          }
+          
+          // Don't reset learning stage in testing mode
+          if (widget.mode != PracticeMode.learning) {
+            _learningStage = 0;
+          }
+          
+          // Clear all visual state immediately
+          _completedStrokeIndices.clear();
+          _userStrokes.clear();
+          _currentStroke.clear();
+          _showSuccess = false;
+          _showManualGrading = false;
+          _autoGradedAsCorrect = false;
+          _testingCharacterRevealed = false;
+          _showHintPath = false;
+          _showFullCharacter = false;
+          _usedHint = false;
+          _missedStrokes = 0;
+          _strokeDeviation = 0.0;
+          _autoProceedTimer?.cancel();
+          _progressTimer?.cancel();
+          _timerProgress = 1.0;
+          
+          _loadCharacterData();
+        });
+      } else if (widget.isWord && _wordCharacters.length > 1) {
+        // Handle multi-character word progression in practice all mode
         if (_currentWordCharacterIndex < _wordCharacters.length - 1) {
           setState(() {
             // Track the result for this character
