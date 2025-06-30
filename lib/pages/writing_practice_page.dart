@@ -70,6 +70,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   // User input tracking
   final List<List<Offset>> _userStrokes = [];
   List<Offset> _currentStroke = [];
+  List<int> _currentStrokeTimestamps = []; // Track timestamp for each point
   Timer? _updateTimer;
   List<Offset> _pendingPoints = [];
   static const _updateInterval = Duration(milliseconds: 8); // 120 FPS for smoother strokes
@@ -205,17 +206,14 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   void _initializeClassicStrokeAnimation() {
     _classicStrokeController?.dispose();
     _classicStrokeController = AnimationController(
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 16), // ~60fps refresh rate
       vsync: this,
     );
     _classicStrokeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _classicStrokeController!,
-      curve: Curves.easeInOut,
-    ));
-    _classicStrokeController!.repeat(reverse: true);
+    ).animate(_classicStrokeController!);
+    _classicStrokeController!.repeat(); // Continuously repaint
   }
   
   @override
@@ -541,6 +539,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       _completedStrokeIndices.clear();
       _userStrokes.clear();
       _currentStroke.clear();
+      _currentStrokeTimestamps.clear();
       _wrongAttempts.clear();
       
       // Reset UI state
@@ -984,6 +983,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                             
                             // Initialize stroke
                             _currentStroke = [details.localPosition];
+                            _currentStrokeTimestamps = [DateTime.now().millisecondsSinceEpoch];
                             _pendingPoints.clear();
                             print('👆 Started new stroke at ${details.localPosition}');
                             
@@ -993,6 +993,11 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                               if (_pendingPoints.isNotEmpty) {
                                 setState(() {
                                   _currentStroke.addAll(_pendingPoints);
+                                  // Add current timestamp for each pending point
+                                  final currentTime = DateTime.now().millisecondsSinceEpoch;
+                                  for (int i = 0; i < _pendingPoints.length; i++) {
+                                    _currentStrokeTimestamps.add(currentTime);
+                                  }
                                   _pendingPoints.clear();
                                 });
                               }
@@ -1048,6 +1053,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                                     size: Size.infinite,
                                     painter: CurrentStrokePainter(
                                       currentStroke: _currentStroke,
+                                      strokeTimestamps: _currentStrokeTimestamps,
                                       strokeColor: _strokeColor ?? (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                                         ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
                                         : Theme.of(context).colorScheme.primary),
@@ -1064,6 +1070,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                                 size: Size.infinite,
                                 painter: CurrentStrokePainter(
                                   currentStroke: _currentStroke,
+                                  strokeTimestamps: _currentStrokeTimestamps,
                                   strokeColor: _strokeColor ?? (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                                     ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
                                     : Theme.of(context).colorScheme.primary),
@@ -1333,7 +1340,11 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     
     if (nextIndex >= _characterStroke!.strokes.length) {
       print('❌ EARLY RETURN: nextIndex ($nextIndex) >= strokeLength (${_characterStroke!.strokes.length})');
-      setState(() => _currentStroke.clear());
+      setState(() {
+        _currentStroke.clear();
+        _currentStrokeTimestamps.clear();
+        _currentStrokeTimestamps.clear();
+      });
       return;
     }
     
@@ -1367,6 +1378,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
           _onCharacterComplete();
         }
         _currentStroke.clear();
+        _currentStrokeTimestamps.clear();
       });
       return;
     }
@@ -1498,6 +1510,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       
       print('🧹 Clearing current stroke (${_currentStroke.length} points)');
       _currentStroke.clear();
+      _currentStrokeTimestamps.clear();
       print('🔍 After setState: CompletedIndices=${_completedStrokeIndices.length}, UserStrokes=${_userStrokes.length}');
     });
     
@@ -1859,6 +1872,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
           _completedStrokeIndices.clear();
           _userStrokes.clear();
           _currentStroke.clear();
+        _currentStrokeTimestamps.clear();
           _showSuccess = false;
           _showManualGrading = false;
           _autoGradedAsCorrect = false;
@@ -1887,6 +1901,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
             _completedStrokeIndices.clear();
             _userStrokes.clear();
             _currentStroke.clear();
+        _currentStrokeTimestamps.clear();
             _showSuccess = false;
             _showManualGrading = false;
             _autoGradedAsCorrect = false;
@@ -1938,6 +1953,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
             _completedStrokeIndices.clear();
             _userStrokes.clear();
             _currentStroke.clear();
+        _currentStrokeTimestamps.clear();
             _showSuccess = false;
             _showManualGrading = false;
             _autoGradedAsCorrect = false;
@@ -2046,6 +2062,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
           _completedStrokeIndices.clear();
           _userStrokes.clear();
           _currentStroke.clear();
+        _currentStrokeTimestamps.clear();
           _showSuccess = false;
           _showManualGrading = false;
           _autoGradedAsCorrect = false;
@@ -3446,6 +3463,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
 // Painters
 class CurrentStrokePainter extends CustomPainter {
   final List<Offset> currentStroke;
+  final List<int>? strokeTimestamps;
   final Color strokeColor;
   final double strokeWidth;
   final StrokeType strokeType;
@@ -3455,6 +3473,7 @@ class CurrentStrokePainter extends CustomPainter {
 
   CurrentStrokePainter({
     required this.currentStroke,
+    this.strokeTimestamps,
     required this.strokeColor,
     this.strokeWidth = 4.0,
     this.strokeType = StrokeType.classic,
@@ -3648,9 +3667,8 @@ class CurrentStrokePainter extends CustomPainter {
   void _paintClassicStroke(Canvas canvas, Size size) {
     if (currentStroke.isEmpty) return;
     
-    // Track when the stroke started
+    // Get current time for age calculations
     final currentTime = DateTime.now().millisecondsSinceEpoch;
-    final strokeStartTime = currentTime - (currentStroke.length * 16); // Approximate 60fps
     
     // Draw as circles with size variation and time-based color
     final dotSpacing = strokeWidth * 0.2; // Small spacing for smooth but visible dots
@@ -3670,7 +3688,10 @@ class CurrentStrokePainter extends CustomPainter {
             initialSpeed = (initialSpeed + (currentStroke[2] - currentStroke[1]).distance) / 2.0;
           }
         }
-        final timestamp = strokeStartTime + (i * 16);
+        // Use actual timestamp if available, otherwise estimate
+        final timestamp = (strokeTimestamps != null && i < strokeTimestamps!.length) 
+          ? strokeTimestamps![i] 
+          : currentTime - ((currentStroke.length - i) * 16);
         dotsToRender.add((currentStroke[i], initialSpeed, timestamp));
       } else {
         final distance = (currentStroke[i] - currentStroke[i-1]).distance;
@@ -3685,8 +3706,10 @@ class CurrentStrokePainter extends CustomPainter {
           // Calculate speed (distance between consecutive points)
           final speed = distance;
           
-          // Estimate timestamp for this dot
-          final timestamp = strokeStartTime + ((i - 1 + t) * 16).round();
+          // Interpolate timestamp
+          final timestamp = (strokeTimestamps != null && i < strokeTimestamps!.length && i > 0) 
+            ? (strokeTimestamps![i-1] + (strokeTimestamps![i] - strokeTimestamps![i-1]) * t).round()
+            : currentTime - ((currentStroke.length - i + 1 - t) * 16).round();
           
           dotsToRender.add((interpolatedPos, speed, timestamp));
           accumulatedDistance -= dotSpacing;
@@ -3697,7 +3720,9 @@ class CurrentStrokePainter extends CustomPainter {
     // Always add the last dot
     if (currentStroke.length > 1) {
       final lastSpeed = (currentStroke.last - currentStroke[currentStroke.length - 2]).distance;
-      final timestamp = strokeStartTime + ((currentStroke.length - 1) * 16);
+      final timestamp = (strokeTimestamps != null && currentStroke.length <= strokeTimestamps!.length) 
+        ? strokeTimestamps![currentStroke.length - 1]
+        : currentTime;
       dotsToRender.add((currentStroke.last, lastSpeed, timestamp));
     }
     
@@ -3722,31 +3747,39 @@ class CurrentStrokePainter extends CustomPainter {
     final sizeFactor = 1.0 - normalizedSpeed;
     final dotRadius = minDotSize + (maxDotSize - minDotSize) * sizeFactor;
     
-    // Time-based color: newest dots are white, then fade to blue
+    // Time-based color: newest dots are very light blue, then fade to darker blue
     final Color dotColor;
     
-    if (ageMs < 100) {
-      // Very new (< 100ms): white
-      dotColor = Colors.white;
-    } else if (ageMs < 300) {
-      // Recent (100-300ms): fade from white to light blue
-      final t = (ageMs - 100) / 200;
+    if (ageMs < 50) {
+      // Very new (< 50ms): very light blue (almost white)
+      dotColor = const Color(0xFFE3F2FD);
+    } else if (ageMs < 200) {
+      // Recent (50-200ms): fade to light blue
+      final t = (ageMs - 50) / 150;
       dotColor = Color.lerp(
-        Colors.white,
-        const Color(0xFFBBDEFB),  // Light blue
+        const Color(0xFFE3F2FD),  // Very light blue
+        const Color(0xFF90CAF9),  // Light blue
         t,
       )!;
-    } else if (ageMs < 1000) {
-      // Medium age (300ms-1s): fade from light blue to medium blue
-      final t = (ageMs - 300) / 700;
+    } else if (ageMs < 500) {
+      // Medium age (200-500ms): fade to medium blue
+      final t = (ageMs - 200) / 300;
       dotColor = Color.lerp(
-        const Color(0xFFBBDEFB),  // Light blue
+        const Color(0xFF90CAF9),  // Light blue
         const Color(0xFF42A5F5),  // Medium blue
         t,
       )!;
+    } else if (ageMs < 1000) {
+      // Older (500ms-1s): fade to darker blue
+      final t = (ageMs - 500) / 500;
+      dotColor = Color.lerp(
+        const Color(0xFF42A5F5),  // Medium blue
+        const Color(0xFF1976D2),  // Darker blue
+        t,
+      )!;
     } else {
-      // Old (>1s): solid blue
-      dotColor = const Color(0xFF2196F3);  // Blue
+      // Old (>1s): dark blue
+      dotColor = const Color(0xFF1565C0);  // Dark blue
     }
     
     // Main dot
