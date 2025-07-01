@@ -1090,23 +1090,28 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                           Positioned(
                             top: 16,
                             right: 16,
-                            child: AnimatedOpacity(
-                              opacity: _showSuccess ? 1.0 : 0.0,
+                            child: AnimatedScale(
+                              scale: _showSuccess ? 1.0 : 0.0,
                               duration: const Duration(milliseconds: 300),
-                              child: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!,
-                                    width: 2,
+                              curve: Curves.elasticOut,
+                              child: AnimatedOpacity(
+                                opacity: _showSuccess ? 1.0 : 0.0,
+                                duration: const Duration(milliseconds: 200),
+                                child: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!,
+                                      width: 2,
+                                    ),
                                   ),
-                                ),
-                                child: Icon(
-                                  _autoGradedAsCorrect ? Icons.check : Icons.close,
-                                  size: 32,
-                                  color: Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!,
+                                  child: Icon(
+                                    _autoGradedAsCorrect ? Icons.check : Icons.close,
+                                    size: 32,
+                                    color: Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!,
+                                  ),
                                 ),
                               ),
                             ),
@@ -1173,30 +1178,34 @@ class _WritingPracticePageState extends State<WritingPracticePage>
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                // Erase button
-                TextButton.icon(
-                  onPressed: (_completedStrokeIndices.isEmpty && !_showSuccess) ? null : () {
-                    setState(() {
-                      _completedStrokeIndices.clear();
-                      _wrongAttempts.fillRange(0, _wrongAttempts.length, 0);
-                      _userStrokes.clear();
-                      _showHintPath = false;
-                      _showFullCharacter = false;
-                      _showSuccess = false;
-                      _showManualGrading = false;
-                      _autoGradedAsCorrect = false;
-                      _usedHint = false;
-                      _missedStrokes = 0;
-                      _missedStrokeIndices.clear();
-                      _currentStroke.clear();
-                      _currentStrokeTimestamps.clear();
-                      _autoProceedTimer?.cancel();
-                      _progressTimer?.cancel();
-                      _timerProgress = 1.0;
-                    });
-                  },
-                  icon: const Icon(Icons.clear),
-                  label: const Text('Erase'),
+                // Erase button with scale animation
+                AnimatedScale(
+                  duration: const Duration(milliseconds: 150),
+                  scale: (_completedStrokeIndices.isEmpty && !_showSuccess) ? 0.9 : 1.0,
+                  child: TextButton.icon(
+                    onPressed: (_completedStrokeIndices.isEmpty && !_showSuccess) ? null : () {
+                      setState(() {
+                        _completedStrokeIndices.clear();
+                        _wrongAttempts.fillRange(0, _wrongAttempts.length, 0);
+                        _userStrokes.clear();
+                        _showHintPath = false;
+                        _showFullCharacter = false;
+                        _showSuccess = false;
+                        _showManualGrading = false;
+                        _autoGradedAsCorrect = false;
+                        _usedHint = false;
+                        _missedStrokes = 0;
+                        _missedStrokeIndices.clear();
+                        _currentStroke.clear();
+                        _currentStrokeTimestamps.clear();
+                        _autoProceedTimer?.cancel();
+                        _progressTimer?.cancel();
+                        _timerProgress = 1.0;
+                      });
+                    },
+                    icon: const Icon(Icons.clear),
+                    label: const Text('Erase'),
+                  ),
                 ),
                 // Show next step button
                 TextButton.icon(
@@ -1235,31 +1244,49 @@ class _WritingPracticePageState extends State<WritingPracticePage>
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  ElevatedButton.icon(
-                    onPressed: _showManualGrading ? () => _proceedWithGrade(false) : null,
-                    icon: const Icon(Icons.close),
-                    label: const Text('Incorrect'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _getButtonBackgroundColor(false),
-                      foregroundColor: _getButtonForegroundColor(),
-                      minimumSize: const Size(140, 48),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        side: !_autoGradedAsCorrect ? BorderSide(color: _getButtonBorderColor(), width: 3) : BorderSide.none,
+                  AnimatedScale(
+                    duration: const Duration(milliseconds: 200),
+                    scale: _showManualGrading ? 1.0 : 0.8,
+                    curve: Curves.easeOutBack,
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 200),
+                      opacity: _showManualGrading ? 1.0 : 0.5,
+                      child: ElevatedButton.icon(
+                        onPressed: _showManualGrading ? () => _proceedWithGrade(false) : null,
+                        icon: const Icon(Icons.close),
+                        label: const Text('Incorrect'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _getButtonBackgroundColor(false),
+                          foregroundColor: _getButtonForegroundColor(),
+                          minimumSize: const Size(140, 48),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            side: !_autoGradedAsCorrect ? BorderSide(color: _getButtonBorderColor(), width: 3) : BorderSide.none,
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                  ElevatedButton.icon(
-                    onPressed: _showManualGrading ? () => _proceedWithGrade(true) : null,
-                    icon: const Icon(Icons.check),
-                    label: const Text('Correct'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _getButtonBackgroundColor(true),
-                      foregroundColor: _getButtonForegroundColor(),
-                      minimumSize: const Size(140, 48),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        side: _autoGradedAsCorrect ? BorderSide(color: _getButtonBorderColor(), width: 3) : BorderSide.none,
+                  AnimatedScale(
+                    duration: const Duration(milliseconds: 200),
+                    scale: _showManualGrading ? 1.0 : 0.8,
+                    curve: Curves.easeOutBack,
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 200),
+                      opacity: _showManualGrading ? 1.0 : 0.5,
+                      child: ElevatedButton.icon(
+                        onPressed: _showManualGrading ? () => _proceedWithGrade(true) : null,
+                        icon: const Icon(Icons.check),
+                        label: const Text('Correct'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _getButtonBackgroundColor(true),
+                          foregroundColor: _getButtonForegroundColor(),
+                          minimumSize: const Size(140, 48),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            side: _autoGradedAsCorrect ? BorderSide(color: _getButtonBorderColor(), width: 3) : BorderSide.none,
+                          ),
+                        ),
                       ),
                     ),
                   ),

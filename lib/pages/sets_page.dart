@@ -1624,14 +1624,31 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
               final set = sets[index];
               final isLoading = _loadingStates[set.id] ?? false;
               
-              return _CharacterSetSquareCard(
-                set: set,
-                isLoading: isLoading,
-                isCustom: false,
-                progress: _setProgress[set.id] ?? 0.0,
-                onTap: isLoading ? null : () => _showSetSynopsis(set),
-                onLongPress: null,
-                onMenuTap: () => _showSetMenu(set),
+              // Add staggered animation delay based on index
+              final animationDelay = index * 50; // 50ms between each card
+              
+              return TweenAnimationBuilder<double>(
+                duration: Duration(milliseconds: 400 + animationDelay),
+                curve: Curves.easeOutCubic,
+                tween: Tween(begin: 0.0, end: 1.0),
+                builder: (context, value, child) {
+                  return Transform.translate(
+                    offset: Offset(0, 20 * (1 - value)),
+                    child: Opacity(
+                      opacity: value,
+                      child: child,
+                    ),
+                  );
+                },
+                child: _CharacterSetSquareCard(
+                  set: set,
+                  isLoading: isLoading,
+                  isCustom: false,
+                  progress: _setProgress[set.id] ?? 0.0,
+                  onTap: isLoading ? null : () => _showSetSynopsis(set),
+                  onLongPress: null,
+                  onMenuTap: () => _showSetMenu(set),
+                ),
               );
             },
           );

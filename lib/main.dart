@@ -1230,9 +1230,29 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
           ],
         ),
       ),
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _pages,
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        transitionBuilder: (Widget child, Animation<double> animation) {
+          final offsetAnimation = Tween<Offset>(
+            begin: const Offset(0, 0.02),
+            end: Offset.zero,
+          ).animate(animation);
+          
+          return SlideTransition(
+            position: offsetAnimation,
+            child: FadeTransition(
+              opacity: animation,
+              child: child,
+            ),
+          );
+        },
+        child: IndexedStack(
+          key: ValueKey<int>(_selectedIndex),
+          index: _selectedIndex,
+          children: _pages,
+        ),
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
