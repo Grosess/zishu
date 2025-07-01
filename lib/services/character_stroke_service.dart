@@ -438,15 +438,15 @@ class StrokeValidator {
     final isDiagonalStroke = (medianDirection.dx.abs() > medianDirection.distance * 0.3 && 
                              medianDirection.dy.abs() > medianDirection.distance * 0.3);
     
-    // Location tolerance - strict
-    final locationTolerance = tolerance * 0.7;  // 70% of base tolerance for all strokes
+    // Location tolerance - stricter for better position accuracy
+    final locationTolerance = tolerance * 0.6;  // 60% of base tolerance for all strokes
     
     // Check key points with appropriate tolerance
     final startDist = (normalizedUser.first - normalizedMedian.first).distance;
     final endDist = (normalizedUser.last - normalizedMedian.last).distance;
     
-    // Strict tolerance for start/end points location
-    final pointTolerance = 1.2;  // Strict for all strokes
+    // Stricter tolerance for start/end points location
+    final pointTolerance = 1.0;  // Stricter for better location accuracy
     
     print('Location check: startDist=$startDist, endDist=$endDist, maxAllowed=${locationTolerance * pointTolerance}');
     
@@ -489,8 +489,8 @@ class StrokeValidator {
         }
       }
       
-      // Strict shape matching requirements
-      final requiredMatch = 0.7; // Need 70% of points to match
+      // Slightly stricter shape matching requirements
+      final requiredMatch = 0.75; // Need 75% of points to match
       print('Path match: $matchedPoints/$totalChecks points within tolerance (${(matchedPoints.toDouble()/totalChecks*100).toStringAsFixed(1)}%), required: ${(requiredMatch*100).toStringAsFixed(0)}%');
       if (matchedPoints < totalChecks * requiredMatch) {
         print('FAILED: Not enough matched points in path check');

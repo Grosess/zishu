@@ -88,6 +88,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   bool _showFullCharacter = false;
   bool _usedHint = false;
   int _missedStrokes = 0;
+  final Set<int> _missedStrokeIndices = {}; // Track which strokes have been missed
   bool _showManualGrading = false;
   bool _autoGradedAsCorrect = false;
   Timer? _autoProceedTimer;
@@ -541,6 +542,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       _currentStroke.clear();
       _currentStrokeTimestamps.clear();
       _wrongAttempts.clear();
+      _missedStrokeIndices.clear();
       
       // Reset UI state
       _testingCharacterRevealed = false;
@@ -1185,6 +1187,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                       _autoGradedAsCorrect = false;
                       _usedHint = false;
                       _missedStrokes = 0;
+                      _missedStrokeIndices.clear();
                       _currentStroke.clear();
                       _currentStrokeTimestamps.clear();
                       _autoProceedTimer?.cancel();
@@ -1542,13 +1545,24 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       } else {
         print('❌ Stroke $nextIndex failed validation');
         _wrongAttempts[nextIndex]++;
-        _missedStrokes++;
+        
+        // Track if this is the first time missing this stroke
+        if (_wrongAttempts[nextIndex] == 1) {
+          _missedStrokeIndices.add(nextIndex);
+          _missedStrokes = _missedStrokeIndices.length;
+          
+          // Check if we've missed 2 different strokes - mark for failure but continue
+          if (_missedStrokeIndices.length >= 2) {
+            print('❌ Will fail: Missed 2 different strokes - continue to complete character');
+            // Don't stop here - let user complete the character
+          }
+        }
         
         // Check if it's a direction error
         final isDirectionError = _checkDirectionError(_currentStroke, nextIndex);
         
-        // Show hint automatically after 2 wrong attempts
-        if (_wrongAttempts[nextIndex] >= 2) {
+        // Show hint automatically after 3 wrong attempts on the same stroke
+        if (_wrongAttempts[nextIndex] >= 3) {
           _showHintPath = true;
         }
         
@@ -1578,7 +1592,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   
   bool _shouldShowHint() {
     final nextIndex = _getNextStrokeIndex();
-    return nextIndex < _wrongAttempts.length && _wrongAttempts[nextIndex] >= 2;
+    return nextIndex < _wrongAttempts.length && _wrongAttempts[nextIndex] >= 3;
   }
   
   bool _shouldShowOutline() {
@@ -1627,7 +1641,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     // For individual practice of learned characters, just reset for continuous practice
     if (isLearnedCharacter) {
       // Determine if the character was completed correctly
-      final wasCorrect = !_usedHint && _missedStrokes < 3;
+      final wasCorrect = !_usedHint && _missedStrokeIndices.length < 2;
       
       setState(() {
         _showSuccess = true;
@@ -1661,6 +1675,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
               _showFullCharacter = false;
               _usedHint = false;
               _missedStrokes = 0;
+              _missedStrokeIndices.clear();
               _showSuccess = false;
               _showManualGrading = false;
               _testingCharacterRevealed = false;
@@ -1679,6 +1694,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
               _showFullCharacter = false;
               _usedHint = false;
               _missedStrokes = 0;
+              _missedStrokeIndices.clear();
               _showSuccess = false;
               _showManualGrading = false;
               _testingCharacterRevealed = false;
@@ -1693,8 +1709,8 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     
     // Don't save practice data here - wait for manual grading
     
-    // Determine auto-grading
-    _autoGradedAsCorrect = !_usedHint && _missedStrokes < 3;
+    // Determine auto-grading - fail if missed 2 different strokes
+    _autoGradedAsCorrect = !_usedHint && _missedStrokeIndices.length < 2;
     
     // Don't call completion callback here for endless practice
     // It will be called in _proceedWithGrade
