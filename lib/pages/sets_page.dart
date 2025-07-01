@@ -822,10 +822,10 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
     final validItems = List<String>.from(set.characters);
     final invalidItems = <dynamic>[];
     
-    // Show synopsis dialog
-    showDialog(
+    // Show synopsis dialog with fade and slide-up animation
+    showGeneralDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      pageBuilder: (context, animation, secondaryAnimation) => AlertDialog(
         title: Stack(
           children: [
             Column(
@@ -1239,6 +1239,39 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
           ),
         ],
       ),
+      transitionDuration: const Duration(milliseconds: 300),
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        // Use different curves for forward and reverse animations
+        final curvedAnimation = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+          reverseCurve: Curves.easeInCubic.flipped, // Faster reverse
+        );
+        
+        // Slide up animation
+        final slideAnimation = Tween<Offset>(
+          begin: const Offset(0.0, 0.1), // Start slightly below
+          end: Offset.zero,
+        ).animate(curvedAnimation);
+        
+        // Fade animation with faster reverse
+        final fadeAnimation = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOut,
+          reverseCurve: Curves.easeIn, // Faster fade out
+        );
+        
+        return SlideTransition(
+          position: slideAnimation,
+          child: FadeTransition(
+            opacity: fadeAnimation,
+            child: child,
+          ),
+        );
+      },
+      barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+      barrierColor: Colors.black54,
+      barrierDismissible: true,
     );
   }
 
