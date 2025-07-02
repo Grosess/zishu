@@ -81,7 +81,7 @@ class CharacterValidator {
         isValid: false,
         validItems: [],
         invalidItems: [],
-        message: 'Input cannot be empty',
+        message: 'No characters',
       );
     }
     
@@ -97,7 +97,7 @@ class CharacterValidator {
         isValid: false,
         validItems: [],
         invalidItems: [],
-        message: 'No valid Chinese characters found',
+        message: 'No Chinese characters found',
       );
     }
     

@@ -2486,18 +2486,30 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
                     showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
-                        title: const Text('Some Characters Unavailable'),
+                        title: Text(
+                          validation.message == 'No Chinese characters found' 
+                              ? 'No Chinese Characters' 
+                              : validation.message == 'No characters'
+                                  ? 'No Characters'
+                                  : 'Some Characters Unavailable'
+                        ),
                         content: SingleChildScrollView(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'The following characters are not in the MakeMeAHanzi database:',
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                              Text(
+                                validation.message == 'No Chinese characters found'
+                                    ? 'No Chinese characters were found in your input. English letters have been automatically removed.'
+                                    : validation.message == 'No characters'
+                                        ? 'Please enter some characters to create a set.'
+                                        : 'The following characters are not in the MakeMeAHanzi database:',
+                                style: const TextStyle(fontWeight: FontWeight.bold),
                               ),
-                              const SizedBox(height: 12),
-                              ...validation.missingCharacters.map((char) => Padding(
+                              if (validation.message != 'No Chinese characters found' && 
+                                  validation.message != 'No characters') ...[
+                                const SizedBox(height: 12),
+                                ...validation.missingCharacters.map((char) => Padding(
                                 padding: const EdgeInsets.only(bottom: 8.0),
                                 child: Container(
                                   padding: const EdgeInsets.all(8),
@@ -2536,6 +2548,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
                                   ),
                                 ),
                               )),
+                              ],
                               if (validation.validItems.isNotEmpty) ...[
                                 const SizedBox(height: 16),
                                 const Text(

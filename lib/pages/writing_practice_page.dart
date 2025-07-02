@@ -2691,6 +2691,37 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     );
   }
   
+  /// Build pinyin from individual characters when phrase has no pinyin
+  String? _buildPinyinFromCharacters(String term) {
+    if (!_cedictService.isLoaded) return null;
+    
+    List<String> pinyinParts = [];
+    
+    for (int i = 0; i < term.length; i++) {
+      final char = term[i];
+      
+      // Try CEDICT first
+      final cedictEntry = _cedictService.lookup(char);
+      if (cedictEntry != null) {
+        pinyinParts.add(PinyinUtils.convertToneNumbersToMarks(cedictEntry.pinyin));
+        continue;
+      }
+      
+      // Try character dictionary
+      final charInfo = _dictionary.getCharacterInfo(char);
+      if (charInfo != null && charInfo.pinyin != null) {
+        pinyinParts.add(PinyinUtils.convertToneNumbersToMarks(charInfo.pinyin));
+        continue;
+      }
+      
+      // If no pinyin found for this character, return null
+      return null;
+    }
+    
+    // Join all pinyin parts with spaces
+    return pinyinParts.join(' ');
+  }
+  
   Widget _buildCharacterInfoSection() {
     // Try CEDICT first, then fall back to dictionary
     CharacterInfo? charInfo;
@@ -2708,6 +2739,9 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         if (cedictEntry != null) {
           pinyin = PinyinUtils.convertToneNumbersToMarks(cedictEntry.pinyin);
           definition = cedictEntry.definition;
+        } else {
+          // If multi-character term has no CEDICT entry, build pinyin from individual characters
+          pinyin = _buildPinyinFromCharacters(currentWord);
         }
       }
       
@@ -2715,6 +2749,11 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         final wordInfo = _dictionary.getWordInfo(currentWord);
         pinyin ??= wordInfo?.pinyin != null ? PinyinUtils.convertToneNumbersToMarks(wordInfo!.pinyin) : null;
         definition ??= wordInfo?.definition;
+        
+        // If still no pinyin and CEDICT is loaded, try building from characters
+        if (pinyin == null && _cedictService.isLoaded) {
+          pinyin = _buildPinyinFromCharacters(currentWord);
+        }
       }
     } else {
       // For single characters, show character definition
@@ -2728,6 +2767,10 @@ class _WritingPracticePageState extends State<WritingPracticePage>
           // Found in CEDICT
         } else {
           // Not found in CEDICT
+          // For multi-character strings labeled as single character, try building pinyin
+          if (currentCharacter.length > 1) {
+            pinyin = _buildPinyinFromCharacters(currentCharacter);
+          }
         }
       } else {
         // CEDICT service not loaded

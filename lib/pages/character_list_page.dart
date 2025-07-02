@@ -38,19 +38,27 @@ class _CharacterListPageState extends State<CharacterListPage> {
   bool _isSetFullyLearned = false;
   
   // Group management
-  int? _selectedGroupIndex;
-  int? _selectedSuperGroupIndex;
   int _groupSize = 10; // Will be loaded from settings
   bool _showGroups = false;
+  bool _showSuperGroups = false;
+  
+  // Shuffled characters for randomization
+  List<String> _shuffledCharacters = [];
   
   @override
   void initState() {
     super.initState();
     // Production: removed debug print
     _currentSetName = widget.setName;
+    _shuffleCharacters();
     _loadGroupSizeFromSettings();
     _loadLearnedStatus();
     _initializeCedict();
+  }
+  
+  void _shuffleCharacters() {
+    _shuffledCharacters = List.from(widget.characters);
+    _shuffledCharacters.shuffle();
   }
   
   Future<void> _loadGroupSizeFromSettings() async {
@@ -108,11 +116,11 @@ class _CharacterListPageState extends State<CharacterListPage> {
   }
   
   // Calculate number of groups
-  int get _groupCount => (widget.characters.length / _groupSize).ceil();
+  int get _groupCount => (_shuffledCharacters.length / _groupSize).ceil();
   
   // Calculate super group size based on total characters
   int get _dynamicSuperGroupSize {
-    final totalChars = widget.characters.length;
+    final totalChars = _shuffledCharacters.length;
     if (totalChars >= 1000) return 100; // 10 groups of 10
     if (totalChars >= 800) return 80;   // 8 groups of 10
     if (totalChars >= 600) return 60;   // 6 groups of 10
@@ -121,7 +129,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
   }
   
   // Check if we should show super groups
-  bool get _shouldShowSuperGroups => widget.characters.length >= 400;
+  bool get _shouldShowSuperGroups => _shuffledCharacters.length >= 400;
   
   // Calculate number of super groups
   int get _superGroupCount {
@@ -140,26 +148,28 @@ class _CharacterListPageState extends State<CharacterListPage> {
   // Get characters for a specific group
   List<String> _getGroupCharacters(int groupIndex) {
     final start = groupIndex * _groupSize;
-    final end = (start + _groupSize).clamp(0, widget.characters.length);
-    return widget.characters.sublist(start, end);
+    final end = (start + _groupSize).clamp(0, _shuffledCharacters.length);
+    return _shuffledCharacters.sublist(start, end);
   }
   
   // Get currently displayed characters in normal order
   List<String> get _displayedCharacters {
-    if (_selectedGroupIndex == null) {
-      return widget.characters;
-    } else {
-      return _getGroupCharacters(_selectedGroupIndex!);
-    }
+    // Show all characters (shuffled)
+    return _shuffledCharacters;
   }
   
-  // Check if we should show characters (only when a group is selected or no groups)
+  // Check if we should show characters
   bool get _shouldShowCharacters {
     // Show characters only if:
-    // 1. Groups are hidden
-    // 2. A specific group is selected (in dedicated view)
-    // 3. There are no groups (small sets)
-    return !_showGroups || (_selectedGroupIndex != null && !_showGroups) || widget.characters.length <= _groupSize;
+    // 1. No groups exist (small sets)
+    // 2. Groups are hidden and no supergroups
+    // 3. Supergroups exist but are hidden
+    if (_shuffledCharacters.length <= _groupSize) return true;
+    if (_shouldShowSuperGroups) {
+      return !_showSuperGroups;
+    } else {
+      return !_showGroups;
+    }
   }
 
   @override
@@ -198,60 +208,42 @@ class _CharacterListPageState extends State<CharacterListPage> {
           const SliverToBoxAdapter(
             child: SizedBox(height: 16),
           ),
-          // Header with back button when in character view, or groups toggle at top level
-          if (widget.characters.length > _groupSize)
+          // Header with toggle button
+          if (_shuffledCharacters.length > _groupSize)
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Center(
-                  child: _shouldShowCharacters && (_selectedGroupIndex != null || _selectedSuperGroupIndex != null)
-                      ? TextButton.icon(
-                          onPressed: () {
-                            setState(() {
-                              if (_selectedGroupIndex != null) {
-                                // Go back to group view
-                                _selectedGroupIndex = null;
-                                _showGroups = true;
-                              } else if (_selectedSuperGroupIndex != null) {
-                                // Go back to super-group view  
-                                _selectedSuperGroupIndex = null;
-                                _showGroups = true;
-                              }
-                            });
-                          },
-                          icon: const Icon(Icons.arrow_back),
-                          label: Text(
-                            _selectedGroupIndex != null 
-                                ? 'Back to Groups'
-                                : 'Back to Super-groups',
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                        )
-                      : _selectedSuperGroupIndex == null
-                          ? TextButton.icon(
-                              onPressed: () {
-                                setState(() {
-                                  _showGroups = !_showGroups;
-                                  // Reset selections when toggling groups
-                                  if (!_showGroups) {
-                                    _selectedGroupIndex = null;
-                                    _selectedSuperGroupIndex = null;
-                                  }
-                                });
-                              },
-                              icon: Icon(_showGroups ? Icons.expand_less : Icons.expand_more),
-                              label: Text(
-                                _showGroups ? 'Hide Groups' : 'Show Groups',
-                                style: const TextStyle(fontSize: 16),
-                              ),
-                            )
-                          : const SizedBox(), // Hide toggle when in super-group view
+                  child: TextButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        if (_shouldShowSuperGroups) {
+                          // Toggle supergroups
+                          _showSuperGroups = !_showSuperGroups;
+                        } else {
+                          // Toggle regular groups
+                          _showGroups = !_showGroups;
+                        }
+                      });
+                    },
+                    icon: Icon(
+                      (_shouldShowSuperGroups ? _showSuperGroups : _showGroups) 
+                        ? Icons.expand_less 
+                        : Icons.expand_more
+                    ),
+                    label: Text(
+                      _shouldShowSuperGroups 
+                        ? (_showSuperGroups ? 'Hide Supergroups' : 'Show Supergroups')
+                        : (_showGroups ? 'Hide Groups' : 'Show Groups'),
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ),
                 ),
               ),
             ),
           
-          // Super groups section for large sets - always show if they exist
-          if (_shouldShowSuperGroups && _selectedSuperGroupIndex == null)
+          // Super groups section for large sets
+          if (_shouldShowSuperGroups && _showSuperGroups)
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               sliver: SliverGrid(
@@ -282,12 +274,29 @@ class _CharacterListPageState extends State<CharacterListPage> {
                       subtitle: '', // No longer needed, count is inline
                       isSelected: false,
                       learnedCount: totalLearned,
-                      totalCount: groupIndices.length, // Show number of groups
+                      totalCount: totalChars, // Show total characters in supergroup
                       onTap: () {
-                        setState(() {
-                          _selectedSuperGroupIndex = index;
-                          _selectedGroupIndex = null;
-                        });
+                        // Get characters for this supergroup
+                        final groupIndices = _getSuperGroupIndices(index);
+                        final supergroupChars = <String>[];
+                        for (final groupIdx in groupIndices) {
+                          supergroupChars.addAll(_getGroupCharacters(groupIdx));
+                        }
+                        
+                        // Navigate to new page with supergroup's characters
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => CharacterListPage(
+                              setName: widget.setName.length > 10 
+                                  ? '${widget.setName.substring(0, 10)}... SG${index + 1}'
+                                  : '${widget.setName} SG${index + 1}',
+                              characters: supergroupChars,
+                              isWordSet: widget.isWordSet,
+                              isCustomSet: false,
+                            ),
+                          ),
+                        );
                       },
                     );
                   },
@@ -296,10 +305,8 @@ class _CharacterListPageState extends State<CharacterListPage> {
               ),
             ),
           
-          // Regular groups section - show when:
-          // 1. Inside a super-group (always show groups)
-          // 2. Groups are toggled on and no super-groups
-          if (((_selectedSuperGroupIndex != null) || (_showGroups && !_shouldShowSuperGroups)) && widget.characters.length > _groupSize)
+          // Regular groups section - show when groups are toggled on and no supergroups exist
+          if (_showGroups && !_shouldShowSuperGroups && _shuffledCharacters.length > _groupSize)
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               sliver: SliverGrid(
@@ -311,31 +318,9 @@ class _CharacterListPageState extends State<CharacterListPage> {
                 ),
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
-                    // Determine which groups to show based on super group selection
-                    final groupsToShow = _selectedSuperGroupIndex != null
-                        ? _getSuperGroupIndices(_selectedSuperGroupIndex!)
-                        : List.generate(_groupCount, (i) => i);
-                    
-                    if (index == 0 && _selectedSuperGroupIndex != null) {
-                      // Back button when in super-group
-                      return _buildGroupCard(
-                        label: '← Back',
-                        subtitle: '', // No longer needed
-                        isSelected: false,
-                        learnedCount: 0,
-                        totalCount: 0, // Back button doesn't need count
-                        onTap: () {
-                          setState(() {
-                            _selectedSuperGroupIndex = null;
-                            _selectedGroupIndex = null;
-                          });
-                        },
-                      );
-                    } else {
-                      final actualIndex = _selectedSuperGroupIndex != null ? index - 1 : index;
-                      if (actualIndex >= groupsToShow.length) return const SizedBox();
+                    if (index >= _groupCount) return const SizedBox();
                       
-                      final groupIndex = groupsToShow[actualIndex];
+                      final groupIndex = index;
                       final groupChars = _getGroupCharacters(groupIndex);
                       
                       // Count learned in this group
@@ -347,7 +332,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
                       return _buildGroupCard(
                         label: 'Group ${groupIndex + 1}',
                         subtitle: '', // No longer needed, count is inline
-                        isSelected: _selectedGroupIndex == groupIndex,
+                        isSelected: false,
                         learnedCount: learnedCount,
                         totalCount: groupChars.length,
                         onTap: () {
@@ -356,7 +341,13 @@ class _CharacterListPageState extends State<CharacterListPage> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => CharacterListPage(
-                                setName: '${widget.setName} - Group ${groupIndex + 1}',
+                                setName: widget.setName.contains('SG') 
+                                    ? '${widget.setName} G${groupIndex + 1}'.length > 25
+                                        ? 'SG${widget.setName.split('SG').last.split(' ').first} G${groupIndex + 1}'
+                                        : '${widget.setName} G${groupIndex + 1}'
+                                    : widget.setName.length > 15
+                                        ? '${widget.setName.substring(0, 15)}... G${groupIndex + 1}'
+                                        : '${widget.setName} G${groupIndex + 1}',
                                 characters: groupChars,
                                 isWordSet: widget.isWordSet,
                                 isCustomSet: false,
@@ -365,11 +356,8 @@ class _CharacterListPageState extends State<CharacterListPage> {
                           );
                         },
                       );
-                    }
                   },
-                  childCount: _selectedSuperGroupIndex != null 
-                      ? _getSuperGroupIndices(_selectedSuperGroupIndex!).length + 1  // +1 for back button
-                      : _groupCount, // No "All" button
+                  childCount: _groupCount,
                 ),
               ),
             ),
@@ -377,13 +365,13 @@ class _CharacterListPageState extends State<CharacterListPage> {
           // Only show spacing, divider, and characters if we should show characters
           if (_shouldShowCharacters) ...[  
             // Spacing after groups
-            if (_showGroups && widget.characters.length > _groupSize)
+            if (_showGroups && _shuffledCharacters.length > _groupSize)
               const SliverToBoxAdapter(
                 child: SizedBox(height: 16),
               ),
             
             // Divider
-            if (_showGroups && widget.characters.length > _groupSize)
+            if (_showGroups && _shuffledCharacters.length > _groupSize)
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -554,13 +542,9 @@ class _CharacterListPageState extends State<CharacterListPage> {
                           await _learningService.markSetAsLearned(widget.setId!, widget.characters);
                         }
                       },
-                      icon: Icon(_isSetFullyLearned && _selectedGroupIndex == null ? Icons.check_circle : Icons.school),
+                      icon: Icon(_isSetFullyLearned ? Icons.check_circle : Icons.school),
                       label: Text(
-                        _isSetFullyLearned && _selectedGroupIndex == null 
-                            ? 'Set Learned!' 
-                            : _selectedGroupIndex != null 
-                                ? 'Learn Group ${_selectedGroupIndex! + 1}'
-                                : 'Learning Mode'
+                        _isSetFullyLearned ? 'Set Learned!' : 'Learning Mode'
                       ),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -629,11 +613,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
                         });
                       },
                       icon: const Icon(Icons.quiz),
-                      label: Text(
-                        _selectedGroupIndex != null 
-                            ? 'Practice Group ${_selectedGroupIndex! + 1}'
-                            : 'Practice All'
-                      ),
+                      label: const Text('Practice All'),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         backgroundColor: Theme.of(context).colorScheme.secondary,
@@ -859,6 +839,10 @@ class _CharacterListPageState extends State<CharacterListPage> {
         definition ??= cedictEntry.definition;
       } else {
         // Production: removed debug print
+        // If multi-character term has no CEDICT entry, build pinyin from individual characters
+        if (term.length > 1 && pronunciation == null) {
+          pronunciation = _buildPinyinFromCharacters(term);
+        }
       }
     } else if (!_cedictService.isLoaded && (pronunciation == null || definition == null)) {
       // Production: removed debug print
@@ -1065,6 +1049,35 @@ class _CharacterListPageState extends State<CharacterListPage> {
     return null;
   }
   
+  /// Truncate definition for grid view to avoid overflow
+  String _truncateDefinition(String? definition) {
+    if (definition == null || definition.isEmpty) return '';
+    
+    // For grid view, limit to reasonable length to avoid overflow
+    const maxLength = 15;
+    if (definition.length <= maxLength) return definition;
+    
+    // Try to cut at a semicolon
+    final semicolonIndex = definition.indexOf(';');
+    if (semicolonIndex > 0 && semicolonIndex <= maxLength) {
+      return definition.substring(0, semicolonIndex);
+    }
+    
+    // Try to cut at a comma
+    final commaIndex = definition.indexOf(',');
+    if (commaIndex > 0 && commaIndex <= maxLength) {
+      return definition.substring(0, commaIndex);
+    }
+    
+    // Try to cut at a space
+    final spaceCutoff = definition.substring(0, maxLength).lastIndexOf(' ');
+    if (spaceCutoff > 8) {
+      return definition.substring(0, spaceCutoff) + '...';
+    }
+    
+    return definition.substring(0, maxLength - 3) + '...';
+  }
+  
   /// Build the display widget for a single character
   Widget _buildCharacterDisplay(String character, bool isLearned) {
     // Try to get definition and pinyin
@@ -1078,6 +1091,10 @@ class _CharacterListPageState extends State<CharacterListPage> {
         pinyin = PinyinUtils.convertToneNumbersToMarks(entry.pinyin);
       } else {
         // Production: removed debug print
+        // For multi-character strings labeled as single character, try building pinyin
+        if (character.length > 1) {
+          pinyin = _buildPinyinFromCharacters(character);
+        }
       }
     } else {
       // Production: removed debug print
@@ -1134,7 +1151,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
           if (definition != null) ...[
             const SizedBox(height: 2),
             Text(
-              definition,
+              _truncateDefinition(definition),
               style: TextStyle(
                 fontSize: 10,
                 color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
@@ -1238,6 +1255,37 @@ class _CharacterListPageState extends State<CharacterListPage> {
     );
   }
   
+  /// Build pinyin from individual characters when phrase has no pinyin
+  String? _buildPinyinFromCharacters(String term) {
+    if (!_cedictService.isLoaded) return null;
+    
+    List<String> pinyinParts = [];
+    
+    for (int i = 0; i < term.length; i++) {
+      final char = term[i];
+      
+      // Try CEDICT first
+      final cedictEntry = _cedictService.lookup(char);
+      if (cedictEntry != null) {
+        pinyinParts.add(PinyinUtils.convertToneNumbersToMarks(cedictEntry.pinyin));
+        continue;
+      }
+      
+      // Try character dictionary
+      final charInfo = _dictionary.getCharacterInfo(char);
+      if (charInfo != null) {
+        pinyinParts.add(PinyinUtils.convertToneNumbersToMarks(charInfo.pinyin));
+        continue;
+      }
+      
+      // If no pinyin found for this character, return null
+      return null;
+    }
+    
+    // Join all pinyin parts with spaces
+    return pinyinParts.join(' ');
+  }
+  
   /// Build the display widget for a word/term
   Widget _buildWordDisplay(String term, String? existingDef, bool isLearned) {
     // Try to get definition for any term (single or multi-character)
@@ -1253,6 +1301,9 @@ class _CharacterListPageState extends State<CharacterListPage> {
       if (entry != null) {
         definition = entry.definition;
         pinyin = PinyinUtils.convertToneNumbersToMarks(entry.pinyin);
+      } else if (term.length > 1) {
+        // If multi-character term has no CEDICT entry, build pinyin from individual characters
+        pinyin = _buildPinyinFromCharacters(term);
       }
     }
     
@@ -1261,7 +1312,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
       final charInfo = _dictionary.getCharacterInfo(term);
       if (charInfo != null) {
         definition = charInfo.definition;
-        pinyin = PinyinUtils.convertToneNumbersToMarks(charInfo.pinyin);
+        pinyin ??= PinyinUtils.convertToneNumbersToMarks(charInfo.pinyin);
       }
     }
     
@@ -1303,7 +1354,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
                   ),
                 if (definition != null)
                   Text(
-                    definition,
+                    _truncateDefinition(definition),
                     style: TextStyle(
                       fontSize: 10,
                       color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
