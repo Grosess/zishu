@@ -1547,8 +1547,8 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
                               ),
                               // Checkbox overlay
                               Positioned(
-                                top: 8,
-                                right: 8,
+                                top: 12,
+                                right: 12,
                                 child: GestureDetector(
                                   onTap: () => _toggleSetSelection(set.id),
                                   child: Container(
