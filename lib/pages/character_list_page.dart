@@ -9,6 +9,36 @@ import '../services/cedict_service.dart';
 import '../utils/pinyin_utils.dart';
 import '../main.dart' show DuotoneThemeExtension;
 
+// Custom page route with smooth transition
+class SlidePageRoute extends PageRouteBuilder {
+  final Widget page;
+  SlidePageRoute({required this.page})
+      : super(
+          pageBuilder: (context, animation, secondaryAnimation) => page,
+          transitionDuration: const Duration(milliseconds: 400),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            const begin = Offset(1.0, 0.0);
+            const end = Offset.zero;
+            const curve = Curves.easeOutCubic;
+
+            var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+            var offsetAnimation = animation.drive(tween);
+            
+            var fadeTween = Tween(begin: 0.0, end: 1.0).chain(CurveTween(curve: curve));
+            var fadeAnimation = animation.drive(fadeTween);
+
+            return SlideTransition(
+              position: offsetAnimation,
+              child: FadeTransition(
+                opacity: fadeAnimation,
+                child: child,
+              ),
+            );
+          },
+        );
+}
+
 class CharacterListPage extends StatefulWidget {
   final String setName;
   final List<String> characters;
@@ -39,11 +69,11 @@ class _CharacterListPageState extends State<CharacterListPage> {
   
   // Group management
   int _groupSize = 10; // Will be loaded from settings
-  bool _showGroups = false;
-  bool _showSuperGroups = false;
+  bool _showGroups = true; // Show groups by default
+  bool _showSuperGroups = true; // Show supergroups by default
   
-  // Shuffled characters for randomization
-  List<String> _shuffledCharacters = [];
+  // Mixed characters for better distribution (not random)
+  List<String> _mixedCharacters = [];
   
   @override
   void initState() {
@@ -57,8 +87,45 @@ class _CharacterListPageState extends State<CharacterListPage> {
   }
   
   void _shuffleCharacters() {
-    _shuffledCharacters = List.from(widget.characters);
-    _shuffledCharacters.shuffle();
+    // Create a deterministic mixed order (not random)
+    // This distributes characters evenly to avoid repetitive sequences
+    if (_mixedCharacters.isEmpty) {
+      _mixedCharacters = _createMixedOrder(widget.characters);
+    }
+  }
+  
+  // Create a deterministic mixed order by distributing similar characters
+  List<String> _createMixedOrder(List<String> characters) {
+    if (characters.length <= 10) return List.from(characters);
+    
+    // Group characters by their first character (for better distribution)
+    final Map<String, List<String>> groups = {};
+    for (final char in characters) {
+      final firstChar = char.isNotEmpty ? char[0] : '';
+      groups.putIfAbsent(firstChar, () => []).add(char);
+    }
+    
+    // Sort groups by size (largest first) for better distribution
+    final sortedGroups = groups.entries.toList()
+      ..sort((a, b) => b.value.length.compareTo(a.value.length));
+    
+    // Distribute characters using round-robin
+    final result = <String>[];
+    final iterators = sortedGroups.map((e) => e.value.iterator).toList();
+    
+    // Keep distributing until all characters are placed
+    bool hasMore = true;
+    while (hasMore) {
+      hasMore = false;
+      for (final iterator in iterators) {
+        if (iterator.moveNext()) {
+          result.add(iterator.current);
+          hasMore = true;
+        }
+      }
+    }
+    
+    return result;
   }
   
   Future<void> _loadGroupSizeFromSettings() async {
@@ -116,11 +183,11 @@ class _CharacterListPageState extends State<CharacterListPage> {
   }
   
   // Calculate number of groups
-  int get _groupCount => (_shuffledCharacters.length / _groupSize).ceil();
+  int get _groupCount => (_mixedCharacters.length / _groupSize).ceil();
   
   // Calculate super group size based on total characters
   int get _dynamicSuperGroupSize {
-    final totalChars = _shuffledCharacters.length;
+    final totalChars = _mixedCharacters.length;
     if (totalChars >= 1000) return 100; // 10 groups of 10
     if (totalChars >= 800) return 80;   // 8 groups of 10
     if (totalChars >= 600) return 60;   // 6 groups of 10
@@ -129,7 +196,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
   }
   
   // Check if we should show super groups
-  bool get _shouldShowSuperGroups => _shuffledCharacters.length >= 400;
+  bool get _shouldShowSuperGroups => _mixedCharacters.length >= 400;
   
   // Calculate number of super groups
   int get _superGroupCount {
@@ -148,14 +215,14 @@ class _CharacterListPageState extends State<CharacterListPage> {
   // Get characters for a specific group
   List<String> _getGroupCharacters(int groupIndex) {
     final start = groupIndex * _groupSize;
-    final end = (start + _groupSize).clamp(0, _shuffledCharacters.length);
-    return _shuffledCharacters.sublist(start, end);
+    final end = (start + _groupSize).clamp(0, _mixedCharacters.length);
+    return _mixedCharacters.sublist(start, end);
   }
   
   // Get currently displayed characters in normal order
   List<String> get _displayedCharacters {
     // Show all characters (shuffled)
-    return _shuffledCharacters;
+    return _mixedCharacters;
   }
   
   // Check if we should show characters
@@ -164,7 +231,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
     // 1. No groups exist (small sets)
     // 2. Groups are hidden and no supergroups
     // 3. Supergroups exist but are hidden
-    if (_shuffledCharacters.length <= _groupSize) return true;
+    if (_mixedCharacters.length <= _groupSize) return true;
     if (_shouldShowSuperGroups) {
       return !_showSuperGroups;
     } else {
@@ -204,38 +271,62 @@ class _CharacterListPageState extends State<CharacterListPage> {
       ),
       body: CustomScrollView(
         slivers: [
-          // Small spacing before characters
-          const SliverToBoxAdapter(
-            child: SizedBox(height: 16),
-          ),
           // Header with toggle button
-          if (_shuffledCharacters.length > _groupSize)
+          if (_mixedCharacters.length > _groupSize)
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                 child: Center(
-                  child: TextButton.icon(
-                    onPressed: () {
-                      setState(() {
-                        if (_shouldShowSuperGroups) {
-                          // Toggle supergroups
-                          _showSuperGroups = !_showSuperGroups;
-                        } else {
-                          // Toggle regular groups
-                          _showGroups = !_showGroups;
-                        }
-                      });
-                    },
-                    icon: Icon(
-                      (_shouldShowSuperGroups ? _showSuperGroups : _showGroups) 
-                        ? Icons.expand_less 
-                        : Icons.expand_more
-                    ),
-                    label: Text(
-                      _shouldShowSuperGroups 
-                        ? (_showSuperGroups ? 'Hide Supergroups' : 'Show Supergroups')
-                        : (_showGroups ? 'Hide Groups' : 'Show Groups'),
-                      style: const TextStyle(fontSize: 16),
+                  child: Material(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(24),
+                    child: InkWell(
+                      onTap: () {
+                        setState(() {
+                          if (_shouldShowSuperGroups) {
+                            // Toggle supergroups
+                            _showSuperGroups = !_showSuperGroups;
+                          } else {
+                            // Toggle regular groups
+                            _showGroups = !_showGroups;
+                          }
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(24),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(24),
+                          color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            AnimatedRotation(
+                              duration: const Duration(milliseconds: 200),
+                              turns: (_shouldShowSuperGroups ? _showSuperGroups : _showGroups) ? 0.5 : 0,
+                              child: Icon(
+                                Icons.expand_more,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              _shouldShowSuperGroups 
+                                ? (_showSuperGroups ? 'Hide Supergroups' : 'Show Supergroups')
+                                : (_showGroups ? 'Hide Groups' : 'Show Groups'),
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -243,18 +334,25 @@ class _CharacterListPageState extends State<CharacterListPage> {
             ),
           
           // Super groups section for large sets
-          if (_shouldShowSuperGroups && _showSuperGroups)
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 1, // One supergroup per line
-                  childAspectRatio: 6.0, // Wide aspect ratio for full width
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 8,
-                ),
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
+          if (_shouldShowSuperGroups)
+            SliverToBoxAdapter(
+              child: AnimatedSize(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                child: _showSuperGroups
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 1,
+                            childAspectRatio: 4.5,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 8,
+                          ),
+                          itemCount: _superGroupCount,
+                          itemBuilder: (context, index) {
                     final groupIndices = _getSuperGroupIndices(index);
                     
                     // Count learned in this super group
@@ -286,8 +384,8 @@ class _CharacterListPageState extends State<CharacterListPage> {
                         // Navigate to new page with supergroup's characters
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) => CharacterListPage(
+                          SlidePageRoute(
+                            page: CharacterListPage(
                               setName: widget.setName.length > 10 
                                   ? '${widget.setName.substring(0, 10)}... SG${index + 1}'
                                   : '${widget.setName} SG${index + 1}',
@@ -299,79 +397,88 @@ class _CharacterListPageState extends State<CharacterListPage> {
                         );
                       },
                     );
-                  },
-                  childCount: _superGroupCount,
-                ),
+                          },
+                        ),
+                      )
+                    : const SizedBox.shrink(),
               ),
             ),
           
           // Regular groups section - show when groups are toggled on and no supergroups exist
-          if (_showGroups && !_shouldShowSuperGroups && _shuffledCharacters.length > _groupSize)
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 1, // One group per line
-                  childAspectRatio: 6.0, // Wide aspect ratio for full width
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 8,
-                ),
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    if (index >= _groupCount) return const SizedBox();
-                      
-                      final groupIndex = index;
-                      final groupChars = _getGroupCharacters(groupIndex);
-                      
-                      // Count learned in this group
-                      final learnedCount = groupChars.where((item) {
-                        final term = _extractTerm(item);
-                        return _learnedCharacters.contains(term) || _learnedCharacters.contains(item);
-                      }).length;
-                      
-                      return _buildGroupCard(
-                        label: 'Group ${groupIndex + 1}',
-                        subtitle: '', // No longer needed, count is inline
-                        isSelected: false,
-                        learnedCount: learnedCount,
-                        totalCount: groupChars.length,
-                        onTap: () {
-                          // Navigate to new page with just this group's characters
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => CharacterListPage(
-                                setName: widget.setName.contains('SG') 
-                                    ? '${widget.setName} G${groupIndex + 1}'.length > 25
-                                        ? 'SG${widget.setName.split('SG').last.split(' ').first} G${groupIndex + 1}'
-                                        : '${widget.setName} G${groupIndex + 1}'
-                                    : widget.setName.length > 15
-                                        ? '${widget.setName.substring(0, 15)}... G${groupIndex + 1}'
-                                        : '${widget.setName} G${groupIndex + 1}',
-                                characters: groupChars,
-                                isWordSet: widget.isWordSet,
-                                isCustomSet: false,
-                              ),
-                            ),
-                          );
-                        },
-                      );
-                  },
-                  childCount: _groupCount,
-                ),
+          if (!_shouldShowSuperGroups && _mixedCharacters.length > _groupSize)
+            SliverToBoxAdapter(
+              child: AnimatedSize(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                child: _showGroups
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 1, // One group per line
+                            childAspectRatio: 4.5, // Adjusted aspect ratio to prevent overflow
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 8,
+                          ),
+                          itemCount: _groupCount,
+                          itemBuilder: (context, index) {
+                            if (index >= _groupCount) return const SizedBox();
+                            
+                            final groupIndex = index;
+                            final groupChars = _getGroupCharacters(groupIndex);
+                            
+                            // Count learned in this group
+                            final learnedCount = groupChars.where((item) {
+                              final term = _extractTerm(item);
+                              return _learnedCharacters.contains(term) || _learnedCharacters.contains(item);
+                            }).length;
+                            
+                            return _buildGroupCard(
+                              label: 'Group ${groupIndex + 1}',
+                              subtitle: '', // No longer needed, count is inline
+                              isSelected: false,
+                              learnedCount: learnedCount,
+                              totalCount: groupChars.length,
+                              onTap: () {
+                                // Navigate to new page with just this group's characters
+                                Navigator.push(
+                                  context,
+                                  SlidePageRoute(
+                                    page: CharacterListPage(
+                                      setName: widget.setName.contains('SG') 
+                                          ? '${widget.setName} G${groupIndex + 1}'.length > 25
+                                              ? 'SG${widget.setName.split('SG').last.split(' ').first} G${groupIndex + 1}'
+                                              : '${widget.setName} G${groupIndex + 1}'
+                                          : widget.setName.length > 15
+                                              ? '${widget.setName.substring(0, 15)}... G${groupIndex + 1}'
+                                              : '${widget.setName} G${groupIndex + 1}',
+                                      characters: groupChars,
+                                      isWordSet: widget.isWordSet,
+                                      isCustomSet: false,
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      )
+                    : const SizedBox.shrink(),
               ),
             ),
           
           // Only show spacing, divider, and characters if we should show characters
           if (_shouldShowCharacters) ...[  
             // Spacing after groups
-            if (_showGroups && _shuffledCharacters.length > _groupSize)
+            if (_showGroups && _mixedCharacters.length > _groupSize)
               const SliverToBoxAdapter(
                 child: SizedBox(height: 16),
               ),
             
             // Divider
-            if (_showGroups && _shuffledCharacters.length > _groupSize)
+            if (_showGroups && _mixedCharacters.length > _groupSize)
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -406,57 +513,113 @@ class _CharacterListPageState extends State<CharacterListPage> {
                   // Check if the term is learned, not the full item with definition
                   final isLearned = _learnedCharacters.contains(term) || _learnedCharacters.contains(item);
                   
+                  final isDuotone = Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true;
+                  
                   if (widget.isWordSet) {
                     final existingDef = _extractExistingDefinition(item);
                     
-                    return Card(
-                      elevation: 2,
-                      color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                          ? (isLearned 
-                              ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2! 
-                              : Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!)
-                          : (isLearned 
-                              ? Theme.of(context).colorScheme.primary.withOpacity(0.3) 
-                              : Theme.of(context).brightness == Brightness.dark
-                                  ? Theme.of(context).colorScheme.primary.withOpacity(0.08)
-                                  : Theme.of(context).colorScheme.surface),
+                    return Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: isLearned 
+                              ? (isDuotone 
+                                  ? [
+                                      Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.2),
+                                      Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.3),
+                                    ]
+                                  : [
+                                      Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                                      Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                                    ])
+                              : [
+                                  Theme.of(context).colorScheme.surface,
+                                  Theme.of(context).colorScheme.surface,
+                                ],
+                        ),
+                        border: Border.all(
+                          color: isLearned 
+                              ? (isDuotone 
+                                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.5)
+                                  : Theme.of(context).colorScheme.primary.withValues(alpha: 0.5))
+                              : Theme.of(context).colorScheme.outline.withValues(alpha: 0.15),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Theme.of(context).colorScheme.primary.withValues(alpha: isLearned ? 0.1 : 0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
                       child: Material(
                         color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
                         child: InkWell(
                           onTap: () {
                             // Word/character tapped
                             _showCharacterInfo(term, item, isWord: true, isLearned: isLearned);
                           },
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(12),
                           child: Padding(
-                            padding: const EdgeInsets.all(8.0),
+                            padding: const EdgeInsets.all(12.0),
                             child: _buildWordDisplay(term, existingDef, isLearned),
                           ),
                         ),
                       ),
                     );
                   } else {
-                    return Card(
-                      elevation: 2,
-                      color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                          ? (isLearned 
-                              ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2! 
-                              : Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!)
-                          : (isLearned 
-                              ? Theme.of(context).colorScheme.primary.withOpacity(0.3) 
-                              : Theme.of(context).brightness == Brightness.dark
-                                  ? Theme.of(context).colorScheme.primary.withOpacity(0.08)
-                                  : Theme.of(context).colorScheme.surface),
+                    return Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: isLearned 
+                              ? (isDuotone 
+                                  ? [
+                                      Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.2),
+                                      Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.3),
+                                    ]
+                                  : [
+                                      Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                                      Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                                    ])
+                              : [
+                                  Theme.of(context).colorScheme.surface,
+                                  Theme.of(context).colorScheme.surface,
+                                ],
+                        ),
+                        border: Border.all(
+                          color: isLearned 
+                              ? (isDuotone 
+                                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.5)
+                                  : Theme.of(context).colorScheme.primary.withValues(alpha: 0.5))
+                              : Theme.of(context).colorScheme.outline.withValues(alpha: 0.15),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Theme.of(context).colorScheme.primary.withValues(alpha: isLearned ? 0.1 : 0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
                       child: Material(
                         color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
                         child: InkWell(
                           onTap: () {
                             // Production: removed debug print
                             _showCharacterInfo(term, item, isWord: false, isLearned: isLearned);
                           },
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(12),
                           child: Padding(
-                            padding: const EdgeInsets.all(8.0),
+                            padding: const EdgeInsets.all(12.0),
                             child: _buildCharacterDisplay(term, isLearned),
                           ),
                         ),
@@ -488,8 +651,9 @@ class _CharacterListPageState extends State<CharacterListPage> {
                         
                         // Get unlearned characters from displayed set - extract terms first
                         // Get unlearned items using the learning service's proper logic
-                        final displayedTerms = _displayedCharacters.map((item) => _extractTerm(item)).toList();
-                        final unlearnedChars = await _learningService.getUnlearnedItems(displayedTerms);
+                        // Use shuffled order to match what's displayed
+                        final shuffledTerms = _mixedCharacters.map((item) => _extractTerm(item)).toList();
+                        final unlearnedChars = await _learningService.getUnlearnedItems(shuffledTerms);
                         
                         // Production: removed debug print
                         
@@ -592,7 +756,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
                           return;
                         }
                         
-                        learnedTerms.shuffle(); // Randomize the order
+                        // Don't shuffle - use the same order as displayed
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -1005,8 +1169,8 @@ class _CharacterListPageState extends State<CharacterListPage> {
     
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => WritingPracticePage(
+      SlidePageRoute(
+        page: WritingPracticePage(
           character: term,
           characterSet: _currentSetName,
           allCharacters: [term], // Pass only the selected character
@@ -1024,9 +1188,11 @@ class _CharacterListPageState extends State<CharacterListPage> {
       // Add a small delay to ensure saves are complete
       await Future.delayed(const Duration(milliseconds: 200));
       await _loadLearnedStatus();
-      // Force a rebuild to update the UI
+      // Force a complete rebuild to update groups/supergroups
       if (mounted) {
-        setState(() {});
+        setState(() {
+          // This ensures the groups are recalculated with new learned status
+        });
       }
     });
   }
@@ -1179,76 +1345,152 @@ class _CharacterListPageState extends State<CharacterListPage> {
     required int totalCount,
   }) {
     final progress = totalCount > 0 ? learnedCount / totalCount : 0.0;
+    final isDuotone = Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true;
     
-    return Card(
-      elevation: isSelected ? 4 : 1,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: totalCount > 0 ? LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-              stops: [progress, progress],
-              colors: [
-                isSelected
-                    ? Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3)
-                    : Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                isSelected
-                    ? Theme.of(context).colorScheme.primaryContainer
-                    : Theme.of(context).colorScheme.surface,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDuotone ? [
+                  Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withValues(alpha: 0.05),
+                  Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.05),
+                ] : [
+                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
+                  Theme.of(context).colorScheme.secondary.withValues(alpha: 0.05),
+                ],
+              ),
+              border: Border.all(
+                color: isSelected 
+                    ? (isDuotone 
+                        ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                        : Theme.of(context).colorScheme.primary)
+                    : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                width: isSelected ? 2 : 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: (isDuotone 
+                      ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!
+                      : Theme.of(context).colorScheme.primary).withValues(alpha: isSelected ? 0.2 : 0.1),
+                  blurRadius: isSelected ? 12 : 8,
+                  offset: const Offset(0, 4),
+                ),
               ],
-            ) : null,
-            color: totalCount == 0 ? (isSelected
-                ? Theme.of(context).colorScheme.primaryContainer
-                : Theme.of(context).colorScheme.surface) : null,
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Row(
-            children: [
-              // Group label with count inline
-              Expanded(
-                child: Row(
-                  children: [
-                    Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                        color: isSelected
-                            ? Theme.of(context).colorScheme.onPrimaryContainer
-                            : Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    if (totalCount > 0) // Only show count if totalCount > 0
-                      Text(
-                        '($totalCount items)',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: isSelected
-                              ? Theme.of(context).colorScheme.onPrimaryContainer.withValues(alpha: 0.7)
-                              : Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Stack(
+                children: [
+                  // Progress indicator background
+                  if (totalCount > 0)
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                            stops: [progress, progress],
+                            colors: [
+                              (isDuotone 
+                                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                                  : Theme.of(context).colorScheme.primary).withValues(alpha: 0.15),
+                              Colors.transparent,
+                            ],
+                          ),
                         ),
                       ),
-                  ],
-                ),
-              ),
-              // Progress text on the right (only if totalCount > 0)
-              if (totalCount > 0)
-                Text(
-                  '$learnedCount/$totalCount',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: isSelected
-                        ? Theme.of(context).colorScheme.onPrimaryContainer
-                        : Theme.of(context).colorScheme.primary,
+                    ),
+                  // Content
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center, // Center vertically
+                      children: [
+                        // Icon
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: (isDuotone 
+                                ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                                : Theme.of(context).colorScheme.primary).withValues(alpha: 0.1),
+                          ),
+                          child: Icon(
+                            label.contains('Supergroup') ? Icons.folder_special : Icons.folder,
+                            size: 24,
+                            color: isDuotone 
+                                ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                                : Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        // Group label with count inline
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                label,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (totalCount > 0)
+                                Text(
+                                  '$totalCount ${totalCount == 1 ? 'item' : 'items'}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                            ],
+                          ),
+                        ),
+                        // Progress count only (no percentage)
+                        if (totalCount > 0) ...[
+                          const SizedBox(width: 8),
+                          Text(
+                            '$learnedCount/$totalCount',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: isDuotone 
+                                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                                  : Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                        ],
+                        // Chevron
+                        const SizedBox(width: 8),
+                        Icon(
+                          Icons.chevron_right,
+                          size: 20,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-            ],
+                ],
+              ),
+            ),
           ),
         ),
       ),
