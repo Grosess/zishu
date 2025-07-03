@@ -505,25 +505,41 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(28),
                   child: Material(
-                    color: Theme.of(context).colorScheme.primary,
+                    color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                        ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2
+                        : Theme.of(context).colorScheme.primary,
                     child: PopupMenuButton<String>(
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.upload, size: 24, color: Colors.white),
+                            Icon(
+                              Icons.upload, 
+                              size: 24, 
+                              color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1
+                                  : Colors.white,
+                            ),
                             const SizedBox(width: 10),
-                            const Text(
+                            Text(
                               'Import',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.white,
+                                color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                    ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1
+                                    : Colors.white,
                               ),
                             ),
                             const SizedBox(width: 6),
-                            const Icon(Icons.arrow_drop_down, size: 24, color: Colors.white),
+                            Icon(
+                              Icons.arrow_drop_down, 
+                              size: 24, 
+                              color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1
+                                  : Colors.white,
+                            ),
                           ],
                         ),
                       ),

@@ -105,9 +105,22 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
     // Initialize search functionality
     _searchController.addListener(_onSearchChanged);
     
-    // Load progress after initialization
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadSetProgress();
+    // Don't load progress here - it will be loaded after character sets are loaded
+    
+    // Add a delayed load to ensure progress is loaded after everything is initialized
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Clear caches and reload everything fresh
+      _learningService.clearCache();
+      _statsService.clearCache();
+      
+      // Wait a bit for sets to be fully loaded
+      await Future.delayed(const Duration(milliseconds: 300));
+      
+      if (mounted) {
+        await _loadSetProgress();
+        // Force UI update
+        setState(() {});
+      }
     });
   }
   
@@ -310,6 +323,9 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
   Future<void> _loadSetProgress() async {
     // Ensure learning service is initialized
     await _learningService.initialize();
+    
+    // Force reload of learned data
+    _learningService.clearCache();
     
     final progress = <String, double>{};
     
@@ -1432,6 +1448,11 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
   Widget build(BuildContext context) {
     if (_isLoading || !_controllersInitialized) {
       return const Center(child: CircularProgressIndicator());
+    }
+    
+    // Ensure progress is loaded
+    if (_setProgress.isEmpty && (_characterSets.isNotEmpty || _customSets.isNotEmpty)) {
+      _loadSetProgress();
     }
 
     return Scaffold(

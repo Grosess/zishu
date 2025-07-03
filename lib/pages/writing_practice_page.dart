@@ -16,7 +16,7 @@ import '../services/stroke_combination_rules.dart';
 import '../services/statistics_service.dart';
 import '../services/learning_service.dart';
 import '../utils/pinyin_utils.dart';
-import '../main.dart';
+import '../main.dart' show DuotoneThemeExtension, refreshSetsProgress;
 import 'settings_page.dart';
 import '../services/image_cache_service.dart';
 import '../services/radical_service.dart';
@@ -1874,6 +1874,12 @@ class _WritingPracticePageState extends State<WritingPracticePage>
             
             // Exit practice
             if (mounted) {
+              // Refresh progress before exiting
+              try {
+                refreshSetsProgress();
+              } catch (_) {
+                // Ignore if main screen is not available
+              }
               Navigator.pop(context);
             }
             return;
@@ -2054,6 +2060,12 @@ class _WritingPracticePageState extends State<WritingPracticePage>
             
             // Navigate back
             if (mounted) {
+              // Refresh progress before exiting
+              try {
+                refreshSetsProgress();
+              } catch (_) {
+                // Ignore if main screen is not available
+              }
               Navigator.pop(context);
             }
           } else {
@@ -2346,6 +2358,12 @@ class _WritingPracticePageState extends State<WritingPracticePage>
           ],
           FilledButton(
             onPressed: () {
+              // Refresh progress before exiting
+              try {
+                refreshSetsProgress();
+              } catch (_) {
+                // Ignore if main screen is not available
+              }
               Navigator.of(context).pop();
               Navigator.of(context).pop();
             },
@@ -2508,17 +2526,14 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   }
   
   void _navigateToCustomSets() {
-    // Find the main screen and navigate to sets tab
+    // Just pop back to the previous screen
     if (mounted) {
-      final mainScreenState = context.findAncestorStateOfType<MainScreenState>();
-      if (mainScreenState != null) {
-        mainScreenState.navigateToSetsTab(showCustom: true);
-        // Refresh the sets page to show the new custom set
-        mainScreenState.refreshSetsPage();
-      } else {
-        // Fallback: just show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+      // Pop all the way back
+      Navigator.of(context).popUntil((route) => route.isFirst);
+      
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
             content: Text('Created custom set: ${widget.characterSet}'),
             backgroundColor: _getSuccessColor(),
             action: SnackBarAction(
@@ -2533,7 +2548,6 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         Navigator.of(context).pop();
       }
     }
-  }
   
   Widget _buildWordPronunciation() {
     // Get pronunciation for the word

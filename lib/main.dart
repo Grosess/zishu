@@ -889,7 +889,11 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
             }
             break;
           case 1:
-            // Sets page will refresh on its own when needed
+            // Refresh sets page progress
+            if (_setsPageKey.currentState != null) {
+              dynamic state = _setsPageKey.currentState;
+              state.onPageGainsFocus();
+            }
             break;
           case 2:
             if (_progressPageKey.currentState != null) {
@@ -959,7 +963,11 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         break;
       case 1:
         _setsPageKey.currentState?.scrollToTop();
-        // Don't refresh every time - only when explicitly needed
+        // Refresh progress when navigating to sets tab
+        if (_setsPageKey.currentState != null && previousIndex != 1) {
+          dynamic state = _setsPageKey.currentState;
+          state.onPageGainsFocus();
+        }
         break;
       case 2:
         _progressPageKey.currentState?.scrollToTop();

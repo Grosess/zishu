@@ -7,7 +7,7 @@ import '../services/character_dictionary.dart';
 import '../services/learning_service.dart';
 import '../services/cedict_service.dart';
 import '../utils/pinyin_utils.dart';
-import '../main.dart' show DuotoneThemeExtension;
+import '../main.dart' show DuotoneThemeExtension, refreshSetsProgress;
 
 // Custom page route with smooth transition
 class SlidePageRoute extends PageRouteBuilder {
@@ -80,10 +80,10 @@ class _CharacterListPageState extends State<CharacterListPage> {
     super.initState();
     // Production: removed debug print
     _currentSetName = widget.setName;
-    _shuffleCharacters();
     _loadGroupSizeFromSettings();
-    _loadLearnedStatus();
     _initializeCedict();
+    // Load learned status first, then shuffle with learned items first
+    _loadLearnedStatusAndShuffle();
   }
   
   void _shuffleCharacters() {
@@ -180,6 +180,46 @@ class _CharacterListPageState extends State<CharacterListPage> {
         _isSetFullyLearned = isFullyLearned;
       });
     }
+  }
+  
+  Future<void> _loadLearnedStatusAndShuffle() async {
+    // First load learned status
+    final terms = widget.characters.map((item) => _extractTerm(item)).toList();
+    final learned = await _learningService.getLearnedCharactersForSet(terms);
+    final isFullyLearned = await _learningService.isSetFullyLearned(terms);
+    
+    if (mounted) {
+      setState(() {
+        _learnedCharacters = learned;
+        _isSetFullyLearned = isFullyLearned;
+        
+        // Now sort characters with learned ones first
+        _mixedCharacters = _createMixedOrderWithLearnedFirst(widget.characters, learned);
+      });
+    }
+  }
+  
+  List<String> _createMixedOrderWithLearnedFirst(List<String> characters, List<String> learnedCharacters) {
+    // Separate learned and unlearned characters
+    final learnedSet = learnedCharacters.map((item) => _extractTerm(item)).toSet();
+    final List<String> learned = [];
+    final List<String> unlearned = [];
+    
+    for (final char in characters) {
+      final term = _extractTerm(char);
+      if (learnedSet.contains(term)) {
+        learned.add(char);
+      } else {
+        unlearned.add(char);
+      }
+    }
+    
+    // Apply mixed order to each group separately
+    final mixedLearned = _createMixedOrder(learned);
+    final mixedUnlearned = _createMixedOrder(unlearned);
+    
+    // Combine with learned characters first
+    return [...mixedLearned, ...mixedUnlearned];
   }
   
   // Calculate number of groups
@@ -697,6 +737,13 @@ class _CharacterListPageState extends State<CharacterListPage> {
                           setState(() {});
                         }
                         
+                        // Refresh sets page progress
+                        try {
+                          refreshSetsProgress();
+                        } catch (_) {
+                          // Ignore if main screen is not available
+                        }
+                        
                         // Debug: Print what was actually learned
                         final debugLearned = await _learningService.getLearnedWords();
                         // Production: removed debug print
@@ -773,6 +820,13 @@ class _CharacterListPageState extends State<CharacterListPage> {
                           await _loadLearnedStatus();
                           if (mounted) {
                             setState(() {});
+                          }
+                          
+                          // Refresh sets page progress
+                          try {
+                            refreshSetsProgress();
+                          } catch (_) {
+                            // Ignore if main screen is not available
                           }
                         });
                       },
