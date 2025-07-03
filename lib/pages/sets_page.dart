@@ -634,7 +634,14 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
   Future<void> _loadAddedBuiltInSets() async {
     // Load previously added sets on app start
     final prefs = await SharedPreferences.getInstance();
-    final addedSetIds = prefs.getStringList('added_builtin_sets') ?? [];
+    var addedSetIds = prefs.getStringList('added_builtin_sets');
+    
+    // Check if this is the first launch (no added sets saved yet)
+    if (addedSetIds == null) {
+      // First launch - add HSK sets by default
+      addedSetIds = ['hsk1', 'hsk2', 'hsk3', 'hsk4', 'hsk5', 'hsk6'];
+      await prefs.setStringList('added_builtin_sets', addedSetIds);
+    }
     
     // Add the sets from additional sets that were previously added
     for (final setId in addedSetIds) {
@@ -1647,6 +1654,36 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
   Widget _buildSetsGrid(List<CharacterSet> sets, {bool isCustomTab = false}) {
     // Production: removed debug print
     if (!isCustomTab) {
+      // Built-in sets - show empty state if no sets
+      if (sets.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.search,
+                size: 64,
+                color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'No character sets',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Press the search button to add some',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+      
       // Built-in sets - show as normal grid
       return LayoutBuilder(
         builder: (context, constraints) {
