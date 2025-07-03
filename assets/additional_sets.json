@@ -17,6 +17,69 @@
       "difficulty": "beginner",
       "isWordSet": true,
       "icon": "学"
+    },
+    {
+      "id": "food",
+      "name": "Food",
+      "characters": "饭,面条,包子,饺子,馄饨,炒饭,炒面,粽子,年糕,烧麦,春卷,豆腐,酸辣汤,麻婆豆腐,宫保鸡丁,红烧肉,鱼香肉丝,担担面,羊肉串,烧烤,油条,豆浆,咕噜肉,蛋炒饭,叉烧,小笼包,粥,鸡汤,酱油,醋",
+      "description": "Common Chinese food vocabulary",
+      "difficulty": "beginner",
+      "isWordSet": true,
+      "icon": "饭"
+    },
+    {
+      "id": "time",
+      "name": "Time",
+      "characters": "现在,今天,昨天,明天,早上,上午,中午,下午,晚上,夜里,星期,星期一,星期五,星期天,月,年,日,点,分,秒,小时,分钟,时候,时间,早,晚,每天,周末,今天晚上,明天早上",
+      "description": "Time-related vocabulary",
+      "difficulty": "beginner",
+      "isWordSet": true,
+      "icon": "时"
+    },
+    {
+      "id": "people",
+      "name": "People",
+      "characters": "我,你,他,她,我们,你们,他们,爸爸,妈妈,哥哥,姐姐,弟弟,妹妹,爷爷,奶奶,外公,外婆,儿子,女儿,孩子,家人,家,老师,同学,朋友,男人,女人,男孩,女孩,人",
+      "description": "People and family vocabulary",
+      "difficulty": "beginner",
+      "isWordSet": true,
+      "icon": "人"
+    },
+    {
+      "id": "adjectives",
+      "name": "Adjectives",
+      "characters": "大,小,多,少,长,短,高,低,快,慢,热,冷,新,旧,好,坏,漂亮,丑,难,容易,贵,便宜,累,饿,饱,聪明,笨,忙,开心,难过",
+      "description": "Common adjectives",
+      "difficulty": "beginner",
+      "isWordSet": true,
+      "icon": "大"
+    },
+    {
+      "id": "verbs",
+      "name": "Verbs",
+      "characters": "是,有,没有,去,来,要,想,能,会,喜欢,知道,觉得,认识,看,听,说,吃,喝,睡,起床,上学,下课,回家,学习,写,读,打,做,等,给",
+      "description": "Common verbs",
+      "difficulty": "beginner",
+      "isWordSet": true,
+      "icon": "做"
+    },
+    {
+      "id": "daily_activities",
+      "name": "Daily Activities",
+      "characters": "起床,睡觉,吃饭,喝水,上学,下课,回家,洗澡,刷牙,洗脸,换衣服,做作业,看书,写字,读书,学习,上网,玩游戏,看电视,听音乐,买东西,做饭,打扫,上厕所,开灯,关灯,坐车,走路,运动,休息",
+      "description": "Daily activities vocabulary",
+      "difficulty": "beginner",
+      "isWordSet": true,
+      "icon": "做"
+    },
+    {
+      "id": "places",
+      "name": "Places",
+      "characters": "家,学校,教室,图书馆,餐厅,商店,超市,医院,公园,银行,车站,火车站,机场,洗手间,房间,厨房,客厅,公司,办公室,饭店,旅馆,动物园,游泳池,体育馆,邮局,街道,广场,山,海,路口",
+      "description": "Common places vocabulary",
+      "difficulty": "beginner",
+      "isWordSet": true,
+      "icon": "家"
     }
   ]
 }

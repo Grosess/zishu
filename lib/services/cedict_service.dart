@@ -796,6 +796,7 @@ class CedictService {
       '顽': {'pinyin': 'wán', 'def': 'stubborn; naughty'},
       '频': {'pinyin': 'pín', 'def': 'frequent; frequency'},
       '颇': {'pinyin': 'pō', 'def': 'rather; quite'},
+      '第': {'pinyin': 'dì', 'def': 'ordinal number'},
     };
     
     final override = overrides[character];
