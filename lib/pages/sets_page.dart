@@ -202,7 +202,8 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
     // Collect all unique icon characters from sets
     final iconCharacters = <String>{};
     
-    for (final set in _characterSets) {
+    // Helper function to extract icon character
+    void addIconCharacter(CharacterSet set) {
       final mainChar = set.icon ?? (set.characters.isNotEmpty ? set.characters.first : null);
       if (mainChar != null) {
         // Extract first character for multi-character strings
@@ -213,15 +214,19 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
       }
     }
     
+    // Add from built-in sets
+    for (final set in _characterSets) {
+      addIconCharacter(set);
+    }
+    
+    // Add from custom sets
     for (final set in _customSets) {
-      final mainChar = set.icon ?? (set.characters.isNotEmpty ? set.characters.first : null);
-      if (mainChar != null) {
-        // Extract first character for multi-character strings
-        final firstChar = mainChar.isNotEmpty ? mainChar[0] : null;
-        if (firstChar != null) {
-          iconCharacters.add(firstChar);
-        }
-      }
+      addIconCharacter(set);
+    }
+    
+    // Add from additional sets (including daily activities with 做)
+    for (final set in _additionalSets) {
+      addIconCharacter(set);
     }
     
     // Use the preview cache to preload characters
@@ -642,6 +647,9 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
       
       // Update which sets are already added
       _updateAddedSets();
+      
+      // Preload icon characters for additional sets
+      await _preloadSetIconCharacters();
     } catch (e) {
       // If loading fails, use empty list
       setState(() {
@@ -1555,7 +1563,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
               Expanded(
                 child: TextField(
                   controller: _searchController,
-                  autofocus: true,
+                  autofocus: false,
                   decoration: InputDecoration(
                     hintText: 'Search additional sets to add...',
                     prefixIcon: const Icon(Icons.search),

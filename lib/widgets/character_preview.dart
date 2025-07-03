@@ -74,16 +74,63 @@ class _CharacterPreviewState extends State<CharacterPreview> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      // Show a subtle loading state
+      // Show a subtle loading state with placeholder
       return Center(
-        child: FittedBox(
-          fit: BoxFit.contain,
-          child: Text(
-            widget.character,
-            style: TextStyle(
-              fontSize: 120,
-              color: (widget.color ?? Theme.of(context).colorScheme.onSurface).withValues(alpha: 0.3),
-              fontWeight: FontWeight.w400,
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: (widget.color ?? Theme.of(context).colorScheme.onSurface).withValues(alpha: 0.2),
+              width: 1,
+            ),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: AspectRatio(
+            aspectRatio: 1,
+            child: Center(
+              child: SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    (widget.color ?? Theme.of(context).colorScheme.onSurface).withValues(alpha: 0.3),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+    
+    if (_characterStroke == null && !widget.forceText) {
+      // If no stroke data available and not forcing text, retry loading
+      Future.microtask(() => _loadCharacterData());
+      
+      // Show loading state while retrying
+      return Center(
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: (widget.color ?? Theme.of(context).colorScheme.onSurface).withValues(alpha: 0.2),
+              width: 1,
+            ),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: AspectRatio(
+            aspectRatio: 1,
+            child: Center(
+              child: FittedBox(
+                fit: BoxFit.contain,
+                child: Text(
+                  widget.character,
+                  style: TextStyle(
+                    fontSize: 120,
+                    color: (widget.color ?? Theme.of(context).colorScheme.onSurface).withValues(alpha: 0.3),
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ),
             ),
           ),
         ),
@@ -91,7 +138,7 @@ class _CharacterPreviewState extends State<CharacterPreview> {
     }
     
     if (_characterStroke == null) {
-      // Fallback to text if no stroke data available
+      // Final fallback to text if forced or no data
       return Center(
         child: FittedBox(
           fit: BoxFit.contain,
