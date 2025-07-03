@@ -21,6 +21,8 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
   final CharacterDatabase _characterDatabase = CharacterDatabase();
   final LearningService _learningService = LearningService();
   
+  LearningService _getLearningService() => LearningService();
+  
   List<String> _allCharacters = [];
   Map<String, bool> _learnedStatus = {};
   bool _isLoading = true;
@@ -28,6 +30,9 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
   
   // Track if any changes were made
   bool _changesMade = false;
+  
+  // Key to force rebuild of count
+  Key _countKey = UniqueKey();
   
   @override
   void initState() {
@@ -223,6 +228,7 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
     
     setState(() {
       _changesMade = true;
+      _countKey = UniqueKey(); // Force count rebuild
     });
     
     // Clear caches to ensure UI updates
@@ -392,6 +398,7 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
         
         setState(() {
           _changesMade = true;
+          _countKey = UniqueKey(); // Force count rebuild
         });
         
         // Clear caches to ensure UI updates
@@ -562,16 +569,20 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
                   ),
                 ),
                 const SizedBox(height: 32),
-                Text(
-                  () {
-                    final count = _learnedStatus.values.where((v) => v).length;
-                    return count == 1 
-                        ? '1 character marked as learned'
-                        : '$count characters marked as learned';
-                  }(),
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                FutureBuilder<int>(
+                  key: _countKey,
+                  future: _getLearningService().getLearnedCharacters().then((chars) => chars.length),
+                  builder: (context, snapshot) {
+                    final count = snapshot.data ?? 0;
+                    return Text(
+                      count == 1 
+                          ? '1 character marked as learned'
+                          : '$count characters marked as learned',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    );
+                  },
                 ),
               ],
             ),

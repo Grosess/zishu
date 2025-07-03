@@ -931,7 +931,13 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     StatisticsService().clearCache();
     LearningService().clearCache();
     
-    // Navigate to sets tab to trigger refresh
+    // Force refresh sets page if it exists
+    if (_setsPageKey.currentState != null) {
+      dynamic state = _setsPageKey.currentState;
+      state.forceRefresh();
+    }
+    
+    // Navigate to sets tab
     _onItemTapped(1);
   }
   
@@ -953,11 +959,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         break;
       case 1:
         _setsPageKey.currentState?.scrollToTop();
-        // Sets page will refresh progress when gaining focus via onPageGainsFocus
-        if (_setsPageKey.currentState != null) {
-          dynamic state = _setsPageKey.currentState;
-          state.onPageGainsFocus();
-        }
+        // Don't refresh every time - only when explicitly needed
         break;
       case 2:
         _progressPageKey.currentState?.scrollToTop();

@@ -61,10 +61,12 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
   
   // Public method to refresh progress when page becomes visible
   void onPageGainsFocus() {
-    // Clear caches to ensure fresh data
-    _statsService.clearCache();
-    _learningService.clearCache();
-    _loadSetProgress();
+    // Ensure progress is loaded even if sets are empty
+    if (_characterSets.isEmpty && _customSets.isEmpty) {
+      _loadCharacterSets();
+    } else {
+      _loadSetProgress();
+    }
   }
   
   // Force complete refresh of all data
@@ -306,6 +308,9 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
   }
   
   Future<void> _loadSetProgress() async {
+    // Ensure learning service is initialized
+    await _learningService.initialize();
+    
     final progress = <String, double>{};
     
     // Load progress in parallel for better performance
@@ -316,6 +321,9 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
       futures.add(
         _learningService.getSetProgress(set.characters).then((value) {
           progress[set.id] = value;
+        }).catchError((e) {
+          // If error, default to 0 progress
+          progress[set.id] = 0.0;
         })
       );
     }
@@ -325,15 +333,20 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
       futures.add(
         _learningService.getSetProgress(set.characters).then((value) {
           progress[set.id] = value;
+        }).catchError((e) {
+          // If error, default to 0 progress
+          progress[set.id] = 0.0;
         })
       );
     }
     
     // Wait for all progress loads to complete
-    await Future.wait(futures);
+    if (futures.isNotEmpty) {
+      await Future.wait(futures);
+    }
     
-    // Only update state if progress actually changed
-    if (!_isProgressEqual(progress, _setProgress)) {
+    // Always update state to ensure UI shows progress
+    if (mounted) {
       setState(() {
         _setProgress = progress;
       });
@@ -364,7 +377,12 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
       // Clear caches and refresh progress when app resumes
       _statsService.clearCache();
       _learningService.clearCache();
-      _loadSetProgress();
+      // Ensure sets are loaded before loading progress
+      if (_characterSets.isEmpty && _customSets.isEmpty) {
+        _loadCharacterSets();
+      } else {
+        _loadSetProgress();
+      }
     }
   }
   
