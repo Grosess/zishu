@@ -46,7 +46,7 @@ class PremiumService with ChangeNotifier {
       _onPurchaseUpdate,
       onDone: () => _subscription.cancel(),
       onError: (error) {
-        print('Purchase stream error: $error');
+        // Purchase stream error handled silently
       },
     );
     
@@ -65,7 +65,6 @@ class PremiumService with ChangeNotifier {
           
       if (response.notFoundIDs.isNotEmpty) {
         _queryProductError = 'Products not found: ${response.notFoundIDs}';
-        print(_queryProductError);
       }
       
       _products = response.productDetails;
@@ -94,7 +93,6 @@ class PremiumService with ChangeNotifier {
     try {
       await _inAppPurchase.buyNonConsumable(purchaseParam: purchaseParam);
     } catch (e) {
-      print('Error purchasing premium: $e');
       rethrow;
     }
   }
@@ -103,7 +101,7 @@ class PremiumService with ChangeNotifier {
     try {
       await _inAppPurchase.restorePurchases();
     } catch (e) {
-      print('Error restoring purchases: $e');
+      // Error restoring purchases handled silently
     }
   }
   
@@ -115,8 +113,7 @@ class PremiumService with ChangeNotifier {
       }
       
       if (purchaseDetails.status == PurchaseStatus.error) {
-        // Handle error
-        print('Purchase error: ${purchaseDetails.error}');
+        // Handle error silently
       } else if (purchaseDetails.status == PurchaseStatus.purchased ||
                  purchaseDetails.status == PurchaseStatus.restored) {
         // Verify purchase

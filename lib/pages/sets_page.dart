@@ -815,11 +815,45 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
     }
   }
   
+  // Apply round-robin distribution to spread out similar characters
+  List<String> _applyRoundRobinDistribution(List<String> characters) {
+    // Group characters by their first character (for better distribution)
+    final Map<String, List<String>> groups = {};
+    for (final char in characters) {
+      final firstChar = char.isNotEmpty ? char[0] : '';
+      groups.putIfAbsent(firstChar, () => []).add(char);
+    }
+    
+    // Sort groups by size (largest first) for better distribution
+    final sortedGroups = groups.entries.toList()
+      ..sort((a, b) => b.value.length.compareTo(a.value.length));
+    
+    // Distribute characters using round-robin
+    final result = <String>[];
+    final iterators = sortedGroups.map((e) => e.value.iterator).toList();
+    
+    // Keep distributing until all characters are placed
+    bool hasMore = true;
+    while (hasMore) {
+      hasMore = false;
+      for (final iterator in iterators) {
+        if (iterator.moveNext()) {
+          result.add(iterator.current);
+          hasMore = true;
+        }
+      }
+    }
+    
+    return result;
+  }
+  
   Future<void> _showSetSynopsis(CharacterSet set) async {
     // Production: removed debug print
     // Don't validate all items - just show the dialog immediately
-    // Make sure to preserve the original order
-    final validItems = List<String>.from(set.characters);
+    // Apply round-robin distribution for word sets to spread out similar characters
+    final validItems = set.isWordSet 
+        ? _applyRoundRobinDistribution(List<String>.from(set.characters))
+        : List<String>.from(set.characters);
     final invalidItems = <dynamic>[];
     
     // Show synopsis dialog with fade and slide-up animation
@@ -924,13 +958,13 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
                 ),
                 const SizedBox(height: 8),
                 FutureBuilder<List<String>>(
-                  future: _learningService.getLearnedCharactersForSet(set.characters),
+                  future: _learningService.getLearnedCharactersForSet(validItems),
                   builder: (context, snapshot) {
                     final learnedCharacters = snapshot.data ?? [];
                     return Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: set.characters.take(10).map((item) {
+                      children: validItems.take(10).map((item) {
                         final isLearned = learnedCharacters.contains(item);
                         return Material(
                           color: Colors.transparent,
@@ -1187,7 +1221,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
                               final allLearned = {...learnedCharacters, ...learnedWords};
                               
                               // Filter this set's items against fresh learned data
-                              final learnedItems = set.characters.where((item) => allLearned.contains(item)).toList();
+                              final learnedItems = validItems.where((item) => allLearned.contains(item)).toList();
                               learnedItems.shuffle(); // Randomize order
                               
                               // Close loading dialog

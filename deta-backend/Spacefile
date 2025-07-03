@@ -1,0 +1,7 @@
+v: 0
+micros:
+  - name: zishu-backend
+    src: .
+    engine: nodejs16
+    public: true
+    run: node index.js

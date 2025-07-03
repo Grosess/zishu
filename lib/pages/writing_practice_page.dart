@@ -549,13 +549,10 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       // For learning mode with multi-character words, preserve the learning stage
       if (widget.mode == PracticeMode.learning && widget.isWord && _wordCharacters.length > 1) {
         // Don't reset learning stage when cycling through characters
-        print('📚 PRESERVING learning stage: $_learningStage');
       } else if (!widget.isWord || widget.mode != PracticeMode.learning) {
         // Reset for single characters or testing mode
-        print('📚 RESET: Setting learning stage to 0 (was $_learningStage)');
         _learningStage = 0;
       }
-      print('📚 LOAD CHARACTER: Stage=$_learningStage, CharIndex=$_currentWordCharacterIndex');
       _showHintPath = false;
       _showFullCharacter = false;
       _usedHint = false;
@@ -563,7 +560,6 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       _practiceStartTime = DateTime.now();
       _showManualGrading = false;
       
-      print('🔄 RESET STATE: Character=$currentCharacter, ManualGrading=$_showManualGrading');
       _showSuccess = false;
       _autoGradedAsCorrect = false;
       _strokeDeviation = 0.0;
@@ -974,12 +970,9 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                           },
                           onPanStart: (details) {
                             final currentChar = widget.isWord ? _wordCharacters[_currentWordCharacterIndex] : widget.character;
-                            print('👆 PAN START: Character=$currentChar, ManualGrading=$_showManualGrading');
-                            print('👆 CompletedIndices=${_completedStrokeIndices.length}, ExpectedNext=${_getNextStrokeIndex()}');
                             
                             // Don't start drawing if manual grading is showing
                             if (_showManualGrading) {
-                              print('👆 BLOCKED: Manual grading is showing');
                               return;
                             }
                             
@@ -987,7 +980,6 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                             _currentStroke = [details.localPosition];
                             _currentStrokeTimestamps = [DateTime.now().millisecondsSinceEpoch];
                             _pendingPoints.clear();
-                            print('👆 Started new stroke at ${details.localPosition}');
                             
                             // Start update timer for smooth rendering
                             _updateTimer?.cancel();
@@ -1026,8 +1018,6 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                           },
                           onPanEnd: (details) {
                             final currentChar = widget.isWord ? _wordCharacters[_currentWordCharacterIndex] : widget.character;
-                            print('👆 PAN END: Character=$currentChar, ManualGrading=$_showManualGrading');
-                            print('👆 CurrentStroke length: ${_currentStroke.length}');
                             
                             if (!_showManualGrading) {
                               // Cancel timer and flush pending points
@@ -1041,10 +1031,8 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                                 }
                               });
                               
-                              print('👆 Calling _handleStrokeEnd() with ${_currentStroke.length} points');
                               _handleStrokeEnd();
                             } else {
-                              print('👆 BLOCKED: Manual grading is showing, not calling _handleStrokeEnd()');
                             }
                           },
                           child: _strokeType == StrokeType.classic && _classicStrokeAnimation != null
@@ -1343,43 +1331,28 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   }
 
   void _handleStrokeEnd() {
-    print('🔍 _handleStrokeEnd() ENTRY: strokeEmpty=${_currentStroke.isEmpty}, characterStroke=${_characterStroke != null ? "loaded" : "NULL"}');
     
     if (_currentStroke.isEmpty || _characterStroke == null) {
-      print('❌ EARLY RETURN: strokeEmpty=${_currentStroke.isEmpty}, characterStroke=${_characterStroke == null ? "NULL" : "loaded"}');
       return;
     }
     
     final RenderBox? box = _canvasKey.currentContext?.findRenderObject() as RenderBox?;
     if (box == null) {
-      print('❌ EARLY RETURN: RenderBox is NULL');
       return;
     }
     
     final canvasSize = box.size;
-    print('🔍 Canvas size: $canvasSize');
     
     final nextIndex = _getNextStrokeIndex();
-    print('🔍 Got nextIndex: $nextIndex');
     
-    print('🔍 Widget.isWord: ${widget.isWord}');
     if (widget.isWord) {
-      print('🔍 _currentCharacterIndex: $_currentCharacterIndex, _currentWordCharacterIndex: $_currentWordCharacterIndex');
-      print('🔍 _wordCharacters.length: ${_wordCharacters.length}');
-      print('🔍 _wordCharacters: $_wordCharacters');
     }
     
     // FIXED: Use same character lookup logic as gesture detection
     final currentCharacter = widget.isWord ? _wordCharacters[_currentWordCharacterIndex] : widget.character;
-    print('🔍 Current character: $currentCharacter');
     
-    print('\n\n🔍 VALIDATING STROKE for character: $currentCharacter, stroke index: $nextIndex');
-    print('Total strokes for this character: ${_characterStroke!.strokes.length}');
-    print('🔍 CompletedIndices: $_completedStrokeIndices');
-    print('🔍 NextIndex: $nextIndex, StrokeLength: ${_characterStroke!.strokes.length}');
     
     if (nextIndex >= _characterStroke!.strokes.length) {
-      print('❌ EARLY RETURN: nextIndex ($nextIndex) >= strokeLength (${_characterStroke!.strokes.length})');
       setState(() {
         _currentStroke.clear();
         _currentStrokeTimestamps.clear();
@@ -1547,12 +1520,9 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     }
     
     final currentCharacterName = widget.isWord ? _wordCharacters[_currentWordCharacterIndex] : widget.character;
-    print('🔍 STATE UPDATE: Character=$currentCharacterName, StrokeIndex=$nextIndex, IsCorrect=$isCorrect');
-    print('🔍 Before setState: CompletedIndices=${_completedStrokeIndices.length}, UserStrokes=${_userStrokes.length}');
     
     setState(() {
       if (isCorrect) {
-        print('✅ Adding stroke $nextIndex to completed indices');
         // Calculate deviation for animation
         _strokeDeviation = _calculateStrokeDeviation(_currentStroke, _characterStroke!.medians[nextIndex], canvasSize);
         
@@ -1560,17 +1530,14 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         _userStrokes.add(List.from(_currentStroke));
         _showHintPath = false; // Hide hint after successful stroke
         
-        print('✅ After adding: CompletedIndices=${_completedStrokeIndices.length}/${_characterStroke!.strokes.length}');
         
         // Trigger bounce animation
         _startBounceAnimation(nextIndex);
         
         if (_completedStrokeIndices.length == _characterStroke!.strokes.length) {
-          print('🎉 Character complete! All strokes done for $currentCharacterName');
           _onCharacterComplete();
         }
       } else {
-        print('❌ Stroke $nextIndex failed validation');
         _wrongAttempts[nextIndex]++;
         
         // Track if this is the first time missing this stroke
@@ -1580,7 +1547,6 @@ class _WritingPracticePageState extends State<WritingPracticePage>
           
           // Check if we've missed 2 different strokes - mark for failure but continue
           if (_missedStrokeIndices.length >= 2) {
-            print('❌ Will fail: Missed 2 different strokes - continue to complete character');
             // Don't stop here - let user complete the character
           }
         }
@@ -1596,16 +1562,13 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         // Removed snackbar notification to prevent render overflow
       }
       
-      print('🧹 Clearing current stroke (${_currentStroke.length} points)');
       _currentStroke.clear();
       _currentStrokeTimestamps.clear();
-      print('🔍 After setState: CompletedIndices=${_completedStrokeIndices.length}, UserStrokes=${_userStrokes.length}');
     });
     
     // Force UI update after a frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        print('🔄 Post-frame: CompletedIndices=${_completedStrokeIndices.length}, Expected next stroke: ${_getNextStrokeIndex()}');
       }
     });
   }
@@ -1754,7 +1717,6 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     setState(() {
       _showSuccess = true;
       _showManualGrading = true;
-      print('🎯 SET MANUAL GRADING: Character=$currentCharacter, ManualGrading=$_showManualGrading');
     });
     
     // Force a rebuild to ensure buttons are shown
@@ -1836,18 +1798,15 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     // Don't immediately hide the success state - keep it visible
     setState(() {
       _showManualGrading = false;
-      print('✅ CLEAR MANUAL GRADING: Character=$currentCharacter, ManualGrading=$_showManualGrading, WasCorrect=$wasCorrect');
     });
     
     Future.delayed(const Duration(milliseconds: 300), () async {
       // In learning mode, check if we should advance to next stage or next character
       if (widget.mode == PracticeMode.learning && _learningStage < 2) {
-        print('📚 LEARNING MODE: Current stage $_learningStage, word=$currentCharacter, charIndex=$_currentWordCharacterIndex');
         
         // For multi-character words, cycle through characters even in the same stage
         if (widget.isWord && _wordCharacters.length > 1) {
           final nextCharacterIndex = (_currentWordCharacterIndex + 1) % _wordCharacters.length;
-          print('📚 LEARNING MODE: Next character index will be $nextCharacterIndex');
           
           setState(() {
             _currentWordCharacterIndex = nextCharacterIndex;
@@ -1855,9 +1814,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
             // If we completed a full cycle (back to first character)
             if (nextCharacterIndex == 0) {
               // Advance stage after completing one full cycle
-              print('📚 LEARNING MODE: Completed cycle at stage $_learningStage, advancing to next stage');
               _learningStage++;
-              print('📚 LEARNING MODE: Now at stage $_learningStage');
             }
             
             _completedStrokeIndices.clear();
@@ -1898,14 +1855,13 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       }
       
       // Auto-progress to next character (testing mode or completed all stages in learning)
-      if (widget.isWord && _wordCharacters.length > 1 && widget.allCharacters != null && widget.allCharacters!.length == 1) {
-        // Handle learning mode completion
+      if (widget.isWord && _wordCharacters.length > 1) {
+        // Handle learning mode completion for multi-character words
         if (widget.mode == PracticeMode.learning && _learningStage == 2) {
           final nextCharacterIndex = (_currentWordCharacterIndex + 1) % _wordCharacters.length;
           
           // Check if we've completed a full cycle at stage 2
           if (nextCharacterIndex == 0) {
-            print('📚 LEARNING MODE: Completed all stages for word');
             
             // Mark as learned
             if (wasCorrect) {

@@ -1,0 +1,77 @@
+functionsDirectory = "/Users/archmo/Documents/zishu/netlify-backend/netlify/functions"
+functionsDirectoryOrigin = "config-v1"
+redirectsOrigin = "config"
+plugins = []
+headers = []
+
+[build]
+publish = "/Users/archmo/Documents/zishu/netlify-backend"
+publishOrigin = "default"
+base = "/Users/archmo/Documents/zishu/netlify-backend"
+functions = "/Users/archmo/Documents/zishu/netlify-backend/netlify/functions"
+
+[build.environment]
+
+[build.processing]
+
+[build.processing.css]
+
+[build.processing.html]
+
+[build.processing.images]
+
+[build.processing.js]
+
+[build.services]
+
+[functions]
+
+[functions."*"]
+
+[[redirects]]
+from = "/v1/health"
+to = "/.netlify/functions/health"
+status = 200.0
+force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]
+
+[[redirects]]
+from = "/v1/metrics/global"
+to = "/.netlify/functions/metrics-global"
+status = 200.0
+force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]
+
+[[redirects]]
+from = "/v1/sync/learned"
+to = "/.netlify/functions/sync-learned"
+status = 200.0
+force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]
+
+[[redirects]]
+from = "/v1/track/learned"
+to = "/.netlify/functions/track-learned"
+status = 200.0
+force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]
