@@ -492,18 +492,13 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(28),
-                    onTap: () {},
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
+                  child: Material(
+                    color: Theme.of(context).colorScheme.primary,
                     child: PopupMenuButton<String>(
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primary,
-                          borderRadius: BorderRadius.circular(28),
-                        ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
