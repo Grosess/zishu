@@ -123,12 +123,8 @@ class StatisticsService {
   Future<Set<String>> getLearnedCharacters() async {
     await initialize();
     
-    // Return cached data if available and recent
-    if (_cachedLearnedCharacters != null && 
-        _lastCacheUpdate != null &&
-        DateTime.now().difference(_lastCacheUpdate!).inMinutes < 5) {
-      return _cachedLearnedCharacters!;
-    }
+    // Always reload from SharedPreferences to ensure fresh data
+    await _prefs.reload();
     
     // Load from storage and cache
     final list = _prefs.getStringList('learned_characters') ?? [];
@@ -140,12 +136,8 @@ class StatisticsService {
   Future<Set<String>> getLearnedWords() async {
     await initialize();
     
-    // Return cached data if available and recent
-    if (_cachedLearnedWords != null && 
-        _lastCacheUpdate != null &&
-        DateTime.now().difference(_lastCacheUpdate!).inMinutes < 5) {
-      return _cachedLearnedWords!;
-    }
+    // Always reload from SharedPreferences to ensure fresh data
+    await _prefs.reload();
     
     // Load from storage and cache
     final list = _prefs.getStringList('learned_words') ?? [];

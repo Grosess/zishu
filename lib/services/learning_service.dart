@@ -124,12 +124,8 @@ class LearningService {
   Future<List<String>> getLearnedCharacters() async {
     await initialize();
     
-    // Return cached data if fresh
-    if (_cachedLearnedCharacters != null && 
-        _lastCacheUpdate != null &&
-        DateTime.now().difference(_lastCacheUpdate!).inSeconds < 30) {
-      return _cachedLearnedCharacters!.toList();
-    }
+    // Always reload from SharedPreferences to ensure fresh data
+    await _prefs.reload();
     
     // Load from storage
     final list = _prefs.getStringList('learned_characters') ?? [];

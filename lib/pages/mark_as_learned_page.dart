@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/character_set_manager.dart';
-import '../main.dart' show DuotoneThemeExtension, refreshStreakDisplay;
+import '../main.dart' show DuotoneThemeExtension, refreshStreakDisplay, refreshSetsProgress;
 import '../services/character_database.dart';
 import '../services/learning_service.dart';
 import '../services/statistics_service.dart';
@@ -237,9 +237,10 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
     // Reload all data to update the UI
     await _loadData();
     
-    // Refresh streak display
+    // Refresh streak display and sets progress
     try {
       refreshStreakDisplay();
+      refreshSetsProgress();
     } catch (_) {
       // Ignore if main screen is not available
     }
@@ -405,9 +406,10 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
         // Reload all data to update the UI
         await _loadData();
         
-        // Refresh streak display
+        // Refresh streak display and sets progress
         try {
           refreshStreakDisplay();
+          refreshSetsProgress();
         } catch (_) {
           // Ignore if main screen is not available
         }

@@ -16,6 +16,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'services/image_cache_service.dart';
 import 'services/statistics_service.dart';
 import 'services/streak_service.dart';
+import 'services/learning_service.dart';
 import 'widgets/streak_display.dart';
 
 // Theme extension for duotone themes
@@ -75,6 +76,11 @@ void restartApp() {
 // Method to refresh streak display
 void refreshStreakDisplay() {
   mainScreenKey.currentState?.refreshStreakDisplay();
+}
+
+// Method to refresh sets progress
+void refreshSetsProgress() {
+  mainScreenKey.currentState?.refreshSetsProgress();
 }
 
 Future<void> _initializeApp() async {
@@ -920,6 +926,15 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     });
   }
   
+  void refreshSetsProgress() {
+    // Clear caches to ensure fresh data
+    StatisticsService().clearCache();
+    LearningService().clearCache();
+    
+    // Navigate to sets tab to trigger refresh
+    _onItemTapped(1);
+  }
+  
   void _onItemTapped(int index) {
     final previousIndex = _selectedIndex;
     setState(() {
@@ -938,7 +953,11 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         break;
       case 1:
         _setsPageKey.currentState?.scrollToTop();
-        // Sets page will load progress on its own
+        // Sets page will refresh progress when gaining focus via onPageGainsFocus
+        if (_setsPageKey.currentState != null) {
+          dynamic state = _setsPageKey.currentState;
+          state.onPageGainsFocus();
+        }
         break;
       case 2:
         _progressPageKey.currentState?.scrollToTop();

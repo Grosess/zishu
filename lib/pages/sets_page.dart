@@ -61,7 +61,26 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
   
   // Public method to refresh progress when page becomes visible
   void onPageGainsFocus() {
+    // Clear caches to ensure fresh data
+    _statsService.clearCache();
+    _learningService.clearCache();
     _loadSetProgress();
+  }
+  
+  // Force complete refresh of all data
+  Future<void> forceRefresh() async {
+    // Clear all caches
+    _statsService.clearCache();
+    _learningService.clearCache();
+    
+    // Reload all data
+    await _loadCharacterSets();
+    await _loadSetProgress();
+    
+    // Force UI update
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
@@ -342,9 +361,18 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      // Refresh progress when app resumes
+      // Clear caches and refresh progress when app resumes
+      _statsService.clearCache();
+      _learningService.clearCache();
       _loadSetProgress();
     }
+  }
+  
+  // Public method to refresh progress
+  void refreshProgress() {
+    _statsService.clearCache();
+    _learningService.clearCache();
+    _loadSetProgress();
   }
   
   void scrollToTop() {
