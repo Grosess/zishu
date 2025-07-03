@@ -12,6 +12,7 @@ class CharacterSet {
   final bool isWordSet;
   final int? color;
   final String? icon;
+  final String? keywords;
   
   CharacterSet({
     required this.id,
@@ -21,6 +22,7 @@ class CharacterSet {
     this.isWordSet = false,
     this.color,
     this.icon,
+    this.keywords,
   });
   
   Map<String, dynamic> toJson() => {
@@ -31,6 +33,7 @@ class CharacterSet {
     'isWordSet': isWordSet,
     'color': color,
     'icon': icon,
+    'keywords': keywords,
   };
   
   factory CharacterSet.fromJson(Map<String, dynamic> json) {
@@ -57,6 +60,7 @@ class CharacterSet {
       isWordSet: json['isWordSet'] ?? false,
       color: json['color'] != null ? int.tryParse(json['color'].toString()) : null,
       icon: json['icon'],
+      keywords: json['keywords'],
     );
   }
 }

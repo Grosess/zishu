@@ -345,9 +345,44 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
         _filteredSets = List.from(_additionalSets);
       } else {
         _filteredSets = _additionalSets.where((set) {
-          return set.name.toLowerCase().contains(query) ||
-                 (set.description?.toLowerCase().contains(query) ?? false) ||
-                 set.characters.any((char) => char.toLowerCase().contains(query));
+          // Search in name
+          if (set.name.toLowerCase().contains(query)) return true;
+          
+          // Search in description
+          if (set.description?.toLowerCase().contains(query) ?? false) return true;
+          
+          // Search in keywords
+          if (set.keywords?.toLowerCase().contains(query) ?? false) return true;
+          
+          // Search in characters (for partial matches)
+          if (set.characters.any((char) => char.toLowerCase().contains(query))) return true;
+          
+          // Smart search for common terms
+          final smartQueries = {
+            'test': ['hsk', 'exam', 'proficiency'],
+            'exam': ['hsk', 'test', 'proficiency'],
+            'food': ['eat', 'meal', 'cuisine', 'dish'],
+            'family': ['people', 'person', 'relative'],
+            'action': ['verb', 'do', 'activity'],
+            'describe': ['adjective', 'quality'],
+            'routine': ['daily', 'activity', 'everyday'],
+            'location': ['place', 'building', 'where'],
+          };
+          
+          // Check if query matches any smart search terms
+          for (final entry in smartQueries.entries) {
+            if (query.contains(entry.key)) {
+              for (final synonym in entry.value) {
+                if (set.name.toLowerCase().contains(synonym) ||
+                    (set.description?.toLowerCase().contains(synonym) ?? false) ||
+                    (set.keywords?.toLowerCase().contains(synonym) ?? false)) {
+                  return true;
+                }
+              }
+            }
+          }
+          
+          return false;
         }).toList();
       }
     });
@@ -588,6 +623,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
             description: setData['description'],
             isWordSet: isWordSet,
             icon: setData['icon'],
+            keywords: setData['keywords'],
           );
           
           additionalSets.add(set);

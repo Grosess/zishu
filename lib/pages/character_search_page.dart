@@ -169,8 +169,40 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
         }
       }
       
-      // Sort deduplicated results by priority
-      uniqueResults.sort((a, b) {
+      // Filter out entries with English characters or unknown symbols
+      final filteredResults = uniqueResults.where((entry) {
+        // Check if the simplified form contains only Chinese characters
+        for (int i = 0; i < entry.simplified.length; i++) {
+          final char = entry.simplified[i];
+          if (!_isChineseCharacter(char)) {
+            return false; // Skip entries with non-Chinese characters
+          }
+        }
+        // Also filter out entries with '?' in definition (usually means uncertain)
+        if (entry.definition.contains('?')) {
+          return false;
+        }
+        // Filter out entries where pinyin contains uppercase letters (like TA, XX)
+        // Normal pinyin should only have lowercase letters with tone marks
+        if (entry.pinyin.contains(RegExp(r'[A-Z]{2,}'))) {
+          return false;
+        }
+        // Filter out entries with definitions that are too technical or contain abbreviations
+        final defLower = entry.definition.toLowerCase();
+        if (defLower.contains('variant of') || 
+            defLower.contains('used in') ||
+            defLower.contains('abbr.') ||
+            defLower.contains('abbreviation') ||
+            defLower.contains('surname') ||
+            defLower.contains('radical') ||
+            defLower.contains('see also')) {
+          return false;
+        }
+        return true;
+      }).toList();
+      
+      // Sort filtered results by priority
+      filteredResults.sort((a, b) {
         final aPriority = characterPriority[a.simplified] ?? 999;
         final bPriority = characterPriority[b.simplified] ?? 999;
         
@@ -189,7 +221,7 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
       });
       
       // Take only the first 50 results after sorting
-      results.addAll(uniqueResults.take(50));
+      results.addAll(filteredResults.take(50));
     }
     
     // Load learned status for results
