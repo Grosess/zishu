@@ -5,6 +5,7 @@ import '../services/character_database.dart';
 import '../services/learning_service.dart';
 import '../services/statistics_service.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
 import 'dart:convert';
 
@@ -212,19 +213,10 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
       ),
     );
     
-    // Mark all characters as learned
-    int importedCount = 0;
-    for (final char in characters) {
-      if (!(_learnedStatus[char] ?? false)) {
-        await _learningService.markCharacterAsLearned(char, updateTodayProgress: false);
-        if (_allCharacters.contains(char)) {
-          setState(() {
-            _learnedStatus[char] = true;
-          });
-        }
-        importedCount++;
-      }
-    }
+    // Mark all characters as learned in batch
+    final charactersList = characters.toList();
+    await _learningService.markCharactersAsLearned(charactersList, updateTodayProgress: false);
+    final importedCount = charactersList.length;
     
     // Close progress dialog
     Navigator.pop(context);
@@ -238,6 +230,13 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
     statsService.clearCache();
     _learningService.clearCache();
     
+    // Force SharedPreferences to reload to ensure data is persisted
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.reload();
+    
+    // Reload all data to update the UI
+    await _loadData();
+    
     // Refresh streak display
     try {
       refreshStreakDisplay();
@@ -247,7 +246,9 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
     
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Imported $importedCount new characters'),
+        content: Text(importedCount == 1 
+            ? 'Imported 1 new character'
+            : 'Imported $importedCount new characters'),
       ),
     );
   }
@@ -380,19 +381,10 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
           ),
         );
         
-        // Mark all characters as learned
-        int importedCount = 0;
-        for (final char in characters) {
-          if (!(_learnedStatus[char] ?? false)) {
-            await _learningService.markCharacterAsLearned(char, updateTodayProgress: false);
-            if (_allCharacters.contains(char)) {
-              setState(() {
-                _learnedStatus[char] = true;
-              });
-            }
-            importedCount++;
-          }
-        }
+        // Mark all characters as learned in batch
+        final charactersList = characters.toList();
+        await _learningService.markCharactersAsLearned(charactersList, updateTodayProgress: false);
+        final importedCount = charactersList.length;
         
         // Close progress dialog
         Navigator.pop(context);
@@ -406,6 +398,13 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
         statsService.clearCache();
         _learningService.clearCache();
         
+        // Force SharedPreferences to reload to ensure data is persisted
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.reload();
+        
+        // Reload all data to update the UI
+        await _loadData();
+        
         // Refresh streak display
         try {
           refreshStreakDisplay();
@@ -415,7 +414,9 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Imported $importedCount new characters from Skritter'),
+            content: Text(importedCount == 1
+                ? 'Imported 1 new character from Skritter'
+                : 'Imported $importedCount new characters from Skritter'),
           ),
         );
       }
