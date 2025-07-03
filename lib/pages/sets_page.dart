@@ -26,7 +26,7 @@ class SetsPage extends StatefulWidget {
   State<SetsPage> createState() => SetsPageState();
 }
 
-class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
+class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, WidgetsBindingObserver {
   final CharacterSetManager _setManager = CharacterSetManager();
   final MakeMeAHanziProcessor _processor = MakeMeAHanziProcessor();
   final CharacterValidator _validator = CharacterValidator();
@@ -58,10 +58,16 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
   final Set<String> _selectedSetIds = {};
   final Set<String> _addedSetIds = {}; // Track which sets have been added to built-in
   bool _isSearchMode = false;
+  
+  // Public method to refresh progress when page becomes visible
+  void onPageGainsFocus() {
+    _loadSetProgress();
+  }
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // Initialize controllers with saved tab index
     _initializeWithSavedState();
     _loadCharacterSets();
@@ -77,7 +83,13 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
     
     // Initialize search functionality
     _searchController.addListener(_onSearchChanged);
+    
+    // Load progress after initialization
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadSetProgress();
+    });
   }
+  
   
   Future<void> _initializeWithSavedState() async {
     // Load saved tab index
@@ -319,11 +331,20 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _tabController?.dispose();
     _builtInScrollController.dispose();
     _customScrollController.dispose();
     _searchController.dispose();
     super.dispose();
+  }
+  
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Refresh progress when app resumes
+      _loadSetProgress();
+    }
   }
   
   void scrollToTop() {
@@ -342,6 +363,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
       );
     }
   }
+  
   
   void _onSearchChanged() {
     final query = _searchController.text.toLowerCase();
@@ -2058,8 +2080,20 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
                 },
               ),
             ListTile(
-              leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text('Delete', style: TextStyle(color: Colors.red)),
+              leading: Icon(
+                Icons.delete, 
+                color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                    ? Theme.of(context).colorScheme.error
+                    : Colors.red,
+              ),
+              title: Text(
+                'Delete', 
+                style: TextStyle(
+                  color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                      ? Theme.of(context).colorScheme.error
+                      : Colors.red,
+                ),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 _showDeleteDialog(set);
@@ -2198,8 +2232,20 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.delete, color: Colors.red),
-            title: const Text('Delete Folder', style: TextStyle(color: Colors.red)),
+            leading: Icon(
+              Icons.delete, 
+              color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                  ? Theme.of(context).colorScheme.error
+                  : Colors.red,
+            ),
+            title: Text(
+              'Delete Folder', 
+              style: TextStyle(
+                color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                    ? Theme.of(context).colorScheme.error
+                    : Colors.red,
+              ),
+            ),
             onTap: () {
               Navigator.pop(context);
               _showDeleteFolderDialog(folder);
@@ -2264,7 +2310,11 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                  ? Theme.of(context).colorScheme.error
+                  : Colors.red,
+            ),
             child: const Text('Delete'),
           ),
         ],
@@ -2786,7 +2836,9 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin {
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                  ? Theme.of(context).colorScheme.error
+                  : Colors.red,
             ),
             child: const Text('Delete'),
           ),

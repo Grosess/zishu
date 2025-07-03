@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/statistics_service.dart';
 import '../services/local_storage_service.dart';
+import '../main.dart' show DuotoneThemeExtension;
 
 class PracticeHistoryPage extends StatefulWidget {
   const PracticeHistoryPage({super.key});
@@ -87,7 +88,7 @@ class _PracticeHistoryPageState extends State<PracticeHistoryPage> {
                       Icon(
                         Icons.history,
                         size: 64,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -102,7 +103,7 @@ class _PracticeHistoryPageState extends State<PracticeHistoryPage> {
                         'Start practicing to see your history here',
                         style: TextStyle(
                           fontSize: 14,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                         ),
                       ),
                     ],
@@ -121,15 +122,27 @@ class _PracticeHistoryPageState extends State<PracticeHistoryPage> {
                       child: ListTile(
                         leading: CircleAvatar(
                           radius: 24,
-                          backgroundColor: isSuccess
-                              ? Colors.green.withOpacity(0.2)
-                              : Colors.orange.withOpacity(0.2),
+                          backgroundColor: () {
+                            final isDuotone = Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true;
+                            if (isDuotone) {
+                              return Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1;
+                            }
+                            return isSuccess
+                                ? Colors.green.withValues(alpha: 0.2)
+                                : Colors.orange.withValues(alpha: 0.2);
+                          }(),
                           child: Text(
                             '$percentage%',
                             style: TextStyle(
                               fontSize: percentage == 100 ? 14 : 15,
                               fontWeight: FontWeight.bold,
-                              color: isSuccess ? Colors.green : Colors.orange,
+                              color: () {
+                                final isDuotone = Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true;
+                                if (isDuotone) {
+                                  return Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2;
+                                }
+                                return isSuccess ? Colors.green : Colors.orange;
+                              }(),
                             ),
                           ),
                         ),
@@ -190,7 +203,13 @@ class _PracticeHistoryPageState extends State<PracticeHistoryPage> {
                           children: [
                             Icon(
                               isSuccess ? Icons.check_circle : Icons.circle_outlined,
-                              color: isSuccess ? Colors.green : Colors.orange,
+                              color: () {
+                                final isDuotone = Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true;
+                                if (isDuotone) {
+                                  return Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2;
+                                }
+                                return isSuccess ? Colors.green : Colors.orange;
+                              }(),
                             ),
                             const SizedBox(height: 4),
                             Text(

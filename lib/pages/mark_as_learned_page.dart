@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../services/character_set_manager.dart';
-import '../widgets/character_preview.dart';
 import '../main.dart' show DuotoneThemeExtension, refreshStreakDisplay;
 import '../services/character_database.dart';
 import '../services/learning_service.dart';
@@ -25,13 +24,6 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
   Map<String, bool> _learnedStatus = {};
   bool _isLoading = true;
   
-  // Drag selection state
-  Set<String> _draggedCharacters = {};
-  final ScrollController _scrollController = ScrollController();
-  bool _isDragging = false;
-  bool _isSelecting = false;
-  bool _isScrolling = false;
-  double _lastScrollPosition = 0;
   
   // Track if any changes were made
   bool _changesMade = false;
@@ -44,7 +36,6 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
   
   @override
   void dispose() {
-    _scrollController.dispose();
     super.dispose();
   }
   
@@ -131,21 +122,6 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
            (codeUnit >= 0x2F800 && codeUnit <= 0x2FA1F); // CJK Compatibility Supplement
   }
   
-  Future<void> _toggleLearned(String item, {bool updateTodayProgress = true}) async {
-    final isLearned = _learnedStatus[item] ?? false;
-    
-    // Always mark as single character since we only show single characters
-    if (isLearned) {
-      await _learningService.removeLearnedCharacter(item);
-    } else {
-      await _learningService.markCharacterAsLearned(item, updateTodayProgress: updateTodayProgress);
-    }
-    
-    setState(() {
-      _learnedStatus[item] = !isLearned;
-      _changesMade = true;
-    });
-  }
   
   Future<void> _showImportDialog() async {
     final controller = TextEditingController();
@@ -457,40 +433,6 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
     }
   }
   
-  void _startDragSelection(String item) {
-    // Don't start drag if we're scrolling
-    if (_isScrolling) return;
-    
-    setState(() {
-      _isDragging = true;
-      _draggedCharacters = {item};
-      _isSelecting = !(_learnedStatus[item] ?? false);
-    });
-  }
-  
-  void _updateDragSelection(String item) {
-    if (_isDragging && !_draggedCharacters.contains(item)) {
-      setState(() {
-        _draggedCharacters.add(item);
-      });
-    }
-  }
-  
-  void _endDragSelection() async {
-    if (_isDragging) {
-      // Apply the learned status to all dragged items
-      for (final item in _draggedCharacters) {
-        if ((_learnedStatus[item] ?? false) != _isSelecting) {
-          await _toggleLearned(item, updateTodayProgress: false);
-        }
-      }
-      
-      setState(() {
-        _isDragging = false;
-        _draggedCharacters.clear();
-      });
-    }
-  }
   
   @override
   Widget build(BuildContext context) {
@@ -528,223 +470,113 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
               }
             },
           ),
-          actions: [
-            PopupMenuButton<String>(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.upload, size: 20, color: Theme.of(context).colorScheme.primary),
-                    const SizedBox(width: 4),
-                    Text('Import', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
-                  ],
+          actions: [],
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.upload_file,
+                  size: 64,
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.6),
                 ),
-              ),
-              onSelected: (value) {
-                if (value == 'text') {
-                  _showImportDialog();
-                } else if (value == 'skritter') {
-                  _importFromSkritter();
-                }
-              },
-              itemBuilder: (BuildContext context) => [
-                const PopupMenuItem<String>(
-                  value: 'text',
-                  child: ListTile(
-                    leading: Icon(Icons.text_fields),
-                    title: Text('Import Text'),
-                    contentPadding: EdgeInsets.zero,
+                const SizedBox(height: 24),
+                Text(
+                  'Import Your Known Characters',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 32),
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(28),
+                    onTap: () {},
+                    child: PopupMenuButton<String>(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary,
+                          borderRadius: BorderRadius.circular(28),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.upload, size: 24, color: Colors.white),
+                            const SizedBox(width: 10),
+                            const Text(
+                              'Import',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            const Icon(Icons.arrow_drop_down, size: 24, color: Colors.white),
+                          ],
+                        ),
+                      ),
+                      offset: const Offset(0, 45),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      onSelected: (value) {
+                        if (value == 'text') {
+                          _showImportDialog();
+                        } else if (value == 'skritter') {
+                          _importFromSkritter();
+                        }
+                      },
+                      itemBuilder: (BuildContext context) => [
+                        PopupMenuItem<String>(
+                          value: 'text',
+                          child: ListTile(
+                            leading: Icon(
+                              Icons.text_fields,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            title: const Text('Import Text'),
+                            subtitle: const Text('Paste characters you know'),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                          ),
+                        ),
+                        const PopupMenuDivider(),
+                        PopupMenuItem<String>(
+                          value: 'skritter',
+                          child: ListTile(
+                            leading: Icon(
+                              Icons.file_upload,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            title: const Text('Import from Skritter'),
+                            subtitle: const Text('Upload .tsv or .csv file'),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                const PopupMenuItem<String>(
-                  value: 'skritter',
-                  child: ListTile(
-                    leading: Icon(Icons.file_upload),
-                    title: Text('Import from Skritter'),
-                    contentPadding: EdgeInsets.zero,
+                const SizedBox(height: 32),
+                Text(
+                  () {
+                    final count = _learnedStatus.values.where((v) => v).length;
+                    return count == 1 
+                        ? '1 character marked as learned'
+                        : '$count characters marked as learned';
+                  }(),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
             ),
-          ],
-        ),
-        body: NotificationListener<ScrollNotification>(
-          onNotification: (notification) {
-            if (notification is ScrollStartNotification) {
-              _isScrolling = true;
-              _lastScrollPosition = _scrollController.position.pixels;
-            } else if (notification is ScrollEndNotification) {
-              // Delay to ensure scroll has truly ended
-              Future.delayed(const Duration(milliseconds: 100), () {
-                if (mounted && (_scrollController.position.pixels - _lastScrollPosition).abs() < 1) {
-                  setState(() {
-                    _isScrolling = false;
-                  });
-                }
-              });
-            } else if (notification is ScrollUpdateNotification) {
-              _lastScrollPosition = _scrollController.position.pixels;
-            }
-            return false;
-          },
-          child: Listener(
-            onPointerUp: (_) => _endDragSelection(),
-            onPointerMove: (event) {
-              if (_isDragging && !_isScrolling) {
-                // Check if we need to auto-scroll
-                final scrollPosition = _scrollController.position;
-                final localPosition = event.localPosition;
-                
-                if (localPosition.dy < 100 && scrollPosition.pixels > 0) {
-                  // Scroll up
-                  _scrollController.animateTo(
-                    scrollPosition.pixels - 20,
-                    duration: const Duration(milliseconds: 50),
-                    curve: Curves.linear,
-                  );
-                } else if (localPosition.dy > MediaQuery.of(context).size.height - 200) {
-                  // Scroll down
-                  _scrollController.animateTo(
-                    scrollPosition.pixels + 20,
-                    duration: const Duration(milliseconds: 50),
-                    curve: Curves.linear,
-                  );
-                }
-              }
-            },
-          child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${_allCharacters.length} items',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: GridView.builder(
-                      controller: _scrollController,
-                      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                        maxCrossAxisExtent: 150, // Max width for each item
-                        childAspectRatio: 1.0,
-                        crossAxisSpacing: 8,
-                        mainAxisSpacing: 8,
-                      ),
-                      itemCount: _allCharacters.length,
-                      itemBuilder: (context, index) {
-                        final item = _allCharacters[index];
-                        return _buildCharacterTile(item, index);
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-  
-  Widget _buildCharacterTile(String item, int index) {
-    final isLearned = _learnedStatus[item] ?? false;
-    final isBeingDragged = _draggedCharacters.contains(item);
-    final isDuotone = Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true;
-    
-    // Determine the effective state during drag
-    final effectiveState = _isDragging && isBeingDragged ? _isSelecting : isLearned;
-    
-    return GestureDetector(
-      onTapDown: (_) {
-        if (!_isScrolling) {
-          _startDragSelection(item);
-        }
-      },
-      onTapUp: (_) async {
-        if (!_isScrolling && _draggedCharacters.length == 1) {
-          // Single tap - toggle on release
-          await _toggleLearned(item, updateTodayProgress: false);
-        }
-        _endDragSelection();
-      },
-      onTapCancel: () => _endDragSelection(),
-      child: MouseRegion(
-        onEnter: (_) {
-          if (_isDragging) {
-            _updateDragSelection(item);
-          }
-        },
-        child: Container(
-          decoration: BoxDecoration(
-            color: effectiveState
-              ? (isDuotone 
-                  ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
-                  : Colors.green.withOpacity(0.2))
-              : Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: effectiveState
-                ? (isDuotone 
-                    ? Theme.of(context).colorScheme.primary
-                    : Colors.green)
-                : Theme.of(context).colorScheme.outline.withOpacity(0.3),
-              width: effectiveState ? 2 : 1,
-            ),
-          ),
-          child: Stack(
-            children: [
-              // Character/Word display
-              Center(
-                child: item.length == 1 
-                  ? SizedBox(
-                      width: 60,
-                      height: 60,
-                      child: CharacterPreview(
-                        character: item,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                    )
-                  : Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        item,
-                        style: TextStyle(
-                          fontSize: item.length == 2 ? 28 : 20,
-                          color: Theme.of(context).colorScheme.onSurface,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-              ),
-              
-              // Checkmark overlay
-              if (effectiveState)
-                Positioned(
-                  top: 4,
-                  right: 4,
-                  child: Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      color: isDuotone 
-                        ? Theme.of(context).colorScheme.primary
-                        : Colors.green,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.check,
-                      size: 16,
-                      color: isDuotone
-                        ? Theme.of(context).colorScheme.onPrimary
-                        : Colors.white,
-                    ),
-                  ),
-                ),
-            ],
           ),
         ),
       ),

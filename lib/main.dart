@@ -875,9 +875,21 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     switch (state) {
       case AppLifecycleState.resumed:
-        // App is back in foreground, refresh HomePage if it's visible
-        if (_selectedIndex == 0 && _homePageKey.currentState != null) {
-          _homePageKey.currentState!.onPageVisible();
+        // App is back in foreground, refresh the current page
+        switch (_selectedIndex) {
+          case 0:
+            if (_homePageKey.currentState != null) {
+              _homePageKey.currentState!.onPageVisible();
+            }
+            break;
+          case 1:
+            // Sets page will refresh on its own when needed
+            break;
+          case 2:
+            if (_progressPageKey.currentState != null) {
+              _progressPageKey.currentState!.loadStatistics();
+            }
+            break;
         }
         // Also refresh streak display
         refreshStreakDisplay();
@@ -926,6 +938,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         break;
       case 1:
         _setsPageKey.currentState?.scrollToTop();
+        // Sets page will load progress on its own
         break;
       case 2:
         _progressPageKey.currentState?.scrollToTop();
