@@ -18,6 +18,7 @@ import '../main.dart' show DuotoneThemeExtension;
 import '../widgets/character_preview.dart';
 import '../services/character_database.dart';
 import '../services/character_preview_cache.dart';
+import '../services/haptic_service.dart';
 
 class SetsPage extends StatefulWidget {
   const SetsPage({super.key});
@@ -983,6 +984,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
   }
   
   Future<void> _showSetSynopsis(CharacterSet set) async {
+    HapticService().lightImpact();
     // Production: removed debug print
     // Don't validate all items - just show the dialog immediately
     // Apply round-robin distribution for word sets to spread out similar characters
@@ -1060,7 +1062,12 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                     set.description!,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
-                  const Divider(height: 24),
+                  Divider(
+                    height: 24,
+                    color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                        ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.2)
+                        : null,
+                  ),
                 ],
                 
                 // Progress indicator
@@ -1590,6 +1597,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                   leading: const Icon(Icons.create_new_folder),
                   title: const Text('Create Folder'),
                   onTap: () {
+                    HapticService().lightImpact();
                     Navigator.pop(bottomSheetContext);
                     _showCreateFolderDialog();
                   },
@@ -1598,6 +1606,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                   leading: const Icon(Icons.add_box),
                   title: const Text('Create Set'),
                   onTap: () {
+                    HapticService().lightImpact();
                     Navigator.pop(bottomSheetContext);
                     _showAddSetDialog();
                   },
@@ -1615,6 +1624,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
     final isSelected = _currentTabIndex == index;
     return GestureDetector(
       onTap: () {
+        HapticService().lightImpact();
         setState(() {
           _currentTabIndex = index;
           _tabController!.animateTo(index);
@@ -1730,7 +1740,9 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                                     height: 24,
                                     decoration: BoxDecoration(
                                       border: Border.all(
-                                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                        color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                            ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                                            : Theme.of(context).colorScheme.onSurfaceVariant,
                                         width: 2,
                                       ),
                                       borderRadius: BorderRadius.circular(4),
@@ -2067,7 +2079,9 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
             decoration: isInExpandedFolder ? BoxDecoration(
               border: Border(
                 left: BorderSide(
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                  color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                      ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.3)
+                      : Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
                   width: 3,
                 ),
               ),
@@ -2109,7 +2123,12 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
           ),
           // Show remove option for built-in sets that were added from additional sets
           if (!_customSets.contains(set) && _additionalSets.any((s) => s.id == set.id)) ...[
-            const Divider(height: 1),
+            Divider(
+              height: 1,
+              color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.2)
+                  : null,
+            ),
             ListTile(
               leading: const Icon(Icons.remove_circle, color: Colors.orange),
               title: const Text('Remove from Built-in', style: TextStyle(color: Colors.orange)),
@@ -2120,7 +2139,12 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
             ),
           ],
           if (_customSets.contains(set)) ...[
-            const Divider(height: 1),
+            Divider(
+              height: 1,
+              color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.2)
+                  : null,
+            ),
             ListTile(
               leading: const Icon(Icons.edit),
               title: const Text('Rename'),

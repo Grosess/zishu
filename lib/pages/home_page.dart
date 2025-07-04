@@ -20,6 +20,7 @@ import 'mark_as_learned_page.dart';
 import '../services/cedict_service.dart';
 import '../widgets/character_preview.dart';
 import 'character_search_page.dart';
+import '../services/haptic_service.dart';
 
 class HomePage extends StatefulWidget {
   final Function(int)? onNavigateToTab;
@@ -304,6 +305,7 @@ class HomePageState extends State<HomePage> with RouteAware {
   }
 
   void _startEndlessPractice() async {
+    HapticService().mediumImpact();
     // Show loading indicator while refreshing
     showDialog(
       context: context,
@@ -470,6 +472,7 @@ class HomePageState extends State<HomePage> with RouteAware {
   }
 
   void _practiceSet(Map<String, dynamic> set) async {
+    HapticService().mediumImpact();
     // Update recent practice sets
     final practiceHistory = _prefs.getStringList('recent_practice_sets') ?? [];
     practiceHistory.remove(set['name']); // Remove if exists
@@ -648,7 +651,12 @@ class HomePageState extends State<HomePage> with RouteAware {
                     set.description!,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
-                  const Divider(height: 24),
+                  Divider(
+                    height: 24,
+                    color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                        ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.2)
+                        : null,
+                  ),
                 ],
                 
                 // Progress indicator
@@ -2464,7 +2472,12 @@ class _EndlessPracticePageState extends State<EndlessPracticePage> {
                 _buildStatRow(Icons.timer, 'Time', _formatDuration(sessionDuration), Theme.of(context).colorScheme.secondary),
                 
                 if (_incorrectItems.isNotEmpty) ...[
-                  const Divider(height: 24),
+                  Divider(
+                    height: 24,
+                    color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                        ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.2)
+                        : null,
+                  ),
                   Text(
                     'Items to Review (${_incorrectItems.length}):',
                     style: Theme.of(context).textTheme.titleSmall,

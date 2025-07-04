@@ -8,6 +8,7 @@ import '../services/learning_service.dart';
 import '../services/cedict_service.dart';
 import '../utils/pinyin_utils.dart';
 import '../main.dart' show DuotoneThemeExtension, refreshSetsProgress;
+import '../services/haptic_service.dart';
 
 // Custom page route with smooth transition
 class SlidePageRoute extends PageRouteBuilder {
@@ -322,6 +323,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
                     borderRadius: BorderRadius.circular(24),
                     child: InkWell(
                       onTap: () {
+                        HapticService().lightImpact();
                         setState(() {
                           if (_shouldShowSuperGroups) {
                             // Toggle supergroups
@@ -414,6 +416,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
                       learnedCount: totalLearned,
                       totalCount: totalChars, // Show total characters in supergroup
                       onTap: () {
+                        HapticService().lightImpact();
                         // Get characters for this supergroup
                         final groupIndices = _getSuperGroupIndices(index);
                         final supergroupChars = <String>[];
@@ -482,6 +485,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
                               learnedCount: learnedCount,
                               totalCount: groupChars.length,
                               onTap: () {
+                                HapticService().lightImpact();
                                 // Navigate to new page with just this group's characters
                                 Navigator.push(
                                   context,
@@ -523,7 +527,9 @@ class _CharacterListPageState extends State<CharacterListPage> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Divider(
-                    color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                    color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                        ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.2)
+                        : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
                   ),
                 ),
               ),
@@ -654,6 +660,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
                         borderRadius: BorderRadius.circular(12),
                         child: InkWell(
                           onTap: () {
+                            HapticService().lightImpact();
                             // Production: removed debug print
                             _showCharacterInfo(term, item, isWord: false, isLearned: isLearned);
                           },

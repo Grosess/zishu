@@ -23,6 +23,7 @@ import '../services/radical_service.dart';
 import '../services/decomposition_service.dart';
 import '../widgets/radical_analysis_widget.dart';
 import '../widgets/simple_radical_display.dart';
+import '../services/haptic_service.dart';
 
 enum PracticeMode { learning, testing }
 
@@ -1172,6 +1173,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                   scale: (_completedStrokeIndices.isEmpty && !_showSuccess) ? 0.9 : 1.0,
                   child: TextButton.icon(
                     onPressed: (_completedStrokeIndices.isEmpty && !_showSuccess) ? null : () {
+                      HapticService().lightImpact();
                       setState(() {
                         _completedStrokeIndices.clear();
                         _wrongAttempts.fillRange(0, _wrongAttempts.length, 0);
@@ -1199,6 +1201,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                 TextButton.icon(
                   onPressed: _characterStroke == null || 
                       _completedStrokeIndices.length == _characterStroke!.strokes.length ? null : () {
+                    HapticService().lightImpact();
                     setState(() {
                       _showHintPath = true;
                       _usedHint = true;
@@ -1210,6 +1213,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                 // Show whole character button
                 TextButton.icon(
                   onPressed: _characterStroke == null ? null : () {
+                    HapticService().lightImpact();
                     setState(() {
                       _showFullCharacter = !_showFullCharacter;
                       if (_showFullCharacter) _usedHint = true;
@@ -1240,7 +1244,10 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                       duration: const Duration(milliseconds: 200),
                       opacity: _showManualGrading ? 1.0 : 0.5,
                       child: ElevatedButton.icon(
-                        onPressed: _showManualGrading ? () => _proceedWithGrade(false) : null,
+                        onPressed: _showManualGrading ? () {
+                          HapticService().lightImpact();
+                          _proceedWithGrade(false);
+                        } : null,
                         icon: const Icon(Icons.close),
                         label: const Text('Incorrect'),
                         style: ElevatedButton.styleFrom(
@@ -1263,7 +1270,10 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                       duration: const Duration(milliseconds: 200),
                       opacity: _showManualGrading ? 1.0 : 0.5,
                       child: ElevatedButton.icon(
-                        onPressed: _showManualGrading ? () => _proceedWithGrade(true) : null,
+                        onPressed: _showManualGrading ? () {
+                          HapticService().lightImpact();
+                          _proceedWithGrade(true);
+                        } : null,
                         icon: const Icon(Icons.check),
                         label: const Text('Correct'),
                         style: ElevatedButton.styleFrom(
@@ -1523,6 +1533,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     
     setState(() {
       if (isCorrect) {
+        HapticService().lightImpact(); // Light haptic for correct stroke
         // Calculate deviation for animation
         _strokeDeviation = _calculateStrokeDeviation(_currentStroke, _characterStroke!.medians[nextIndex], canvasSize);
         
@@ -1613,6 +1624,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   }
   
   void _onCharacterComplete() {
+    HapticService().mediumImpact(); // Medium haptic for character completion
     // Check if this is individual character practice of an already learned character
     final isIndividualPractice = widget.allCharacters != null && widget.allCharacters!.length == 1;
     final isLearnedCharacter = widget.mode == PracticeMode.testing && isIndividualPractice;

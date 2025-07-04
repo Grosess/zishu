@@ -17,6 +17,7 @@ import 'services/image_cache_service.dart';
 import 'services/statistics_service.dart';
 import 'services/streak_service.dart';
 import 'services/learning_service.dart';
+import 'services/haptic_service.dart';
 import 'widgets/streak_display.dart';
 
 // Theme extension for duotone themes
@@ -104,6 +105,9 @@ Future<void> _initializeApp() async {
   
   // Initialize streak service
   await StreakService().initialize();
+  
+  // Initialize haptic service
+  await HapticService().initialize();
 }
 
 void main() async {

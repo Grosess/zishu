@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import '../main.dart' show DuotoneThemeExtension;
+import '../services/haptic_service.dart';
 
 class ModernNavigationBar extends StatelessWidget {
   final int selectedIndex;
@@ -111,7 +112,10 @@ class ModernNavigationBar extends StatelessWidget {
     
     return Expanded(
       child: InkWell(
-        onTap: () => onDestinationSelected(index),
+        onTap: () {
+          HapticService().lightImpact();
+          onDestinationSelected(index);
+        },
         splashColor: primaryColor.withValues(alpha: 0.1),
         highlightColor: primaryColor.withValues(alpha: 0.05),
         child: Container(

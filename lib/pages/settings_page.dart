@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
+import '../services/haptic_service.dart';
 
 enum StrokeType {
   invisible,
@@ -31,6 +32,7 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _showRadicalAnalysis = false;
   StrokeType _strokeType = StrokeType.classic;
   int _dailyLearnGoal = 10;
+  bool _hapticFeedbackEnabled = true;
 
   @override
   void initState() {
@@ -87,6 +89,10 @@ class _SettingsPageState extends State<SettingsPage> {
       orElse: () => StrokeType.classic,
     );
     _dailyLearnGoal = _prefs.getInt('daily_learn_goal') ?? 10;
+    _hapticFeedbackEnabled = _prefs.getBool('haptic_feedback_enabled') ?? true;
+    
+    // Initialize haptic service
+    await HapticService().initialize();
     
     // Update UI after all settings are loaded
     setState(() {
@@ -456,6 +462,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   subtitle: const Text('Display grid lines in the practice area'),
                   value: _showGrid,
                   onChanged: (value) {
+                    HapticService().selectionClick();
                     setState(() {
                       _showGrid = value;
                     });
@@ -467,6 +474,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   subtitle: const Text('Show character outline in learning mode'),
                   value: _showGuide,
                   onChanged: (value) {
+                    HapticService().selectionClick();
                     setState(() {
                       _showGuide = value;
                     });
@@ -478,6 +486,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   subtitle: const Text('Animate stroke hints in learning mode'),
                   value: _showStrokeAnimation,
                   onChanged: (value) {
+                    HapticService().selectionClick();
                     setState(() {
                       _showStrokeAnimation = value;
                     });
@@ -509,10 +518,26 @@ class _SettingsPageState extends State<SettingsPage> {
                   subtitle: const Text('Display character components in learning mode'),
                   value: _showRadicalAnalysis,
                   onChanged: (value) {
+                    HapticService().selectionClick();
                     setState(() {
                       _showRadicalAnalysis = value;
                     });
                     _saveBoolSetting('show_radical_analysis', value);
+                  },
+                ),
+                SwitchListTile(
+                  title: const Text('Haptic Feedback'),
+                  subtitle: const Text('Subtle vibrations for interactions'),
+                  value: _hapticFeedbackEnabled,
+                  onChanged: (value) async {
+                    setState(() {
+                      _hapticFeedbackEnabled = value;
+                    });
+                    await HapticService().setEnabled(value);
+                    if (value) {
+                      // Give a light haptic feedback when enabled
+                      HapticService().lightImpact();
+                    }
                   },
                 ),
                 
