@@ -1533,7 +1533,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     
     setState(() {
       if (isCorrect) {
-        HapticService().lightImpact(); // Light haptic for correct stroke
+        HapticService().ultraLight(); // Ultra light haptic for correct stroke
         // Calculate deviation for animation
         _strokeDeviation = _calculateStrokeDeviation(_currentStroke, _characterStroke!.medians[nextIndex], canvasSize);
         
@@ -2414,6 +2414,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   }
   
   void _practiceIncorrect() {
+    HapticService().lightImpact();
     Navigator.of(context).pop();
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
@@ -2432,6 +2433,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     // Get all the original characters/words that were practiced
     final allItems = widget.allCharacters ?? [widget.character];
     
+    HapticService().lightImpact();
     Navigator.of(context).pop();
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(

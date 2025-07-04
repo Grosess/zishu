@@ -1112,6 +1112,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                           color: Colors.transparent,
                           child: InkWell(
                             onTap: () {
+                              HapticService().lightImpact();
                               Navigator.pop(context);
                               Navigator.push(
                                 context,
@@ -1265,6 +1266,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                               return;
                             }
                             
+                            HapticService().lightImpact();
                             Navigator.pop(context);
                             Navigator.push(
                               context,
@@ -1379,6 +1381,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                                 return;
                               }
                               
+                              HapticService().lightImpact();
                               Navigator.pop(context);
                               Navigator.push(
                                 context,

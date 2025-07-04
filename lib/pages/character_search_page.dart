@@ -8,6 +8,7 @@ import '../widgets/character_preview.dart';
 import 'writing_practice_page.dart';
 import '../main.dart' show DuotoneThemeExtension;
 import '../utils/pinyin_utils.dart';
+import '../services/haptic_service.dart';
 
 class CharacterSearchPage extends StatefulWidget {
   const CharacterSearchPage({super.key});
@@ -277,6 +278,7 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
     if (!mounted) return;
     
     // Navigate to practice page in testing mode
+    HapticService().lightImpact();
     final result = await Navigator.push<Map<String, dynamic>>(
       context,
       MaterialPageRoute(
@@ -303,6 +305,7 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
     if (!mounted) return;
     
     // Navigate to practice page in learning mode
+    HapticService().lightImpact();
     final result = await Navigator.push<Map<String, dynamic>>(
       context,
       MaterialPageRoute(

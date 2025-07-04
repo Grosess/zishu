@@ -695,6 +695,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
                         }
                         
                         // Start learning mode with first unlearned character
+                        HapticService().lightImpact();
                         await Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -789,6 +790,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
                         }
                         
                         // Don't shuffle - use the same order as displayed
+                        HapticService().lightImpact();
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -1206,6 +1208,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
   void _navigateToPractice(String term, {required bool isWord, required bool isLearned}) {
     // Production: removed debug print
     
+    HapticService().lightImpact();
     Navigator.push(
       context,
       SlidePageRoute(

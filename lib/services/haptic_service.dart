@@ -51,4 +51,12 @@ class HapticService {
       HapticFeedback.heavyImpact();
     }
   }
+  
+  // Ultra light - for very subtle feedback like stroke validation
+  void ultraLight() {
+    if (_isEnabled) {
+      // selectionClick is the lightest haptic available
+      HapticFeedback.selectionClick();
+    }
+  }
 }

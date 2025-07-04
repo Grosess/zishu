@@ -701,6 +701,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                           color: Colors.transparent,
                           child: InkWell(
                             onTap: () {
+                              HapticService().lightImpact();
                               Navigator.pop(context);
                               Navigator.push(
                                 context,
@@ -854,6 +855,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                               return;
                             }
                             
+                            HapticService().lightImpact();
                             Navigator.pop(context);
                             Navigator.push(
                               context,
@@ -968,6 +970,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                                 return;
                               }
                               
+                              HapticService().lightImpact();
                               Navigator.pop(context);
                               Navigator.push(
                                 context,
@@ -1170,6 +1173,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                             return;
                           }
                           
+                          HapticService().lightImpact();
                           Navigator.pop(context);
                           Navigator.push(
                             context,
@@ -1207,6 +1211,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                     if (validItems.isNotEmpty)
                       FilledButton.icon(
                         onPressed: () {
+                          HapticService().lightImpact();
                           Navigator.pop(context);
                           Navigator.push(
                             context,
@@ -1845,6 +1850,7 @@ class HomePageState extends State<HomePage> with RouteAware {
   
   void _startTutorial() async {
     // Navigate to writing practice with 一 character
+    HapticService().lightImpact();
     await Navigator.push(
       context,
       MaterialPageRoute(
