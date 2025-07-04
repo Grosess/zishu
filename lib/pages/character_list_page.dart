@@ -567,35 +567,24 @@ class _CharacterListPageState extends State<CharacterListPage> {
                     return Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: isLearned 
-                              ? (isDuotone 
-                                  ? [
-                                      Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.2),
-                                      Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.3),
-                                    ]
-                                  : [
-                                      Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
-                                      Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-                                    ])
-                              : [
-                                  Theme.of(context).colorScheme.surface,
-                                  Theme.of(context).colorScheme.surface,
-                                ],
-                        ),
+                        color: isLearned 
+                            ? (isDuotone 
+                                ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                                : Theme.of(context).colorScheme.primary)
+                            : (Theme.of(context).brightness == Brightness.dark
+                                ? Theme.of(context).colorScheme.surface
+                                : Theme.of(context).colorScheme.surfaceContainerHighest),
                         border: Border.all(
                           color: isLearned 
                               ? (isDuotone 
-                                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.5)
-                                  : Theme.of(context).colorScheme.primary.withValues(alpha: 0.5))
-                              : Theme.of(context).colorScheme.outline.withValues(alpha: 0.15),
-                          width: 1,
+                                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                                  : Theme.of(context).colorScheme.primary)
+                              : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                          width: isLearned ? 2 : 1,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Theme.of(context).colorScheme.primary.withValues(alpha: isLearned ? 0.1 : 0.05),
+                            color: Theme.of(context).colorScheme.primary.withValues(alpha: isLearned ? 0.15 : 0.05),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -621,35 +610,24 @@ class _CharacterListPageState extends State<CharacterListPage> {
                     return Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: isLearned 
-                              ? (isDuotone 
-                                  ? [
-                                      Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.2),
-                                      Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.3),
-                                    ]
-                                  : [
-                                      Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
-                                      Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-                                    ])
-                              : [
-                                  Theme.of(context).colorScheme.surface,
-                                  Theme.of(context).colorScheme.surface,
-                                ],
-                        ),
+                        color: isLearned 
+                            ? (isDuotone 
+                                ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                                : Theme.of(context).colorScheme.primary)
+                            : (Theme.of(context).brightness == Brightness.dark
+                                ? Theme.of(context).colorScheme.surface
+                                : Theme.of(context).colorScheme.surfaceContainerHighest),
                         border: Border.all(
                           color: isLearned 
                               ? (isDuotone 
-                                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.5)
-                                  : Theme.of(context).colorScheme.primary.withValues(alpha: 0.5))
-                              : Theme.of(context).colorScheme.outline.withValues(alpha: 0.15),
-                          width: 1,
+                                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                                  : Theme.of(context).colorScheme.primary)
+                              : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                          width: isLearned ? 2 : 1,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Theme.of(context).colorScheme.primary.withValues(alpha: isLearned ? 0.1 : 0.05),
+                            color: Theme.of(context).colorScheme.primary.withValues(alpha: isLearned ? 0.15 : 0.05),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -1353,11 +1331,13 @@ class _CharacterListPageState extends State<CharacterListPage> {
             style: TextStyle(
               fontSize: 40,
               fontWeight: FontWeight.w300,
-              color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                  ? (isLearned 
-                      ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1! 
-                      : Theme.of(context).colorScheme.primary)
-                  : Colors.white,
+              color: isLearned
+                  ? (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                      ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!
+                      : Colors.white)
+                  : (Theme.of(context).brightness == Brightness.dark
+                      ? Colors.black87
+                      : Theme.of(context).colorScheme.onSurface),
             ),
           ),
           if (pinyin != null) ...[
@@ -1366,11 +1346,13 @@ class _CharacterListPageState extends State<CharacterListPage> {
               pinyin,
               style: TextStyle(
                 fontSize: 12,
-                color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                    ? (isLearned 
-                        ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withOpacity(0.7) 
-                        : Theme.of(context).colorScheme.primary.withOpacity(0.7))
-                    : Colors.white70,
+                color: isLearned
+                    ? (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                        ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withValues(alpha: 0.8)
+                        : Colors.white70)
+                    : (Theme.of(context).brightness == Brightness.dark
+                        ? Colors.black.withValues(alpha: 0.7)
+                        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
               ),
               textAlign: TextAlign.center,
             ),
@@ -1381,11 +1363,13 @@ class _CharacterListPageState extends State<CharacterListPage> {
               _truncateDefinition(definition),
               style: TextStyle(
                 fontSize: 10,
-                color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                    ? (isLearned 
-                        ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withOpacity(0.6) 
-                        : Theme.of(context).colorScheme.primary.withOpacity(0.6))
-                    : Colors.white60,
+                color: isLearned
+                    ? (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                        ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withValues(alpha: 0.7)
+                        : Colors.white60)
+                    : (Theme.of(context).brightness == Brightness.dark
+                        ? Colors.black.withValues(alpha: 0.6)
+                        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
               ),
               textAlign: TextAlign.center,
               maxLines: 2,
