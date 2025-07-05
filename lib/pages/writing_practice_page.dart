@@ -2634,9 +2634,10 @@ class _WritingPracticePageState extends State<WritingPracticePage>
             constraints: const BoxConstraints(minWidth: 48),
             decoration: BoxDecoration(
               border: Border.all(
-                color: index == _currentWordCharacterIndex
+                color: index == _currentWordCharacterIndex && !_showSuccess
                     ? Theme.of(context).colorScheme.primary
-                    : index < _currentWordCharacterIndex
+                    : (index < _currentWordCharacterIndex || 
+                       (index == _currentWordCharacterIndex && _showSuccess))
                         ? (widget.mode == PracticeMode.learning || _wordCharacterResults[index] == true 
                             ? (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                                 ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
@@ -2645,10 +2646,11 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                                 ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.6)
                                 : Theme.of(context).colorScheme.error))
                         : Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
-                width: index == _currentWordCharacterIndex ? 3 : 1.5,
+                width: (index == _currentWordCharacterIndex && !_showSuccess) ? 3 : 1.5,
               ),
               borderRadius: BorderRadius.circular(12),
-              color: index < _currentWordCharacterIndex
+              color: (index < _currentWordCharacterIndex || 
+                      (index == _currentWordCharacterIndex && _showSuccess))
                   ? (widget.mode == PracticeMode.learning || _wordCharacterResults[index] == true 
                       ? (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                           ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.1)
@@ -2660,7 +2662,10 @@ class _WritingPracticePageState extends State<WritingPracticePage>
             ),
             child: Center(
               child: Text(
-                index < _currentWordCharacterIndex ? _wordCharacters[index] : '_',
+                (index < _currentWordCharacterIndex || 
+                 (index == _currentWordCharacterIndex && _showSuccess)) 
+                    ? _wordCharacters[index] 
+                    : '_',
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: index == _currentWordCharacterIndex

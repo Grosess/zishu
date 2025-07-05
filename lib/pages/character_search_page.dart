@@ -30,6 +30,7 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
   final Map<String, List<String>> _pinyinToCharacters = {};
   bool _isInitialized = false;
   Timer? _debounceTimer;
+  bool _showLearnedOnly = false;
   
   @override
   void initState() {
@@ -238,8 +239,14 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
       }
     }
     
+    // Filter by learned status if checkbox is checked
+    List<CedictEntry> filteredResults = results;
+    if (_showLearnedOnly) {
+      filteredResults = results.where((entry) => learnedStatus[entry.simplified] ?? false).toList();
+    }
+    
     setState(() {
-      _searchResults = results;
+      _searchResults = filteredResults;
       _learnedStatus = learnedStatus;
       _isSearching = false;
     });
@@ -337,44 +344,73 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
         children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search by pinyin, Chinese, or English',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          _performSearch('');
-                        },
-                      )
-                    : null,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
+            child: Column(
+              children: [
+                TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search by pinyin, Chinese, or English',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _searchController.clear();
+                              _performSearch('');
+                            },
+                          )
+                        : null,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    filled: true,
+                    fillColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                  ),
+                  onChanged: (value) {
+                    // Cancel previous timer
+                    _debounceTimer?.cancel();
+                    
+                    // Show loading immediately if there's text
+                    if (value.isNotEmpty) {
+                      setState(() {
+                        _isSearching = true;
+                      });
+                    }
+                    
+                    // Set up new timer
+                    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+                      _performSearch(value);
+                    });
+                  },
+                  autofocus: true,
+                  textInputAction: TextInputAction.search,
                 ),
-                filled: true,
-                fillColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
-              ),
-              onChanged: (value) {
-                // Cancel previous timer
-                _debounceTimer?.cancel();
-                
-                // Show loading immediately if there's text
-                if (value.isNotEmpty) {
-                  setState(() {
-                    _isSearching = true;
-                  });
-                }
-                
-                // Set up new timer
-                _debounceTimer = Timer(const Duration(milliseconds: 300), () {
-                  _performSearch(value);
-                });
-              },
-              autofocus: true,
-              textInputAction: TextInputAction.search,
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Checkbox(
+                      value: _showLearnedOnly,
+                      onChanged: (value) {
+                        HapticService().selectionClick();
+                        setState(() {
+                          _showLearnedOnly = value ?? false;
+                        });
+                        // Re-run search with new filter
+                        if (_searchController.text.isNotEmpty) {
+                          _performSearch(_searchController.text);
+                        }
+                      },
+                      activeColor: isDuotone
+                          ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2
+                          : Theme.of(context).colorScheme.primary,
+                    ),
+                    Text(
+                      'Show learned only',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
           if (!_isInitialized)
@@ -451,14 +487,16 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'No results found',
+                      _showLearnedOnly ? 'No learned results found' : 'No results found',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Try a different pinyin',
+                      _showLearnedOnly 
+                          ? 'Try unchecking "Show learned only" or search for different characters'
+                          : 'Try a different pinyin',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7),
                       ),
