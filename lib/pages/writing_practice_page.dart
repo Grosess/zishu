@@ -1816,18 +1816,22 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       // In learning mode, check if we should advance to next stage or next character
       if (widget.mode == PracticeMode.learning && _learningStage < 2) {
         
-        // For multi-character words, cycle through characters even in the same stage
+        // For multi-character words, follow 1-2-1-2-1-2 pattern
         if (widget.isWord && _wordCharacters.length > 1) {
+          // Follow 1-2-1-2-1-2 pattern for 2-character words
           final nextCharacterIndex = (_currentWordCharacterIndex + 1) % _wordCharacters.length;
+          int nextStage = _learningStage;
+          
+          // For 2-character words: alternate between stages for each character
+          // Pattern: char1-stage0, char2-stage0, char1-stage1, char2-stage1, char1-stage2, char2-stage2
+          if (nextCharacterIndex == 0) {
+            // We've completed both characters at current stage, advance to next stage
+            nextStage = _learningStage + 1;
+          }
           
           setState(() {
             _currentWordCharacterIndex = nextCharacterIndex;
-            
-            // If we completed a full cycle (back to first character)
-            if (nextCharacterIndex == 0) {
-              // Advance stage after completing one full cycle
-              _learningStage++;
-            }
+            _learningStage = nextStage;
             
             _completedStrokeIndices.clear();
             _wrongAttempts.fillRange(0, _wrongAttempts.length, 0);

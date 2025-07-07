@@ -179,7 +179,7 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
     
     // Animate progress changes
     final newProgress = _totalCharactersLearned.toDouble();
-    final newPercentage = (_totalCharactersLearned / _characterGoal) * 100;
+    final newPercentage = ((_totalCharactersLearned / _characterGoal) * 100).clamp(0.0, 100.0);
     
     _progressAnimation = Tween<double>(
       begin: _lastProgress,

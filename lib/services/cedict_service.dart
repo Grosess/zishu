@@ -637,6 +637,8 @@ class CedictService {
       '必须': {'pinyin': 'bì xū', 'def': 'must'},
       '需要': {'pinyin': 'xū yào', 'def': 'need; require'},
       '离': {'pinyin': 'lí', 'def': 'leave; from'},
+      '里': {'pinyin': 'lǐ', 'def': 'inside'},
+      '哪': {'pinyin': 'nǎ', 'def': 'which one'},
       '踢足球': {'pinyin': 'tī zú qiú', 'def': 'play soccer'},
       '同学': {'pinyin': 'tóng xué', 'def': 'classmate'},
       '名字': {'pinyin': 'míng zi', 'def': 'name'},
