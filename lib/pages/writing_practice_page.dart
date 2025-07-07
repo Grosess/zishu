@@ -1867,8 +1867,8 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       }
       
       // Auto-progress to next character (testing mode or completed all stages in learning)
-      if (widget.isWord && _wordCharacters.length > 1) {
-        // Handle learning mode completion for multi-character words
+      if (widget.isWord && _wordCharacters.length > 1 && widget.allCharacters != null && widget.allCharacters!.length > 1) {
+        // Handle learning mode completion for multi-character words in practice all mode
         if (widget.mode == PracticeMode.learning && _learningStage == 2) {
           final nextCharacterIndex = (_currentWordCharacterIndex + 1) % _wordCharacters.length;
           
@@ -1914,10 +1914,12 @@ class _WritingPracticePageState extends State<WritingPracticePage>
           }
         }
         
-        // For testing mode or continuous practice
-        final nextCharacterIndex = (_currentWordCharacterIndex + 1) % _wordCharacters.length;
-        
-        setState(() {
+        // For testing mode - only do infinite cycling if practicing a single word
+        if (widget.allCharacters == null || widget.allCharacters!.length == 1) {
+          // Single word continuous practice - cycle through characters infinitely
+          final nextCharacterIndex = (_currentWordCharacterIndex + 1) % _wordCharacters.length;
+          
+          setState(() {
           // Track the result for this character
           _wordCharacterResults[_currentWordCharacterIndex] = wasCorrect;
           _currentWordCharacterIndex = nextCharacterIndex;
@@ -1952,7 +1954,12 @@ class _WritingPracticePageState extends State<WritingPracticePage>
           
           _loadCharacterData();
         });
-      } else if (widget.isWord && _wordCharacters.length > 1) {
+          return; // Exit here for single word practice
+        }
+      }
+      
+      // Handle multi-character word progression in practice all mode
+      if (widget.isWord && _wordCharacters.length > 1) {
         // Handle multi-character word progression in practice all mode
         if (_currentWordCharacterIndex < _wordCharacters.length - 1) {
           setState(() {
