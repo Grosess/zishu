@@ -133,7 +133,7 @@ const Map<String, CommonDefinition> commonDefinitions = {
   '哪': CommonDefinition(
     character: '哪',
     pinyin: 'na3',
-    definition: 'nei3, na5,which; how',
+    definition: 'which one',
     priority: 1,
   ),
   '国': CommonDefinition(
@@ -607,7 +607,7 @@ const Map<String, CommonDefinition> commonDefinitions = {
   '里': CommonDefinition(
     character: '里',
     pinyin: 'li3',
-    definition: 'in; inside; internal; village; Chinese mile (~.5 km); neighborhood (Kangxi radical 166)',
+    definition: 'inside',
     priority: 2,
   ),
   '钱': CommonDefinition(
