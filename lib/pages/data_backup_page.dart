@@ -4,7 +4,7 @@ import '../services/local_storage_service.dart';
 import '../services/learning_service.dart';
 import '../services/statistics_service.dart';
 import '../services/streak_service.dart';
-import '../main.dart';
+import '../main.dart' show DuotoneThemeExtension, restartApp, MainScreen;
 
 class DataBackupPage extends StatefulWidget {
   const DataBackupPage({super.key});
@@ -210,7 +210,11 @@ class _DataBackupPageState extends State<DataBackupPage> {
               ),
             ),
             const SizedBox(height: 32),
-            const Divider(),
+            Divider(
+              color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.2)
+                  : null,
+            ),
             const SizedBox(height: 32),
             // Reset All Data Section
             Card(

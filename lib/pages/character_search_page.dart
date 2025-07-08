@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/cedict_service.dart';
 import '../services/character_database.dart';
@@ -579,7 +580,8 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
           else
             Expanded(
               child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                physics: const AlwaysScrollableScrollPhysics(),
                 itemCount: _searchResults.length,
                 itemBuilder: (context, index) {
                   final entry = _searchResults[index];
@@ -587,116 +589,82 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
                   
                   return Card(
                     margin: const EdgeInsets.only(bottom: 8),
-                    child: InkWell(
-                      onTap: () => _handleCharacterTap(entry.simplified),
-                      borderRadius: BorderRadius.circular(12),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Row(
-                          children: [
-                            // Character display
-                            entry.simplified.length == 1
-                                ? SizedBox(
-                                    width: 48,
-                                    height: 48,
-                                    child: CharacterPreview(
-                                      character: entry.simplified,
-                                      color: Theme.of(context).colorScheme.onSurface,
-                                    ),
-                                  )
-                                : Container(
-                                    constraints: BoxConstraints(
-                                      maxWidth: entry.simplified.length <= 4 ? 60 : 
-                                               entry.simplified.length <= 6 ? 80 : 100,
-                                    ),
-                                    height: 48,
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: entry.simplified.length <= 6 ? 6.0 : 4.0,
-                                    ),
-                                    alignment: Alignment.center,
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
-                                      ),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      child: Text(
-                                        entry.simplified,
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                  ),
-                            const SizedBox(width: 12),
-                            // Title and subtitle
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          PinyinUtils.convertToneNumbersToMarks(entry.pinyin),
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            color: Theme.of(context).colorScheme.primary,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                          maxLines: 1,
-                                        ),
-                                      ),
-                                      if (isLearned) ...[
-                                        const SizedBox(width: 8),
-                                        Icon(
-                                          Icons.check_circle,
-                                          size: 16,
-                                          color: isDuotone
-                                              ? Theme.of(context).colorScheme.primary
-                                              : Colors.green,
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    entry.definition,
-                                    style: TextStyle(
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 2,
-                                  ),
-                                ],
+                    child: ListTile(
+                      leading: Container(
+                        width: 48,
+                        height: 48,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withOpacity(0.3)
+                                : Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Padding(
+                            padding: const EdgeInsets.all(4.0),
+                            child: Text(
+                              entry.simplified,
+                              style: TextStyle(
+                                fontSize: entry.simplified.length == 1 ? 24 :
+                                         entry.simplified.length == 2 ? 20 : 
+                                         entry.simplified.length == 3 ? 14 : 12,
+                                fontWeight: FontWeight.w500,
                               ),
+                              textAlign: TextAlign.center,
                             ),
-                            const SizedBox(width: 8),
-                            // Action button
-                            isLearned
-                                ? TextButton.icon(
-                                    icon: const Icon(Icons.edit, size: 18),
-                                    label: const Text('Practice'),
-                                    onPressed: () => _handleCharacterTap(entry.simplified),
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: Theme.of(context).colorScheme.primary,
-                                    ),
-                                  )
-                                : TextButton.icon(
-                                    icon: const Icon(Icons.school, size: 18),
-                                    label: const Text('Learn'),
-                                    onPressed: () => _handleCharacterTap(entry.simplified),
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: Theme.of(context).colorScheme.primary,
-                                    ),
-                                  ),
-                          ],
+                          ),
                         ),
                       ),
+                      title: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              PinyinUtils.convertToneNumbersToMarks(entry.pinyin),
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (isLearned) ...[
+                            const SizedBox(width: 8),
+                            Icon(
+                              Icons.check_circle,
+                              size: 16,
+                              color: isDuotone
+                                  ? Theme.of(context).colorScheme.primary
+                                  : Colors.green,
+                            ),
+                          ],
+                        ],
+                      ),
+                      subtitle: Text(
+                        entry.definition,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 2,
+                      ),
+                      trailing: isLearned
+                          ? IconButton(
+                              icon: const Icon(Icons.edit),
+                              onPressed: () => _handleCharacterTap(entry.simplified),
+                              tooltip: 'Practice',
+                              color: Theme.of(context).colorScheme.primary,
+                            )
+                          : IconButton(
+                              icon: const Icon(Icons.school),
+                              onPressed: () => _handleCharacterTap(entry.simplified),
+                              tooltip: 'Learn',
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                      onTap: () => _handleCharacterTap(entry.simplified),
                     ),
                   );
                 },

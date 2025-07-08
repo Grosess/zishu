@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
+import 'package:url_launcher/url_launcher.dart';
 import 'services/local_storage_service.dart';
 import 'services/character_cache_manager.dart';
 import 'services/profile_service.dart';
@@ -1249,6 +1250,18 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                   
                   // Force UI update
                   setState(() {});
+                }
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.feedback_outlined),
+              title: const Text('Give Feedback'),
+              onTap: () async {
+                Navigator.pop(context);
+                const url = 'https://forms.gle/YourGoogleFormLink';
+                if (await canLaunchUrl(Uri.parse(url))) {
+                  await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
                 }
               },
             ),
