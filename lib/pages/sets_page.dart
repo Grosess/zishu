@@ -2716,28 +2716,46 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                 Navigator.pop(context); // Close loading
                 
                 if (validation.isValid) {
-                  final newSet = await _setManager.createSetFromString(
-                    controller.text,
-                    nameController.text,
-                  );
-                  
-                  if (mounted) {
-                    setState(() {
-                      _customSets.add(newSet);
-                    });
-                  }
-                  
-                  // Save to SharedPreferences
-                  await _saveCustomSetsToStorage();
-                  
-                  // If we're in a folder, add the set to it
-                  if (_selectedFolderId != null) {
-                    await _folderService.moveSetToFolder(newSet.id, _selectedFolderId);
-                    await _loadFolders();
-                  }
-                  
-                  if (mounted) {
-                    Navigator.pop(context); // Close dialog
+                  try {
+                    final newSet = await _setManager.createSetFromString(
+                      controller.text,
+                      nameController.text,
+                    );
+                    
+                    if (mounted) {
+                      setState(() {
+                        _customSets.add(newSet);
+                      });
+                    }
+                    
+                    // Save to SharedPreferences
+                    await _saveCustomSetsToStorage();
+                    
+                    // If we're in a folder, add the set to it
+                    if (_selectedFolderId != null) {
+                      await _folderService.moveSetToFolder(newSet.id, _selectedFolderId);
+                      await _loadFolders();
+                    }
+                    
+                    if (mounted) {
+                      Navigator.pop(context); // Close dialog
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Cannot Create Set'),
+                          content: Text(e.toString().replaceAll('Exception: ', '')),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('OK'),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
                   }
                 } else {
                   // Show validation error
@@ -3181,15 +3199,16 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                   Navigator.pop(context); // Close loading
                   
                   if (validation.isValid) {
-                    final newSet = await _setManager.createSetFromString(
-                      chineseChars,
-                      nameController.text,
-                    );
-                    
-                    if (mounted) {
-                      setState(() {
-                        _customSets.add(newSet);
-                      });
+                    try {
+                      final newSet = await _setManager.createSetFromString(
+                        chineseChars,
+                        nameController.text,
+                      );
+                      
+                      if (mounted) {
+                        setState(() {
+                          _customSets.add(newSet);
+                        });
                     }
                     
                     await _saveCustomSetsToStorage();
@@ -3200,6 +3219,23 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                         backgroundColor: Colors.green,
                       ),
                     );
+                    } catch (e) {
+                      if (mounted) {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Cannot Create Set'),
+                            content: Text(e.toString().replaceAll('Exception: ', '')),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('OK'),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                    }
                   } else {
                     // Show validation errors (using existing validation dialog logic)
                     _showValidationErrorDialog(validation, nameController.text, chineseChars);

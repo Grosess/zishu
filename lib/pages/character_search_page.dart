@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/cedict_service.dart';
 import '../services/character_database.dart';
 import '../services/learning_service.dart';
@@ -46,6 +47,12 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
   }
   
   Future<void> _initialize() async {
+    // Load saved preference for "Show learned only"
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _showLearnedOnly = prefs.getBool('showLearnedOnly') ?? false;
+    });
+    
     // Initialize services
     await _cedictService.initialize();
     await _characterDatabase.initialize();
@@ -173,6 +180,10 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
       
       // Filter out entries with English characters or unknown symbols
       final filteredResults = uniqueResults.where((entry) {
+        // Filter out phrases longer than 8 characters
+        if (entry.simplified.length > 8) {
+          return false;
+        }
         // Check if the simplified form contains only Chinese characters
         for (int i = 0; i < entry.simplified.length; i++) {
           final char = entry.simplified[i];
@@ -208,9 +219,24 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
         final aPriority = characterPriority[a.simplified] ?? 999;
         final bPriority = characterPriority[b.simplified] ?? 999;
         
-        // First sort by priority
+        // For exact pinyin matches, prioritize by HSK level and common usage
+        final queryLower = processedQuery.toLowerCase();
+        final aPinyinMatch = _removeTones(a.pinyin).toLowerCase() == queryLower;
+        final bPinyinMatch = _removeTones(b.pinyin).toLowerCase() == queryLower;
+        
+        if (aPinyinMatch && !bPinyinMatch) return -1;
+        if (!aPinyinMatch && bPinyinMatch) return 1;
+        
+        // First sort by priority (HSK level)
         if (aPriority != bPriority) {
           return aPriority.compareTo(bPriority);
+        }
+        
+        // Then by definition length (shorter is better)
+        final aDefLength = a.definition.length;
+        final bDefLength = b.definition.length;
+        if (aDefLength != bDefLength) {
+          return aDefLength.compareTo(bDefLength);
         }
         
         // Then by character length
@@ -239,10 +265,38 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
       }
     }
     
+    // Filter out characters not available in the database
+    final availableResults = <CedictEntry>[];
+    for (final entry in results) {
+      // For single characters, check if they're available in the database
+      if (entry.simplified.length == 1) {
+        final hasStrokeData = await _characterDatabase.hasCharacter(entry.simplified);
+        if (hasStrokeData) {
+          availableResults.add(entry);
+        }
+      } else {
+        // For multi-character words, check if all characters are available
+        bool allAvailable = true;
+        for (int i = 0; i < entry.simplified.length; i++) {
+          final char = entry.simplified[i];
+          if (_isChineseCharacter(char)) {
+            final hasStrokeData = await _characterDatabase.hasCharacter(char);
+            if (!hasStrokeData) {
+              allAvailable = false;
+              break;
+            }
+          }
+        }
+        if (allAvailable) {
+          availableResults.add(entry);
+        }
+      }
+    }
+    
     // Filter by learned status if checkbox is checked
-    List<CedictEntry> filteredResults = results;
+    List<CedictEntry> filteredResults = availableResults;
     if (_showLearnedOnly) {
-      filteredResults = results.where((entry) => learnedStatus[entry.simplified] ?? false).toList();
+      filteredResults = availableResults.where((entry) => learnedStatus[entry.simplified] ?? false).toList();
     }
     
     setState(() {
@@ -252,6 +306,17 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
     });
   }
   
+  String _removeTones(String pinyin) {
+    return pinyin
+        .replaceAll(RegExp(r'[āáǎàa]'), 'a')
+        .replaceAll(RegExp(r'[ēéěèe]'), 'e')
+        .replaceAll(RegExp(r'[īíǐìi]'), 'i')
+        .replaceAll(RegExp(r'[ōóǒòo]'), 'o')
+        .replaceAll(RegExp(r'[ūúǔùu]'), 'u')
+        .replaceAll(RegExp(r'[ǖǘǚǜü]'), 'u')
+        .replaceAll(RegExp(r'[0-9]'), '')
+        .replaceAll(RegExp(r'\s+'), '');
+  }
   
   bool _isChineseCharacter(String char) {
     if (char.isEmpty) return false;
@@ -390,11 +455,16 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
                   children: [
                     Checkbox(
                       value: _showLearnedOnly,
-                      onChanged: (value) {
+                      onChanged: (value) async {
                         HapticService().selectionClick();
                         setState(() {
                           _showLearnedOnly = value ?? false;
                         });
+                        
+                        // Save preference
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setBool('showLearnedOnly', _showLearnedOnly);
+                        
                         // Re-run search with new filter
                         if (_searchController.text.isNotEmpty) {
                           _performSearch(_searchController.text);
@@ -527,31 +597,33 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
                                 color: Theme.of(context).colorScheme.onSurface,
                               ),
                             )
-                          : Container(
-                              width: 48,
-                              height: 48,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                          : IntrinsicWidth(
+                              child: Container(
+                                constraints: BoxConstraints(
+                                  minWidth: 48,
+                                  maxWidth: MediaQuery.of(context).size.width * 0.4,
                                 ),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(4.0),
-                                  child: Text(
-                                    entry.simplified.length > 4 
-                                        ? '${entry.simplified.substring(0, 3)}...' 
-                                        : entry.simplified,
-                                    style: TextStyle(
-                                      fontSize: entry.simplified.length == 2 ? 20 : 
-                                               entry.simplified.length == 3 ? 14 : 12,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    textAlign: TextAlign.center,
+                                height: 48,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: entry.simplified.length <= 4 ? 8.0 : 12.0,
+                                ),
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
                                   ),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  entry.simplified,
+                                  style: TextStyle(
+                                    fontSize: entry.simplified.length <= 2 ? 18 : 
+                                             entry.simplified.length <= 4 ? 14 : 
+                                             entry.simplified.length <= 6 ? 11 : 9,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ),

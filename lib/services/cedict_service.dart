@@ -281,6 +281,14 @@ class CedictService {
       (match) => match.group(1) ?? ''
     );
     
+    // Remove Chinese characters that appear as references (e.g., "see 考试卷子")
+    def = def.replaceAll(RegExp(r'see\s+[\u4e00-\u9fff\u3400-\u4dbf]+'), 'see [Chinese term]');
+    def = def.replaceAll(RegExp(r'See\s+[\u4e00-\u9fff\u3400-\u4dbf]+'), 'See [Chinese term]');
+    
+    // Remove standalone Chinese characters or those in parentheses
+    def = def.replaceAll(RegExp(r'\([\u4e00-\u9fff\u3400-\u4dbf]+\)'), '');
+    def = def.replaceAll(RegExp(r'\[[\u4e00-\u9fff\u3400-\u4dbf]+\]'), '');
+    
     // Clean up whitespace
     def = def.trim().replaceAll(RegExp(r'\s+'), ' ');
     
@@ -356,6 +364,10 @@ class CedictService {
       }
     } else {
       // No entry found in dictionary
+      // For multi-character words, try to build a definition from individual characters
+      if (word.length > 1) {
+        return _buildCompositeDefinition(word);
+      }
     }
     return entry;
   }
@@ -401,6 +413,68 @@ class CedictService {
   /// Get total number of entries
   int get entryCount => _dictionary?.length ?? 0;
   
+  /// Get synonyms for common search terms
+  List<String> _getSynonyms(String word) {
+    final synonymMap = {
+      'test': ['test', 'exam', 'examination', 'quiz'],
+      'exam': ['test', 'exam', 'examination', 'quiz'],
+      'examination': ['test', 'exam', 'examination', 'quiz'],
+      'quiz': ['test', 'exam', 'examination', 'quiz'],
+      'big': ['big', 'large', 'huge', 'great'],
+      'large': ['big', 'large', 'huge', 'great'],
+      'huge': ['big', 'large', 'huge', 'great'],
+      'small': ['small', 'little', 'tiny', 'minor'],
+      'little': ['small', 'little', 'tiny', 'minor'],
+      'tiny': ['small', 'little', 'tiny', 'minor'],
+      'fast': ['fast', 'quick', 'rapid', 'swift'],
+      'quick': ['fast', 'quick', 'rapid', 'swift'],
+      'rapid': ['fast', 'quick', 'rapid', 'swift'],
+      'slow': ['slow', 'sluggish', 'gradual'],
+      'good': ['good', 'well', 'fine', 'nice'],
+      'bad': ['bad', 'poor', 'terrible', 'awful'],
+      'happy': ['happy', 'glad', 'joyful', 'pleased'],
+      'sad': ['sad', 'unhappy', 'sorrowful', 'upset'],
+      'angry': ['angry', 'mad', 'furious', 'upset'],
+      'mad': ['angry', 'mad', 'furious', 'crazy'],
+      'beautiful': ['beautiful', 'pretty', 'lovely', 'attractive'],
+      'pretty': ['beautiful', 'pretty', 'lovely', 'attractive'],
+      'ugly': ['ugly', 'unattractive', 'unsightly'],
+      'hot': ['hot', 'warm', 'heated'],
+      'cold': ['cold', 'cool', 'chilly', 'freezing'],
+      'new': ['new', 'fresh', 'recent', 'modern'],
+      'old': ['old', 'ancient', 'aged', 'elderly'],
+      'young': ['young', 'youthful', 'juvenile'],
+      'speak': ['speak', 'say', 'talk', 'tell'],
+      'say': ['speak', 'say', 'talk', 'tell'],
+      'talk': ['speak', 'say', 'talk', 'tell'],
+      'tell': ['speak', 'say', 'talk', 'tell'],
+      'see': ['see', 'look', 'watch', 'view'],
+      'look': ['see', 'look', 'watch', 'view'],
+      'watch': ['see', 'look', 'watch', 'view'],
+      'eat': ['eat', 'consume', 'dine'],
+      'drink': ['drink', 'beverage', 'sip'],
+      'sleep': ['sleep', 'rest', 'slumber', 'nap'],
+      'rest': ['sleep', 'rest', 'relax'],
+      'walk': ['walk', 'stroll', 'stride'],
+      'run': ['run', 'jog', 'sprint'],
+      'buy': ['buy', 'purchase', 'shop'],
+      'sell': ['sell', 'vend', 'market'],
+      'help': ['help', 'assist', 'aid'],
+      'like': ['like', 'enjoy', 'love', 'fond'],
+      'love': ['like', 'enjoy', 'love', 'adore'],
+      'hate': ['hate', 'dislike', 'detest'],
+      'want': ['want', 'need', 'desire', 'wish'],
+      'need': ['want', 'need', 'require'],
+      'begin': ['begin', 'start', 'commence'],
+      'start': ['begin', 'start', 'commence'],
+      'end': ['end', 'finish', 'complete', 'stop'],
+      'finish': ['end', 'finish', 'complete'],
+      'stop': ['end', 'stop', 'halt', 'cease'],
+    };
+    
+    return synonymMap[word] ?? [word];
+  }
+
   /// Search the dictionary by pinyin or English definition
   List<CedictEntry> search(String query, {int maxResults = 100}) {
     if (_dictionary == null || query.isEmpty) return [];
@@ -426,9 +500,25 @@ class CedictService {
         continue;
       }
       
-      // Exact word match in definition
+      // Exact word match in definition (including synonyms)
       final definitionWords = definitionLower.split(RegExp(r'[\s,;/()]+'));
+      bool matchesSynonym = false;
+      
+      // Check if query matches any word in definition
       if (definitionWords.contains(processedQuery)) {
+        matchesSynonym = true;
+      } else {
+        // Check synonyms
+        final synonyms = _getSynonyms(processedQuery);
+        for (final synonym in synonyms) {
+          if (definitionWords.contains(synonym)) {
+            matchesSynonym = true;
+            break;
+          }
+        }
+      }
+      
+      if (matchesSynonym) {
         results.add(entry);
         continue;
       }
@@ -446,9 +536,24 @@ class CedictService {
         final pinyinNoTone = _removeTones(entry.pinyin).toLowerCase();
         final definitionLower = entry.definition.toLowerCase();
         
-        // Partial match in pinyin or definition
+        // Partial match in pinyin or definition (including synonyms)
+        bool partialMatch = false;
+        
         if (pinyinNoTone.contains(processedQueryNoSpaces) || 
             definitionLower.contains(processedQuery)) {
+          partialMatch = true;
+        } else {
+          // Check synonyms for partial matches
+          final synonyms = _getSynonyms(processedQuery);
+          for (final synonym in synonyms) {
+            if (definitionLower.contains(synonym)) {
+              partialMatch = true;
+              break;
+            }
+          }
+        }
+        
+        if (partialMatch) {
           results.add(entry);
         }
       }
@@ -589,7 +694,7 @@ class CedictService {
       '她': {'pinyin': 'tā', 'def': 'she; her'},
       '我': {'pinyin': 'wǒ', 'def': 'I; me'},
       '们': {'pinyin': 'men', 'def': 'plural marker'},
-      '是': {'pinyin': 'shì', 'def': 'is; are; am'},
+      '是': {'pinyin': 'shì', 'def': 'is'},
       '没': {'pinyin': 'méi', 'def': 'not have; no'},
       '有': {'pinyin': 'yǒu', 'def': 'have; there is'},
       '和': {'pinyin': 'hé', 'def': 'and; with'},
@@ -814,5 +919,43 @@ class CedictService {
     }
     
     return null;
+  }
+  
+  /// Build a composite definition for multi-character phrases
+  CedictEntry? _buildCompositeDefinition(String word) {
+    if (_dictionary == null || word.isEmpty) return null;
+    
+    final definitions = <String>[];
+    final pinyins = <String>[];
+    
+    // Get definition for each character
+    for (int i = 0; i < word.length; i++) {
+      final char = word[i];
+      // Look up single character directly to avoid recursion
+      final charEntry = _dictionary![char] ?? _getManualOverride(char);
+      if (charEntry != null && !_shouldFilterDefinition(charEntry.definition)) {
+        // Add the first/main definition
+        String def = charEntry.definition.split(';').first.trim();
+        // Remove "to" prefix for cleaner concatenation
+        if (def.startsWith('to ')) {
+          def = def.substring(3);
+        }
+        definitions.add(def);
+        pinyins.add(charEntry.pinyin);
+      }
+    }
+    
+    // If we couldn't find definitions for most characters, return null
+    if (definitions.length < word.length / 2) {
+      return null;
+    }
+    
+    // Create composite entry
+    return CedictEntry(
+      simplified: word,
+      traditional: word,
+      pinyin: pinyins.join(' '),
+      definition: definitions.join(', '),
+    );
   }
 }

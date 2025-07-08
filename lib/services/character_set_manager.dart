@@ -174,11 +174,14 @@ class CharacterSetManager {
     String? description,
     bool isWordSet = false,
   }) async {
+    // Filter out phrases longer than 8 characters
+    final filteredCharacters = characters.where((item) => item.length <= 8).toList();
+    
     final id = 'custom_${DateTime.now().millisecondsSinceEpoch}';
     final set = CharacterSet(
       id: id,
       name: name,
-      characters: characters,
+      characters: filteredCharacters,
       description: description,
       isWordSet: isWordSet,
     );
@@ -203,12 +206,20 @@ class CharacterSetManager {
     
     // Check if input contains commas
     if (processedInput.contains(',')) {
-      // Split by comma and trim each item
-      items = processedInput.split(',').map((item) => item.trim()).where((item) => item.isNotEmpty).toList();
+      // Split by comma and trim each item, filter out items longer than 8 characters
+      items = processedInput.split(',')
+          .map((item) => item.trim())
+          .where((item) => item.isNotEmpty && item.length <= 8)
+          .toList();
       isWordSet = true;
     } else {
       // Split into individual characters
       items = processedInput.split('').where((c) => c.trim().isNotEmpty).toList();
+    }
+    
+    // Check if any valid items remain after filtering
+    if (items.isEmpty) {
+      throw Exception('Sorry, all terms were over 8 characters. Please use terms under 9 characters.');
     }
     
     return createCustomSet(
