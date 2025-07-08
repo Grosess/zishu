@@ -587,97 +587,116 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
                   
                   return Card(
                     margin: const EdgeInsets.only(bottom: 8),
-                    child: ListTile(
-                      leading: entry.simplified.length == 1
-                          ? SizedBox(
-                              width: 48,
-                              height: 48,
-                              child: CharacterPreview(
-                                character: entry.simplified,
-                                color: Theme.of(context).colorScheme.onSurface,
-                              ),
-                            )
-                          : IntrinsicWidth(
-                              child: Container(
-                                constraints: BoxConstraints(
-                                  minWidth: 48,
-                                  maxWidth: MediaQuery.of(context).size.width * 0.4,
-                                ),
-                                height: 48,
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: entry.simplified.length <= 4 ? 8.0 : 12.0,
-                                ),
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
-                                  ),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  entry.simplified,
-                                  style: TextStyle(
-                                    fontSize: entry.simplified.length <= 2 ? 18 : 
-                                             entry.simplified.length <= 4 ? 14 : 
-                                             entry.simplified.length <= 6 ? 11 : 9,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ),
-                      title: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              PinyinUtils.convertToneNumbersToMarks(entry.pinyin),
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                            ),
-                          ),
-                          if (isLearned) ...[
-                            const SizedBox(width: 8),
-                            Icon(
-                              Icons.check_circle,
-                              size: 16,
-                              color: isDuotone
-                                  ? Theme.of(context).colorScheme.primary
-                                  : Colors.green,
-                            ),
-                          ],
-                        ],
-                      ),
-                      subtitle: Text(
-                        entry.definition,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 2,
-                      ),
-                      trailing: isLearned
-                          ? TextButton.icon(
-                              icon: const Icon(Icons.edit, size: 18),
-                              label: const Text('Practice'),
-                              onPressed: () => _handleCharacterTap(entry.simplified),
-                              style: TextButton.styleFrom(
-                                foregroundColor: Theme.of(context).colorScheme.primary,
-                              ),
-                            )
-                          : TextButton.icon(
-                              icon: const Icon(Icons.school, size: 18),
-                              label: const Text('Learn'),
-                              onPressed: () => _handleCharacterTap(entry.simplified),
-                              style: TextButton.styleFrom(
-                                foregroundColor: Theme.of(context).colorScheme.primary,
-                              ),
-                            ),
+                    child: InkWell(
                       onTap: () => _handleCharacterTap(entry.simplified),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Row(
+                          children: [
+                            // Character display
+                            entry.simplified.length == 1
+                                ? SizedBox(
+                                    width: 48,
+                                    height: 48,
+                                    child: CharacterPreview(
+                                      character: entry.simplified,
+                                      color: Theme.of(context).colorScheme.onSurface,
+                                    ),
+                                  )
+                                : Container(
+                                    constraints: BoxConstraints(
+                                      maxWidth: entry.simplified.length <= 4 ? 60 : 
+                                               entry.simplified.length <= 6 ? 80 : 100,
+                                    ),
+                                    height: 48,
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: entry.simplified.length <= 6 ? 6.0 : 4.0,
+                                    ),
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                      ),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        entry.simplified,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  ),
+                            const SizedBox(width: 12),
+                            // Title and subtitle
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          PinyinUtils.convertToneNumbersToMarks(entry.pinyin),
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: Theme.of(context).colorScheme.primary,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 1,
+                                        ),
+                                      ),
+                                      if (isLearned) ...[
+                                        const SizedBox(width: 8),
+                                        Icon(
+                                          Icons.check_circle,
+                                          size: 16,
+                                          color: isDuotone
+                                              ? Theme.of(context).colorScheme.primary
+                                              : Colors.green,
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    entry.definition,
+                                    style: TextStyle(
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 2,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            // Action button
+                            isLearned
+                                ? TextButton.icon(
+                                    icon: const Icon(Icons.edit, size: 18),
+                                    label: const Text('Practice'),
+                                    onPressed: () => _handleCharacterTap(entry.simplified),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: Theme.of(context).colorScheme.primary,
+                                    ),
+                                  )
+                                : TextButton.icon(
+                                    icon: const Icon(Icons.school, size: 18),
+                                    label: const Text('Learn'),
+                                    onPressed: () => _handleCharacterTap(entry.simplified),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: Theme.of(context).colorScheme.primary,
+                                    ),
+                                  ),
+                          ],
+                        ),
+                      ),
                     ),
                   );
                 },
