@@ -500,6 +500,7 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7),
                       ),
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),

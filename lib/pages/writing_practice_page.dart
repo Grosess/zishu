@@ -1407,127 +1407,35 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     }
     */
     
-    // Validate single stroke
+    // Validate single stroke with balanced tolerance
     bool isCorrect;
     
-    // Special handling for problematic characters
-    if (currentCharacter == '一' || (currentCharacter == '二' || currentCharacter == '三')) {
-      // For horizontal stroke characters, use lenient validation
-      final tolerance = 0.60;
-      isCorrect = StrokeValidator.validateStroke(
-        _currentStroke,
-        _characterStroke!.medians[nextIndex],
-        canvasSize,
-        tolerance: tolerance,
-        isMultiDirectional: false,
-      );
-    } else if (currentCharacter == '中' && nextIndex == _characterStroke!.strokes.length - 1) {
-      // Last stroke of 中 is the long vertical - use extremely simple validation
-      isCorrect = _validateZhongLastStroke(_currentStroke, canvasSize);
-    } else if (currentCharacter == '中') {
-      // Other strokes of 中 - extremely lenient
-      final tolerance = 0.55;  // Strict tolerance for both modes
-      isCorrect = StrokeValidator.validateStroke(
-        _currentStroke,
-        _characterStroke!.medians[nextIndex],
-        canvasSize,
-        tolerance: tolerance,
-        isMultiDirectional: false,
-      );
-    } else if (currentCharacter == '女' && nextIndex == 1) {
-      // For 女 stroke 1 (second stroke - diagonal pie stroke), use very lenient validation
-      final tolerance = 0.65;
-      isCorrect = StrokeValidator.validateStroke(
-        _currentStroke,
-        _characterStroke!.medians[nextIndex],
-        canvasSize,
-        tolerance: tolerance,
-        isMultiDirectional: true, // Treat as multi-directional for the slight curve
-      );
-    } else if (currentCharacter == '我' && (nextIndex == 1 || nextIndex == 4)) {
-      // For 我, strokes 1 and 4 - use high tolerance
-      final tolerance = 0.45;
-      isCorrect = StrokeValidator.validateStroke(
-        _currentStroke,
-        _characterStroke!.medians[nextIndex],
-        canvasSize,
-        tolerance: tolerance,
-        isMultiDirectional: false,
-      );
-    } else if (currentCharacter == '马' || currentCharacter == '七') {
-      // For multi-directional characters like 马 and 七, use more lenient tolerance
-      final tolerance = 0.45;
-      isCorrect = StrokeValidator.validateStroke(
-        _currentStroke,
-        _characterStroke!.medians[nextIndex],
-        canvasSize,
-        tolerance: tolerance,
-        isMultiDirectional: true,
-      );
-    } else if (currentCharacter == '门' && nextIndex == 2) {
-      // Special case for 门 - the right vertical stroke (index 2) is very difficult
-      final tolerance = 0.60;
-      isCorrect = StrokeValidator.validateStroke(
-        _currentStroke,
-        _characterStroke!.medians[nextIndex],
-        canvasSize,
-        tolerance: tolerance,
-        isMultiDirectional: false,
-      );
-    } else if ((currentCharacter == '事' || currentCharacter == '中' || currentCharacter == '十' || 
-                currentCharacter == '丰' || currentCharacter == '串' || currentCharacter == '午' || 
-                currentCharacter == '年' || currentCharacter == '半' || currentCharacter == '门') && 
-                _isLongVerticalStroke(nextIndex)) {
-      // Characters with prominent vertical strokes need extreme tolerance
-      final tolerance = 0.50;
-      isCorrect = StrokeValidator.validateStroke(
-        _currentStroke,
-        _characterStroke!.medians[nextIndex],
-        canvasSize,
-        tolerance: tolerance,
-        isMultiDirectional: false,
-      );
-    } else if (_isHorizontalStroke(nextIndex)) {
-      // Horizontal strokes need lenient validation
-      final tolerance = 0.55;
-      isCorrect = StrokeValidator.validateStroke(
-        _currentStroke,
-        _characterStroke!.medians[nextIndex],
-        canvasSize,
-        tolerance: tolerance,
-        isMultiDirectional: false,
-      );
-    } else if (_isDiagonalStroke(nextIndex)) {
-      // Diagonal strokes (pie strokes) need more lenient validation
-      final tolerance = 0.60;
-      isCorrect = StrokeValidator.validateStroke(
-        _currentStroke,
-        _characterStroke!.medians[nextIndex],
-        canvasSize,
-        tolerance: tolerance,
-        isMultiDirectional: true, // Treat as multi-directional for potential slight curves
-      );
-    } else if (_isMultiDirectionalStroke(nextIndex)) {
-      // Multi-directional strokes need special handling
-      final tolerance = 0.45;
-      isCorrect = StrokeValidator.validateStroke(
-        _currentStroke,
-        _characterStroke!.medians[nextIndex],
-        canvasSize,
-        tolerance: tolerance,
-        isMultiDirectional: true,
-      );
-    } else {
-      // All other strokes - use high default tolerance
-      final tolerance = 0.45;
-      isCorrect = StrokeValidator.validateStroke(
-        _currentStroke,
-        _characterStroke!.medians[nextIndex],
-        canvasSize,
-        tolerance: tolerance,
-        isMultiDirectional: false,
-      );
+    // Determine stroke type for appropriate tolerance
+    final isHorizontal = _isHorizontalStroke(nextIndex);
+    final isDiagonal = _isDiagonalStroke(nextIndex);
+    final isVertical = _isLongVerticalStroke(nextIndex);
+    final isMultiDir = _isMultiDirectionalStroke(nextIndex);
+    
+    // Use balanced tolerances for all strokes
+    double baseTolerance = 0.55; // Balanced base tolerance
+    
+    // Slightly adjust based on stroke type
+    if (isHorizontal || isVertical) {
+      baseTolerance = 0.60; // More forgiving for straight strokes
+    } else if (isDiagonal) {
+      baseTolerance = 0.57; // Slightly more forgiving for diagonals
+    } else if (isMultiDir) {
+      baseTolerance = 0.52; // Slightly less forgiving for complex strokes
     }
+    
+    // Always validate with the appropriate tolerance
+    isCorrect = StrokeValidator.validateStroke(
+      _currentStroke,
+      _characterStroke!.medians[nextIndex],
+      canvasSize,
+      tolerance: baseTolerance,
+      isMultiDirectional: isMultiDir || isDiagonal,
+    );
     
     final currentCharacterName = widget.isWord ? _wordCharacters[_currentWordCharacterIndex] : widget.character;
     
@@ -3400,20 +3308,20 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   void _startBounceAnimation(int strokeIndex) {
     _bounceController?.dispose();
     
-    // Create animation controller with shorter duration
-    final duration = Duration(milliseconds: 200 + (_strokeDeviation * 200).round());
+    // Create animation controller with satisfying duration
+    final duration = const Duration(milliseconds: 350);
     _bounceController = AnimationController(
       duration: duration,
       vsync: this,
     );
     
-    // Create bounce animation with gentler curve
+    // Create bounce animation with more intense elastic curve
     _bounceAnimation = Tween<double>(
       begin: 0.0,
-      end: 1.0,
+      end: 1.15, // Overshoot for more bounce
     ).animate(CurvedAnimation(
       parent: _bounceController!,
-      curve: Curves.easeOutBack,
+      curve: Curves.elasticOut,
     ));
     
     _bouncingStrokeIndex = strokeIndex;

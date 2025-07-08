@@ -471,13 +471,14 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
                     Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        const SizedBox(height: 10), // Add spacing from top
                         AnimatedBuilder(
                           animation: _percentageAnimation,
                           builder: (context, child) {
                             return Text(
                               '${_percentageAnimation.value.toStringAsFixed(1)}%',
                               style: TextStyle(
-                                fontSize: 36,
+                                fontSize: 32, // Slightly smaller font
                                 fontWeight: FontWeight.bold,
                                 color: Theme.of(context).colorScheme.onSurface,
                               ),
@@ -505,19 +506,9 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                        ? [
-                            Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                            Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                          ]
-                        : [
-                            Colors.amber.withOpacity(0.2),
-                            Colors.orange.withOpacity(0.1),
-                          ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+                    color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                      ? Theme.of(context).colorScheme.primary.withOpacity(0.15)
+                      : Colors.amber.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
@@ -593,7 +584,7 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
           
           // Progress meters
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Row(
               children: [
                 // Characters learned today

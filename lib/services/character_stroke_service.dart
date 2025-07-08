@@ -416,7 +416,7 @@ class StrokeValidator {
       return false;
     }
     
-    // Direction validation - strict
+    // Direction validation - balanced
     final directionTolerance = tolerance * 0.6;  // 60% of base tolerance for all strokes
     
     
@@ -445,7 +445,7 @@ class StrokeValidator {
         }
       }
       
-      // Slightly stricter shape matching requirements
+      // Balanced shape matching requirements
       final requiredMatch = 0.75; // Need 75% of points to match
       if (matchedPoints < totalChecks * requiredMatch) {
         return false;

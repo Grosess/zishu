@@ -3599,8 +3599,9 @@ class _CharacterSetSquareCard extends StatelessWidget {
                                   value: progress,
                                   backgroundColor: Colors.transparent,
                                   valueColor: AlwaysStoppedAnimation<Color>(
-                                    Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? 
-                                    Theme.of(context).colorScheme.primary
+                                    isDuotone 
+                                      ? (duotoneExt?.duotoneColor2 ?? Theme.of(context).colorScheme.primary)
+                                      : Colors.white.withOpacity(0.5)
                                   ),
                                   borderRadius: BorderRadius.circular(2),
                                 ),

@@ -411,6 +411,18 @@ class HomePageState extends State<HomePage> with RouteAware {
     }
   }
   
+  Color _getProgressColor() {
+    final duotoneTheme = Theme.of(context).extension<DuotoneThemeExtension>();
+    
+    if (duotoneTheme?.isDuotoneTheme == true) {
+      // In duotone mode, use the duotone color
+      return duotoneTheme!.duotoneColor2!;
+    } else {
+      // Use the theme's primary color (accent color)
+      return Theme.of(context).colorScheme.primary;
+    }
+  }
+  
   LinearGradient? _buildCardGradient() {
     final duotoneTheme = Theme.of(context).extension<DuotoneThemeExtension>();
     
@@ -1306,8 +1318,7 @@ class HomePageState extends State<HomePage> with RouteAware {
             child: Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                gradient: _buildCardGradient(),
-                color: _getCardBackgroundColor(),
+                color: _getCardBackgroundColor() ?? Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
                   color: _getCardBorderColor(),
@@ -1322,26 +1333,13 @@ class HomePageState extends State<HomePage> with RouteAware {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        ShaderMask(
-                          shaderCallback: (bounds) => LinearGradient(
-                            colors: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                              ? [
-                                  Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!, // Green for rice paper goal
-                                  Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!,
-                                ]
-                              : [
-                                  Theme.of(context).colorScheme.primary,
-                                  Theme.of(context).colorScheme.secondary,
-                                ],
-                          ).createShader(bounds),
-                          child: Text(
-                            _characterGoal.toString(),
-                            style: TextStyle(
-                              fontSize: _getGoalFontSize(_characterGoal),
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                              height: 1.0,
-                            ),
+                        Text(
+                          _characterGoal.toString(),
+                          style: TextStyle(
+                            fontSize: _getGoalFontSize(_characterGoal),
+                            fontWeight: FontWeight.w900,
+                            color: Theme.of(context).colorScheme.onSurface,
+                            height: 1.0,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -1369,9 +1367,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
-                              color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
-                                  : Theme.of(context).colorScheme.primary,
+                              color: _getProgressColor(),
                             ),
                           ),
                         ],
@@ -1392,53 +1388,45 @@ class HomePageState extends State<HomePage> with RouteAware {
                               size: const Size(170, 170),
                               painter: CleanProgressPainter(
                                 progress: _progressPercentage,
-                                primaryColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                                    ? (_paceOffset >= 0 ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2! : Colors.orange) // Use duotone foreground
-                                    : (_paceOffset >= 0 ? Theme.of(context).colorScheme.primary : Colors.orange),
-                                backgroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                                    ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withOpacity(0.2) // Use duotone foreground with opacity
-                                    : Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                primaryColor: _paceOffset >= 0 ? _getProgressColor() : Colors.orange,
+                                backgroundColor: _getProgressColor().withOpacity(0.2),
                               ),
                             ),
-                            Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  '${(_progressPercentage * 100).toInt()}%',
-                                  style: TextStyle(
-                                    fontSize: 42,
-                                    fontWeight: FontWeight.w600,
-                                    color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                                        ? (_paceOffset >= 0 ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2! : Colors.orange) // Use duotone foreground
-                                        : (_paceOffset >= 0 ? Theme.of(context).colorScheme.primary : Colors.orange),
-                                    height: 1,
+                            SizedBox(
+                              width: 110, // Constrain width to keep text centered and away from edges
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    '${(_progressPercentage * 100).toInt()}%',
+                                    style: TextStyle(
+                                      fontSize: 36, // Reduced from 42
+                                      fontWeight: FontWeight.w600,
+                                      color: _paceOffset >= 0 ? _getProgressColor() : Colors.orange,
+                                      height: 1,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'there',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                    letterSpacing: 0.5,
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'there',
+                                    style: TextStyle(
+                                      fontSize: 14, // Reduced from 16
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      letterSpacing: 0.5,
+                                    ),
                                   ),
-                                ),
                                 if (_paceOffset != 0) ...[                                  
                                   const SizedBox(height: 8),
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                     decoration: BoxDecoration(
                                       color: (_paceOffset > 0 
-                                        ? (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true 
-                                            ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2! 
-                                            : Theme.of(context).colorScheme.primary) 
+                                        ? _getProgressColor()
                                         : Colors.red).withOpacity(0.15),
                                       borderRadius: BorderRadius.circular(14),
                                       border: Border.all(
                                         color: (_paceOffset > 0 
-                                          ? (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true 
-                                              ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2! 
-                                              : Theme.of(context).colorScheme.primary) 
+                                          ? _getProgressColor()
                                           : Colors.red).withOpacity(0.3),
                                         width: 1,
                                       ),
@@ -1448,9 +1436,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                                       style: TextStyle(
                                         fontSize: 11,
                                         color: _paceOffset > 0 
-                                          ? (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true 
-                                              ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2! 
-                                              : Theme.of(context).colorScheme.primary) 
+                                          ? _getProgressColor()
                                           : Colors.red,
                                         fontWeight: FontWeight.w600,
                                       ),
@@ -1459,9 +1445,10 @@ class HomePageState extends State<HomePage> with RouteAware {
                                 ],
                               ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
+                    ),
                     ],
                   ),
                 ],
@@ -1486,21 +1473,12 @@ class HomePageState extends State<HomePage> with RouteAware {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                    ? [
-                        Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!,
-                        Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withOpacity(0.8),
-                      ]
-                    : [
-                        const Color(0xFF6A5ACD),
-                        const Color(0xFF4169E1),
-                      ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                  : const Color(0xFF6A5ACD),
                 borderRadius: BorderRadius.circular(20),
-                boxShadow: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                boxShadow: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true || 
+                          Theme.of(context).brightness == Brightness.dark
                   ? []
                   : [
                       BoxShadow(
@@ -1560,7 +1538,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                     Icons.arrow_forward_ios,
                     color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                       ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!
-                      : Colors.purple,
+                      : Colors.white,
                   ),
                 ],
               ),
@@ -1769,80 +1747,6 @@ class HomePageState extends State<HomePage> with RouteAware {
             ],
           ),
         ),
-        // Feedback widget - positioned at bottom right corner
-        Positioned(
-          bottom: 16,
-          right: 16,
-          child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              child: Material(
-                elevation: 8,
-                borderRadius: BorderRadius.circular(28),
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: _launchFeedbackForm,
-                  borderRadius: BorderRadius.circular(28),
-                  splashColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                      ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withOpacity(0.2)
-                      : Colors.white.withOpacity(0.2),
-                  highlightColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                      ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withOpacity(0.1)
-                      : Colors.white.withOpacity(0.1),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                          ? [
-                              Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!,
-                              Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withOpacity(0.8),
-                            ]
-                          : [
-                              const Color(0xFFFF6B6B), // Bright red-orange for other themes
-                              const Color(0xFFFFE66D), // Bright yellow for other themes
-                            ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(28),
-                      boxShadow: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                        ? [] // No shadow for duotone theme
-                        : [
-                            BoxShadow(
-                              color: const Color(0xFFFF6B6B).withOpacity(0.4),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.feedback_outlined,
-                          color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                            ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!
-                            : Colors.white,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Give Feedback',
-                          style: TextStyle(
-                            color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                              ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!
-                              : Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
       ],
     );
   }
@@ -2111,22 +2015,6 @@ class CleanProgressPainter extends CustomPainter {
       ..strokeWidth = 8;
     
     canvas.drawCircle(center, radius - 10, trackPaint);
-    
-    // Subtle glow layer
-    final glowPaint = Paint()
-      ..color = primaryColor.withOpacity(0.3)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 12
-      ..strokeCap = StrokeCap.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
-    
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius - 10),
-      -math.pi / 2,
-      2 * math.pi * progress,
-      false,
-      glowPaint,
-    );
     
     // Progress arc - simple solid color
     final progressPaint = Paint()
@@ -2829,13 +2717,15 @@ class _AnimatedSetCreationState extends State<_AnimatedSetCreation>
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-                        blurRadius: 20,
-                        spreadRadius: 5,
-                      ),
-                    ],
+                    boxShadow: Theme.of(context).brightness == Brightness.dark
+                      ? []
+                      : [
+                          BoxShadow(
+                            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                            blurRadius: 20,
+                            spreadRadius: 5,
+                          ),
+                        ],
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,

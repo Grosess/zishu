@@ -399,7 +399,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       case 'orange':
         return Colors.orange;
       case 'teal':
-        return Colors.teal;
+        return const Color(0xFF037A76); // Blue-green color
       case 'lightpink':
         return const Color(0xFFFFC1CC); // Light pink
       case 'hotpink':
@@ -419,7 +419,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     if (color == Colors.green) return 'green';
     if (color == Colors.purple) return 'purple';
     if (color == Colors.orange) return 'orange';
-    if (color == Colors.teal) return 'teal';
+    if (color == const Color(0xFF037A76)) return 'teal';
     if (color == const Color(0xFFFFC1CC)) return 'lightpink';
     if (color == const Color(0xFFFF69B4)) return 'hotpink';
     if (color == Colors.black) return 'black';
@@ -763,7 +763,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
           seedColor: _accentColor,
           brightness: Brightness.dark,
         ),
-        scaffoldBackgroundColor: const Color(0xFF0A0A0A),
+        scaffoldBackgroundColor: const Color(0xFF121212),
         useMaterial3: true,
         fontFamilyFallback: const ['Noto Sans CJK SC', 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', 'Source Han Sans SC', 'WenQuanYi Micro Hei'],
         elevatedButtonTheme: ElevatedButtonThemeData(
@@ -781,7 +781,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
             borderRadius: BorderRadius.circular(20),
             side: BorderSide(color: _accentColor.withValues(alpha: 0.2), width: 1),
           ),
-          color: const Color(0xFF1A1A1A),
+          color: const Color(0xFF1E1E1E),
         ),
         appBarTheme: const AppBarTheme(
           elevation: 0,
@@ -1037,19 +1037,9 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
             child: Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                    ? LinearGradient(
-                        colors: [
-                          Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!,
-                          Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.8),
-                        ],
-                      )
-                    : LinearGradient(
-                        colors: [
-                          Theme.of(context).colorScheme.primary,
-                          Theme.of(context).colorScheme.secondary,
-                        ],
-                      ),
+                color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                    ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                    : Theme.of(context).colorScheme.primary,
                 boxShadow: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                     ? [] // No shadow for duotone
                     : [
@@ -1082,26 +1072,15 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
             ),
           ),
         ),
-        title: ShaderMask(
-          shaderCallback: (bounds) => LinearGradient(
-            colors: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                ? [
-                    Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!,
-                    Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!,
-                  ]
-                : [
-                    Theme.of(context).colorScheme.primary,
-                    Theme.of(context).colorScheme.secondary,
-                  ],
-          ).createShader(bounds),
-          child: const Text(
-            'Zishu',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-              letterSpacing: 1.2,
-            ),
+        title: Text(
+          'Zishu',
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
+            color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                : Theme.of(context).colorScheme.primary,
+            letterSpacing: 1.2,
           ),
         ),
         actions: [
