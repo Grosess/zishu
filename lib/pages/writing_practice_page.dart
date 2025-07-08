@@ -2540,17 +2540,37 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     // Just the progress boxes for multi-character words
     if (_wordCharacters.length <= 1) return const SizedBox.shrink();
     
+    // Calculate responsive sizes based on word length
+    final screenWidth = MediaQuery.of(context).size.width;
+    final availableWidth = screenWidth - 32; // Account for container padding
+    final boxCount = _wordCharacters.length;
+    
+    // Dynamic sizing based on character count
+    double horizontalMargin = boxCount > 6 ? 2 : 4;
+    double horizontalPadding = boxCount > 6 ? 6 : boxCount > 4 ? 8 : 12;
+    double minWidth = boxCount > 6 ? 36 : boxCount > 4 ? 42 : 48;
+    
+    // Ensure boxes fit within available width
+    final totalWidth = boxCount * (minWidth + (horizontalMargin * 2));
+    if (totalWidth > availableWidth) {
+      final scaleFactor = availableWidth / totalWidth;
+      minWidth *= scaleFactor;
+      horizontalPadding *= scaleFactor;
+    }
+    
     return Container(
       alignment: Alignment.center,
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: List.generate(_wordCharacters.length, (index) {
-          return Container(
-            margin: const EdgeInsets.symmetric(horizontal: 4),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            constraints: const BoxConstraints(minWidth: 48),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(_wordCharacters.length, (index) {
+            return Container(
+              margin: EdgeInsets.symmetric(horizontal: horizontalMargin),
+              padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
+              constraints: BoxConstraints(minWidth: minWidth),
             decoration: BoxDecoration(
               border: Border.all(
                 color: index == _currentWordCharacterIndex && !_showSuccess
@@ -2595,6 +2615,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
             ),
           );
         }),
+        ),
       ),
     );
   }

@@ -1084,10 +1084,13 @@ class _CharacterListPageState extends State<CharacterListPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(
-          displayTerm,
-          style: const TextStyle(fontSize: 48),
-          textAlign: TextAlign.center,
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            displayTerm,
+            style: const TextStyle(fontSize: 48),
+            textAlign: TextAlign.center,
+          ),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1103,12 +1106,14 @@ class _CharacterListPageState extends State<CharacterListPage> {
                     color: Theme.of(context).colorScheme.primary,
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    PinyinUtils.convertToneNumbersToMarks(pronunciation),
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Theme.of(context).colorScheme.primary,
-                      fontWeight: FontWeight.w500,
+                  Expanded(
+                    child: Text(
+                      PinyinUtils.convertToneNumbersToMarks(pronunciation),
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ],
@@ -1515,14 +1520,18 @@ class _CharacterListPageState extends State<CharacterListPage> {
                         // Progress count only (no percentage)
                         if (totalCount > 0) ...[
                           const SizedBox(width: 8),
-                          Text(
-                            '$learnedCount/$totalCount',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: isDuotone 
-                                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
-                                  : Theme.of(context).colorScheme.primary,
+                          Flexible(
+                            fit: FlexFit.loose,
+                            child: Text(
+                              '$learnedCount/$totalCount',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: isDuotone 
+                                    ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                                    : Theme.of(context).colorScheme.primary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],

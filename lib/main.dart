@@ -1253,7 +1253,6 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                 }
               },
             ),
-            const Divider(),
             ListTile(
               leading: const Icon(Icons.feedback_outlined),
               title: const Text('Give Feedback'),
