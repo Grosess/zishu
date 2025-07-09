@@ -2545,18 +2545,14 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     final availableWidth = screenWidth - 32; // Account for container padding
     final boxCount = _wordCharacters.length;
     
-    // Dynamic sizing based on character count
-    double horizontalMargin = boxCount > 6 ? 2 : 4;
-    double horizontalPadding = boxCount > 6 ? 6 : boxCount > 4 ? 8 : 12;
-    double minWidth = boxCount > 6 ? 36 : boxCount > 4 ? 42 : 48;
+    // Fixed sizing - boxes don't scale with text
+    double horizontalMargin = 3;
+    double horizontalPadding = 8;
+    double boxWidth = 40;
     
-    // Ensure boxes fit within available width
-    final totalWidth = boxCount * (minWidth + (horizontalMargin * 2));
-    if (totalWidth > availableWidth) {
-      final scaleFactor = availableWidth / totalWidth;
-      minWidth *= scaleFactor;
-      horizontalPadding *= scaleFactor;
-    }
+    // Check if we need scrolling
+    final totalWidth = boxCount * (boxWidth + (horizontalMargin * 2));
+    final needsScroll = totalWidth > availableWidth;
     
     return Container(
       alignment: Alignment.center,
@@ -2570,7 +2566,8 @@ class _WritingPracticePageState extends State<WritingPracticePage>
             return Container(
               margin: EdgeInsets.symmetric(horizontal: horizontalMargin),
               padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
-              constraints: BoxConstraints(minWidth: minWidth),
+              width: boxWidth,
+              height: 40,
             decoration: BoxDecoration(
               border: Border.all(
                 color: index == _currentWordCharacterIndex && !_showSuccess

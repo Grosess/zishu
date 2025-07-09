@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
-import 'package:url_launcher/url_launcher.dart';
 import 'services/local_storage_service.dart';
 import 'services/character_cache_manager.dart';
 import 'services/profile_service.dart';
@@ -20,6 +19,7 @@ import 'services/streak_service.dart';
 import 'services/learning_service.dart';
 import 'services/haptic_service.dart';
 import 'widgets/streak_display.dart';
+import 'pages/feedback_form_page.dart';
 
 // Theme extension for duotone themes
 class DuotoneThemeExtension extends ThemeExtension<DuotoneThemeExtension> {
@@ -138,17 +138,18 @@ void main() async {
     final brightness = WidgetsBinding.instance.platformDispatcher.platformBrightness;
     final systemIsDark = brightness == Brightness.dark;
     
-    // Set default theme to duotone with system-based background and blue accent
-    final themeMode = prefs.getString('theme_mode') ?? 'duotone';
+    // Set default theme to system (not duotone) until unlocked
+    final themeMode = prefs.getString('theme_mode') ?? 'system';
     final accentColor = prefs.getString('accent_color') ?? 'blue';
-    final duotoneBackground = prefs.getString('duotone_background') ?? (isFirstRun ? (systemIsDark ? 'black' : 'white') : 'white');
+    final duotoneBackground = prefs.getString('duotone_background') ?? (systemIsDark ? 'black' : 'white');
     final duotoneColor = prefs.getString('duotone_color') ?? 'blue';
     
     // Save defaults if first run
     if (isFirstRun) {
-      await prefs.setString('theme_mode', 'duotone');
+      await prefs.setString('theme_mode', 'system');
       await prefs.setString('duotone_background', systemIsDark ? 'black' : 'white');
       await prefs.setString('duotone_color', 'blue');
+      await prefs.setString('accent_color', 'blue');
     }
     
     runApp(MainApp(
@@ -1019,7 +1020,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       });
     }
   }
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1258,10 +1259,14 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
               title: const Text('Give Feedback'),
               onTap: () async {
                 Navigator.pop(context);
-                const url = 'https://forms.gle/YourGoogleFormLink';
-                if (await canLaunchUrl(Uri.parse(url))) {
-                  await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-                }
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const FeedbackFormPage(),
+                  ),
+                );
+                
+                // Form completed or cancelled, no action needed
               },
             ),
           ],
