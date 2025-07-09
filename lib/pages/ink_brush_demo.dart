@@ -20,7 +20,6 @@ class _InkBrushDemoState extends State<InkBrushDemo> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Ink Brush Demo'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: Column(
         children: [

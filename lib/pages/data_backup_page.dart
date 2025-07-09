@@ -25,7 +25,6 @@ class _DataBackupPageState extends State<DataBackupPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Data Backup'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),

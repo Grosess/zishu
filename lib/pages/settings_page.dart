@@ -192,7 +192,6 @@ class _SettingsPageState extends State<SettingsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -970,11 +969,30 @@ class _SettingsPageState extends State<SettingsPage> {
   List<Widget> _getBackgroundColorOptions() {
     List<Widget> options = [];
     
-    // Only black and white are valid backgrounds
-    options.addAll([
-      _buildBackgroundOption('White', 'white'),
-      _buildBackgroundOption('Black', 'black'),
-    ]);
+    // Check if current accent is neutral (white/black)
+    final isAccentNeutral = _duotoneColor == 'white' || _duotoneColor == 'black';
+    
+    if (isAccentNeutral) {
+      // If accent is neutral, any color can be background
+      options.addAll([
+        _buildBackgroundOption('White', 'white'),
+        _buildBackgroundOption('Black', 'black'),
+        _buildBackgroundOption('Blue', 'blue'),
+        _buildBackgroundOption('Green', 'green'),
+        _buildBackgroundOption('Blue Green', 'bluegreen'),
+        _buildBackgroundOption('Red', 'red'),
+        _buildBackgroundOption('Light Pink', 'lightpink'),
+        _buildBackgroundOption('Hot Pink', 'hotpink'),
+        _buildBackgroundOption('Gold', 'gold'),
+        _buildBackgroundOption('Purple', 'purple'),
+      ]);
+    } else {
+      // If accent is a color, only neutral backgrounds are valid
+      options.addAll([
+        _buildBackgroundOption('White', 'white'),
+        _buildBackgroundOption('Black', 'black'),
+      ]);
+    }
     
     return options;
   }
@@ -982,20 +1000,31 @@ class _SettingsPageState extends State<SettingsPage> {
   List<Widget> _getAccentColorOptions() {
     List<Widget> options = [];
     
-    // All colors are now available
-    final allColors = [
-      ['Blue', 'blue'],
-      ['Green', 'green'],
-      ['Blue Green', 'bluegreen'],
-      ['Red', 'red'],
-      ['Light Pink', 'lightpink'],
-      ['Hot Pink', 'hotpink'],
-      ['Gold', 'gold'],
-      ['Purple', 'purple'],
-    ];
+    // Check if current background is neutral (white/black)
+    final isBackgroundNeutral = _duotoneBackground == 'white' || _duotoneBackground == 'black';
     
-    for (final color in allColors) {
-      options.add(_buildDuotoneColorOption(color[0], color[1]));
+    if (isBackgroundNeutral) {
+      // If background is neutral, any color can be accent
+      final allColors = [
+        ['Blue', 'blue'],
+        ['Green', 'green'],
+        ['Blue Green', 'bluegreen'],
+        ['Red', 'red'],
+        ['Light Pink', 'lightpink'],
+        ['Hot Pink', 'hotpink'],
+        ['Gold', 'gold'],
+        ['Purple', 'purple'],
+      ];
+      
+      for (final color in allColors) {
+        options.add(_buildDuotoneColorOption(color[0], color[1]));
+      }
+    } else {
+      // If background is a color, only neutral accents are valid
+      options.addAll([
+        _buildDuotoneColorOption('White', 'white'),
+        _buildDuotoneColorOption('Black', 'black'),
+      ]);
     }
     
     return options;

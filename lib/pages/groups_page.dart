@@ -186,7 +186,6 @@ class _GroupsPageState extends State<GroupsPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('${widget.setName} - Groups'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: CustomScrollView(
         slivers: [

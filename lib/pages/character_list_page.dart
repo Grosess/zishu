@@ -308,7 +308,6 @@ class _CharacterListPageState extends State<CharacterListPage> {
               ),
           ],
         ),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: CustomScrollView(
         slivers: [
@@ -352,7 +351,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
                               turns: (_shouldShowSuperGroups ? _showSuperGroups : _showGroups) ? 0.5 : 0,
                               child: Icon(
                                 Icons.expand_more,
-                                color: Theme.of(context).colorScheme.primary,
+                                color: Theme.of(context).colorScheme.onPrimaryContainer,
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -363,7 +362,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
-                                color: Theme.of(context).colorScheme.primary,
+                                color: Theme.of(context).colorScheme.onPrimaryContainer,
                               ),
                             ),
                           ],

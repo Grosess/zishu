@@ -334,6 +334,9 @@ class HomePageState extends State<HomePage> with RouteAware {
     final learningWords = await _learningService.getLearnedWords();
     final allLearnedWords = {...learnedWords, ...learningWords};
     
+    print('Total learned characters: ${allLearnedChars.length}');
+    print('Total learned words: ${allLearnedWords.length}');
+    
     // Build a map of all items from all sets with their set names
     final allSetItems = <String, MapEntry<String, bool>>{}; // item -> (setName, isFromWordSet)
     final setProgressMap = <String, double>{}; // setName -> progress
@@ -359,25 +362,67 @@ class HomePageState extends State<HomePage> with RouteAware {
     final allowedSets = <String>{};
     String? highestIncompleteHSK;
     
-    for (final hskSet in hskSets) {
-      final progress = setProgressMap[hskSet] ?? 0.0;
-      if (progress >= 1.0) {
-        // Set is completed, include it
-        allowedSets.add(hskSet);
-        print('Adding completed HSK set: $hskSet');
-      } else if (progress > 0 && highestIncompleteHSK == null) {
-        // This is the highest incomplete HSK set with progress
-        highestIncompleteHSK = hskSet;
-        allowedSets.add(hskSet);
-        print('Adding incomplete HSK set: $hskSet (${(progress * 100).toStringAsFixed(1)}%)');
+    // First check if we have any learned items at all
+    if (allLearnedChars.isNotEmpty || allLearnedWords.isNotEmpty) {
+      // If we have learned items but no set progress, include all sets
+      bool hasAnyProgress = false;
+      for (final progress in setProgressMap.values) {
+        if (progress > 0) {
+          hasAnyProgress = true;
+          break;
+        }
       }
-    }
-    
-    // Include all non-HSK sets that have any progress
-    for (final entry in setProgressMap.entries) {
-      if (!hskSets.contains(entry.key) && entry.value > 0) {
-        allowedSets.add(entry.key);
-        print('Adding non-HSK set: ${entry.key} (${(entry.value * 100).toStringAsFixed(1)}%)');
+      
+      if (!hasAnyProgress) {
+        print('No set progress found, but have learned items. Including all sets.');
+        // Add all sets that contain our learned items
+        for (final entry in allSetItems.entries) {
+          final card = entry.key;
+          final setName = entry.value.key;
+          
+          // Check if this card or its characters are learned
+          bool isRelevant = false;
+          if (allLearnedWords.contains(card)) {
+            isRelevant = true;
+          } else if (card.length == 1 && allLearnedChars.contains(card)) {
+            isRelevant = true;
+          } else {
+            // Check if any character in the card is learned
+            for (int i = 0; i < card.length; i++) {
+              if (allLearnedChars.contains(card[i])) {
+                isRelevant = true;
+                break;
+              }
+            }
+          }
+          
+          if (isRelevant) {
+            allowedSets.add(setName);
+          }
+        }
+      } else {
+        // Use the normal HSK progression logic
+        for (final hskSet in hskSets) {
+          final progress = setProgressMap[hskSet] ?? 0.0;
+          if (progress >= 1.0) {
+            // Set is completed, include it
+            allowedSets.add(hskSet);
+            print('Adding completed HSK set: $hskSet');
+          } else if (progress > 0 && highestIncompleteHSK == null) {
+            // This is the highest incomplete HSK set with progress
+            highestIncompleteHSK = hskSet;
+            allowedSets.add(hskSet);
+            print('Adding incomplete HSK set: $hskSet (${(progress * 100).toStringAsFixed(1)}%)');
+          }
+        }
+        
+        // Include all non-HSK sets that have any progress
+        for (final entry in setProgressMap.entries) {
+          if (!hskSets.contains(entry.key) && entry.value > 0) {
+            allowedSets.add(entry.key);
+            print('Adding non-HSK set: ${entry.key} (${(entry.value * 100).toStringAsFixed(1)}%)');
+          }
+        }
       }
     }
     
@@ -385,53 +430,75 @@ class HomePageState extends State<HomePage> with RouteAware {
     print('All learned characters: ${allLearnedChars.take(10).toList()}...');
     print('All learned words: ${allLearnedWords.take(10).toList()}...');
     
-    // Collect items for endless practice
+    // Collect items for endless practice - use CARDS not individual characters
     final practiceItems = <String>[];
+    final addedItems = <String>{};
     
-    // Always include all learned words
-    practiceItems.addAll(allLearnedWords);
-    
-    // For single characters, try to reconstruct multi-character items
-    final processedChars = <String>{};
-    
-    for (final char in allLearnedChars) {
-      if (processedChars.contains(char)) continue;
+    // Process all cards regardless of allowed sets if we have learned items
+    if (allLearnedChars.isNotEmpty || allLearnedWords.isNotEmpty) {
+      print('Processing cards for endless practice...');
       
-      // Check if this character is part of any multi-character item in sets
-      bool addedAsPartOfWord = false;
-      
-      for (final entry in allSetItems.entries) {
-        final item = entry.key;
-        final setName = entry.value.key;
-        
-        // Skip if not from an allowed set (unless no sets are allowed)
-        if (allowedSets.isNotEmpty && !allowedSets.contains(setName)) continue;
-        
-        // If this is a multi-character item containing our character
-        if (item.length > 1 && item.contains(char)) {
-          // Check if all characters of this item are learned
-          bool allCharsLearned = true;
-          for (int i = 0; i < item.length; i++) {
-            if (!allLearnedChars.contains(item[i])) {
-              allCharsLearned = false;
-              break;
-            }
-          }
-          
-          if (allCharsLearned && !practiceItems.contains(item)) {
-            practiceItems.add(item);
-            // Mark all characters as processed
-            for (int i = 0; i < item.length; i++) {
-              processedChars.add(item[i]);
-            }
-            addedAsPartOfWord = true;
-          }
+      // If no allowed sets, use all sets
+      if (allowedSets.isEmpty) {
+        print('No allowed sets found, using all sets');
+        for (final set in allSets) {
+          allowedSets.add(set.name);
         }
       }
       
-      // If not added as part of a word, add as single character
-      if (!addedAsPartOfWord && !practiceItems.contains(char)) {
-        practiceItems.add(char);
+      // Process all cards
+      for (final entry in allSetItems.entries) {
+        final card = entry.key;
+        final setName = entry.value.key;
+        
+        // Check if this card is learned
+        bool cardIsLearned = false;
+        
+        if (card.length == 1) {
+          // Single character card
+          cardIsLearned = allLearnedChars.contains(card);
+        } else {
+          // Multi-character card
+          if (allLearnedWords.contains(card)) {
+            cardIsLearned = true;
+          } else {
+            // Check if all characters are learned
+            bool allCharsLearned = true;
+            for (int i = 0; i < card.length; i++) {
+              if (!allLearnedChars.contains(card[i])) {
+                allCharsLearned = false;
+                break;
+              }
+            }
+            cardIsLearned = allCharsLearned;
+          }
+        }
+        
+        if (cardIsLearned && !addedItems.contains(card)) {
+          practiceItems.add(card);
+          addedItems.add(card);
+          print('Adding card: "$card" from set: $setName');
+        }
+      }
+      
+      // If still no cards found, just use all learned items directly
+      if (practiceItems.isEmpty) {
+        print('No cards found in sets, using learned items directly');
+        practiceItems.addAll(allLearnedWords);
+        
+        // Add learned characters that aren't part of words
+        for (final char in allLearnedChars) {
+          bool isPartOfWord = false;
+          for (final word in allLearnedWords) {
+            if (word.contains(char)) {
+              isPartOfWord = true;
+              break;
+            }
+          }
+          if (!isPartOfWord && !practiceItems.contains(char)) {
+            practiceItems.add(char);
+          }
+        }
       }
     }
     

@@ -726,7 +726,6 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     final scaffold = Scaffold(
       appBar: AppBar(
         title: _buildAppBarTitle(),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         leading: widget.characterSet == 'Tutorial' ? null : IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -789,6 +788,11 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                   if (widget.isWord && _wordCharacters.length > 1) ...[
                     // For multi-character words, show pronunciation above progress boxes
                     _buildWordPronunciation(),
+                    // Progress boxes for multi-character words
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: _buildWordProgressBoxes(),
+                    ),
                   ] else ...[
                     // For single characters, show pronunciation and definition
                     Padding(
@@ -796,11 +800,6 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                       child: _buildCharacterInfoSection(),
                     ),
                   ],
-                  // Always show progress boxes
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: _buildWordProgressBoxes(),
-                  ),
                   
                   // Drawing area (square) with all buttons right below
                   Flexible(
@@ -2539,9 +2538,79 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     );
   }
   
+  Widget _buildSingleCharacterProgressBox() {
+    // Single box for single character practice
+    final showCharacter = _showSuccess || _showHintPath;
+    final wasCorrect = !_usedHint;
+    
+    return Container(
+      alignment: Alignment.center,
+      child: Container(
+        width: 60,
+        height: 60,
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: _showSuccess
+                ? (wasCorrect
+                    ? (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                        ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                        : Theme.of(context).colorScheme.primary)
+                    : (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                        ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.6)
+                        : Theme.of(context).colorScheme.error))
+                : Theme.of(context).colorScheme.primary,
+            width: _showSuccess ? 1.5 : 3,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          color: _showSuccess
+              ? (wasCorrect
+                  ? (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                      ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.1)
+                      : Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3))
+                  : (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                      ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.05)
+                      : Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.5)))
+              : (_showHintPath
+                  ? (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                      ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.05)
+                      : Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.2))
+                  : null),
+        ),
+        child: Center(
+          child: showCharacter
+              ? Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Text(
+                      currentCharacter,
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: _showHintPath && !_showSuccess
+                            ? (_hintColor ?? Theme.of(context).colorScheme.primary)
+                            : null,
+                      ),
+                    ),
+                  ],
+                )
+              : Text(
+                  '_',
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
+                  ),
+                ),
+        ),
+      ),
+    );
+  }
+  
   Widget _buildWordProgressBoxes() {
-    // Show progress boxes for both single and multi-character practice
-    final characterList = widget.isWord ? _wordCharacters : [currentCharacter];
+    // Show progress boxes for multi-character practice only
+    if (!widget.isWord || _wordCharacters.length <= 1) return const SizedBox.shrink();
+    
+    final characterList = _wordCharacters;
     if (characterList.isEmpty) return const SizedBox.shrink();
     
     // Calculate responsive sizes based on character count
@@ -2639,18 +2708,6 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                             : null,
                       ),
                     ),
-                    if (isCompletedBox && wasCorrect && boxCount == 1)
-                      Positioned(
-                        right: 2,
-                        bottom: 2,
-                        child: Icon(
-                          Icons.check_circle,
-                          size: 16,
-                          color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                              ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
-                              : Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
                   ],
                 )
               : Text(

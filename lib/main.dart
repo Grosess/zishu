@@ -1250,6 +1250,16 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                 );
               },
             ),
+            Divider(
+              color: () {
+                final duotone = Theme.of(context).extension<DuotoneThemeExtension>();
+                if (duotone?.isDuotoneTheme == true && duotone?.duotoneColor2 != null) {
+                  return duotone!.duotoneColor2!.withValues(alpha: 0.2);
+                }
+                return Theme.of(context).colorScheme.outline.withValues(alpha: 0.2);
+              }(),
+              height: 1,
+            ),
             ListTile(
               leading: const Icon(Icons.backup),
               title: const Text('Data Backup'),
@@ -1303,6 +1313,16 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                   setState(() {});
                 }
               },
+            ),
+            Divider(
+              color: () {
+                final duotone = Theme.of(context).extension<DuotoneThemeExtension>();
+                if (duotone?.isDuotoneTheme == true && duotone?.duotoneColor2 != null) {
+                  return duotone!.duotoneColor2!.withValues(alpha: 0.2);
+                }
+                return Theme.of(context).colorScheme.outline.withValues(alpha: 0.2);
+              }(),
+              height: 1,
             ),
             ListTile(
               leading: const Icon(Icons.feedback_outlined),
