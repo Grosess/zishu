@@ -789,11 +789,6 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                   if (widget.isWord && _wordCharacters.length > 1) ...[
                     // For multi-character words, show pronunciation above progress boxes
                     _buildWordPronunciation(),
-                    // Progress boxes
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: _buildWordProgressBoxes(),
-                    ),
                   ] else ...[
                     // For single characters, show pronunciation and definition
                     Padding(
@@ -801,6 +796,11 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                       child: _buildCharacterInfoSection(),
                     ),
                   ],
+                  // Always show progress boxes
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _buildWordProgressBoxes(),
+                  ),
                   
                   // Drawing area (square) with all buttons right below
                   Flexible(
@@ -811,7 +811,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                         AspectRatio(
                           aspectRatio: 1.0, // Force square
                           child: Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                       ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1! // Use background color
@@ -1476,6 +1476,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         // Show hint automatically after 3 wrong attempts on the same stroke
         if (_wrongAttempts[nextIndex] >= 3) {
           _showHintPath = true;
+          _usedHint = true; // Mark as used hint for auto-grading
         }
         
         // Removed snackbar notification to prevent render overflow
@@ -1569,8 +1570,10 @@ class _WritingPracticePageState extends State<WritingPracticePage>
             // Track the result for this character
             _wordCharacterResults[_currentWordCharacterIndex] = wasCorrect;
             
-            // Increment practice count each time we complete any character
-            _practiceCount++;
+            // Only increment practice count when we complete the entire word (going back to first character)
+            if (nextCharacterIndex == 0) {
+              _practiceCount++;
+            }
             
             setState(() {
               _currentWordCharacterIndex = nextCharacterIndex;
@@ -2537,84 +2540,168 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   }
   
   Widget _buildWordProgressBoxes() {
-    // Just the progress boxes for multi-character words
-    if (_wordCharacters.length <= 1) return const SizedBox.shrink();
+    // Show progress boxes for both single and multi-character practice
+    final characterList = widget.isWord ? _wordCharacters : [currentCharacter];
+    if (characterList.isEmpty) return const SizedBox.shrink();
     
-    // Calculate responsive sizes based on word length
+    // Calculate responsive sizes based on character count
     final screenWidth = MediaQuery.of(context).size.width;
     final availableWidth = screenWidth - 32; // Account for container padding
-    final boxCount = _wordCharacters.length;
+    final boxCount = characterList.length;
     
-    // Fixed sizing - boxes don't scale with text
-    double horizontalMargin = 3;
-    double horizontalPadding = 8;
-    double boxWidth = 40;
+    // Dynamic sizing based on character count
+    double boxSize;
+    double horizontalMargin;
+    double fontSize;
+    bool shouldStack = false;
     
-    // Check if we need scrolling
-    final totalWidth = boxCount * (boxWidth + (horizontalMargin * 2));
-    final needsScroll = totalWidth > availableWidth;
+    if (boxCount == 1) {
+      boxSize = 60;
+      horizontalMargin = 0;
+      fontSize = 32;
+    } else if (boxCount <= 4) {
+      // Calculate box size to fit all boxes with margins
+      final maxBoxSize = 60.0;
+      final minBoxSize = 45.0;
+      final totalMargins = (boxCount - 1) * 8 + 32; // margins between boxes + padding
+      final availableForBoxes = availableWidth - totalMargins;
+      boxSize = (availableForBoxes / boxCount).clamp(minBoxSize, maxBoxSize);
+      horizontalMargin = 4;
+      fontSize = boxSize * 0.5;
+    } else if (boxCount <= 6) {
+      boxSize = 45;
+      horizontalMargin = 3;
+      fontSize = 22;
+    } else {
+      // For 7-8 characters, use 4x4 stacking
+      shouldStack = true;
+      boxSize = 50;
+      horizontalMargin = 4;
+      fontSize = 24;
+    }
     
-    return Container(
-      alignment: Alignment.center,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
+    Widget buildBox(int index) {
+      final isCurrentBox = index == _currentWordCharacterIndex;
+      final isCompletedBox = widget.isWord 
+          ? (index < _currentWordCharacterIndex || (index == _currentWordCharacterIndex && _showSuccess))
+          : _showSuccess;
+      final wasCorrect = widget.isWord 
+          ? (_wordCharacterResults[index] ?? true)  // Default to true for learning mode
+          : !_usedHint;
+      final showCharacter = isCompletedBox || (_showHintPath && isCurrentBox);
+      
+      return Container(
+        margin: EdgeInsets.symmetric(horizontal: horizontalMargin),
+        width: boxSize,
+        height: boxSize,
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: isCurrentBox && !_showSuccess
+                ? Theme.of(context).colorScheme.primary
+                : isCompletedBox
+                    ? (wasCorrect
+                        ? (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                            ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                            : Theme.of(context).colorScheme.primary)
+                        : (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                            ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.6)
+                            : Theme.of(context).colorScheme.error))
+                    : Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+            width: (isCurrentBox && !_showSuccess) ? 3 : 1.5,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          color: isCompletedBox
+              ? (wasCorrect
+                  ? (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                      ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.1)
+                      : Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3))
+                  : (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                      ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.05)
+                      : Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.5)))
+              : (_showHintPath && isCurrentBox)
+                  ? (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                      ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.05)
+                      : Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.2))
+                  : null,
+        ),
+        child: Center(
+          child: showCharacter
+              ? Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Text(
+                      characterList[index],
+                      style: TextStyle(
+                        fontSize: fontSize,
+                        fontWeight: isCurrentBox ? FontWeight.bold : FontWeight.normal,
+                        color: (_showHintPath && isCurrentBox && !isCompletedBox)
+                            ? (_hintColor ?? Theme.of(context).colorScheme.primary)
+                            : null,
+                      ),
+                    ),
+                    if (isCompletedBox && wasCorrect && boxCount == 1)
+                      Positioned(
+                        right: 2,
+                        bottom: 2,
+                        child: Icon(
+                          Icons.check_circle,
+                          size: 16,
+                          color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                              ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                              : Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                  ],
+                )
+              : Text(
+                  '_',
+                  style: TextStyle(
+                    fontSize: fontSize,
+                    fontWeight: isCurrentBox ? FontWeight.bold : FontWeight.normal,
+                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
+                  ),
+                ),
+        ),
+      );
+    }
+    
+    if (shouldStack && boxCount > 4) {
+      // Stack layout for 7-8 characters
+      final firstRowCount = (boxCount + 1) ~/ 2; // Round up for first row
+      final secondRowCount = boxCount - firstRowCount;
+      
+      return Container(
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: List.generate(firstRowCount, (i) => buildBox(i)),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: List.generate(secondRowCount, (i) => buildBox(firstRowCount + i)),
+            ),
+          ],
+        ),
+      );
+    } else {
+      // Single row layout
+      return Container(
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
-          children: List.generate(_wordCharacters.length, (index) {
-            return Container(
-              margin: EdgeInsets.symmetric(horizontal: horizontalMargin),
-              padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
-              width: boxWidth,
-              height: 40,
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: index == _currentWordCharacterIndex && !_showSuccess
-                    ? Theme.of(context).colorScheme.primary
-                    : (index < _currentWordCharacterIndex || 
-                       (index == _currentWordCharacterIndex && _showSuccess))
-                        ? (widget.mode == PracticeMode.learning || _wordCharacterResults[index] == true 
-                            ? (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                                ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
-                                : Theme.of(context).colorScheme.primary)
-                            : (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                                ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.6)
-                                : Theme.of(context).colorScheme.error))
-                        : Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
-                width: (index == _currentWordCharacterIndex && !_showSuccess) ? 3 : 1.5,
-              ),
-              borderRadius: BorderRadius.circular(12),
-              color: (index < _currentWordCharacterIndex || 
-                      (index == _currentWordCharacterIndex && _showSuccess))
-                  ? (widget.mode == PracticeMode.learning || _wordCharacterResults[index] == true 
-                      ? (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                          ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.1)
-                          : Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3))
-                      : (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                          ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.05)
-                          : Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.5)))
-                  : null,
-            ),
-            child: Center(
-              child: Text(
-                (index < _currentWordCharacterIndex || 
-                 (index == _currentWordCharacterIndex && _showSuccess)) 
-                    ? _wordCharacters[index] 
-                    : '_',
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: index == _currentWordCharacterIndex
-                      ? FontWeight.bold
-                      : FontWeight.normal,
-                ),
-              ),
-            ),
-          );
-        }),
+          children: List.generate(boxCount, buildBox),
         ),
-      ),
-    );
+      );
+    }
   }
   
   /// Build pinyin from individual characters when phrase has no pinyin
@@ -3366,7 +3453,12 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       title = 'Endless (${widget.endlessPracticeCount ?? 1}/∞)';
     } else if (widget.allCharacters != null && widget.allCharacters!.length > 1) {
       // Add progress for regular sets
-      title = '$title (${_currentCharacterIndex + 1}/${widget.allCharacters!.length})';
+      // For words, show the word count, not the character count
+      if (widget.isWord) {
+        title = '$title (${_currentCharacterIndex + 1}/${widget.allCharacters!.length})';
+      } else {
+        title = '$title (${_currentCharacterIndex + 1}/${widget.allCharacters!.length})';
+      }
     }
     
     return Text(

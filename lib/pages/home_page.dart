@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import 'dart:math' show Random;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/statistics_service.dart';
 import '../services/local_storage_service.dart';
@@ -319,10 +320,125 @@ class HomePageState extends State<HomePage> with RouteAware {
     _learningService.clearCache();
     _statsService.clearCache();
     
-    // Force refresh ALL learned items from database
+    // Get all character sets to find the original items
+    final characterSetManager = CharacterSetManager();
+    await characterSetManager.loadPredefinedSets();
+    final allSets = characterSetManager.getAllSets();
+    
+    // Get learned characters and words
     final learnedCharacters = await _statsService.getLearnedCharacters();
+    final learningChars = await _learningService.getLearnedCharacters();
+    final allLearnedChars = {...learnedCharacters, ...learningChars};
+    
     final learnedWords = await _statsService.getLearnedWords();
-    _allLearnedItems = [...learnedCharacters, ...learnedWords];
+    final learningWords = await _learningService.getLearnedWords();
+    final allLearnedWords = {...learnedWords, ...learningWords};
+    
+    // Build a map of all items from all sets with their set names
+    final allSetItems = <String, MapEntry<String, bool>>{}; // item -> (setName, isFromWordSet)
+    final setProgressMap = <String, double>{}; // setName -> progress
+    
+    // Calculate progress for each set
+    for (final set in allSets) {
+      final progress = await _learningService.getSetProgress(set.characters);
+      setProgressMap[set.name] = progress;
+      
+      for (final item in set.characters) {
+        allSetItems[item] = MapEntry(set.name, set.isWordSet || item.length > 1);
+      }
+    }
+    
+    // Debug: Print all set progress
+    print('Set progress map:');
+    for (final entry in setProgressMap.entries) {
+      print('  ${entry.key}: ${(entry.value * 100).toStringAsFixed(1)}%');
+    }
+    
+    // For HSK sets, only include completed sets and the highest incomplete one
+    final hskSets = ['HSK 1', 'HSK 2', 'HSK 3', 'HSK 4', 'HSK 5', 'HSK 6'];
+    final allowedSets = <String>{};
+    String? highestIncompleteHSK;
+    
+    for (final hskSet in hskSets) {
+      final progress = setProgressMap[hskSet] ?? 0.0;
+      if (progress >= 1.0) {
+        // Set is completed, include it
+        allowedSets.add(hskSet);
+        print('Adding completed HSK set: $hskSet');
+      } else if (progress > 0 && highestIncompleteHSK == null) {
+        // This is the highest incomplete HSK set with progress
+        highestIncompleteHSK = hskSet;
+        allowedSets.add(hskSet);
+        print('Adding incomplete HSK set: $hskSet (${(progress * 100).toStringAsFixed(1)}%)');
+      }
+    }
+    
+    // Include all non-HSK sets that have any progress
+    for (final entry in setProgressMap.entries) {
+      if (!hskSets.contains(entry.key) && entry.value > 0) {
+        allowedSets.add(entry.key);
+        print('Adding non-HSK set: ${entry.key} (${(entry.value * 100).toStringAsFixed(1)}%)');
+      }
+    }
+    
+    print('Allowed sets for endless practice: $allowedSets');
+    print('All learned characters: ${allLearnedChars.take(10).toList()}...');
+    print('All learned words: ${allLearnedWords.take(10).toList()}...');
+    
+    // Collect items for endless practice
+    final practiceItems = <String>[];
+    
+    // Always include all learned words
+    practiceItems.addAll(allLearnedWords);
+    
+    // For single characters, try to reconstruct multi-character items
+    final processedChars = <String>{};
+    
+    for (final char in allLearnedChars) {
+      if (processedChars.contains(char)) continue;
+      
+      // Check if this character is part of any multi-character item in sets
+      bool addedAsPartOfWord = false;
+      
+      for (final entry in allSetItems.entries) {
+        final item = entry.key;
+        final setName = entry.value.key;
+        
+        // Skip if not from an allowed set (unless no sets are allowed)
+        if (allowedSets.isNotEmpty && !allowedSets.contains(setName)) continue;
+        
+        // If this is a multi-character item containing our character
+        if (item.length > 1 && item.contains(char)) {
+          // Check if all characters of this item are learned
+          bool allCharsLearned = true;
+          for (int i = 0; i < item.length; i++) {
+            if (!allLearnedChars.contains(item[i])) {
+              allCharsLearned = false;
+              break;
+            }
+          }
+          
+          if (allCharsLearned && !practiceItems.contains(item)) {
+            practiceItems.add(item);
+            // Mark all characters as processed
+            for (int i = 0; i < item.length; i++) {
+              processedChars.add(item[i]);
+            }
+            addedAsPartOfWord = true;
+          }
+        }
+      }
+      
+      // If not added as part of a word, add as single character
+      if (!addedAsPartOfWord && !practiceItems.contains(char)) {
+        practiceItems.add(char);
+      }
+    }
+    
+    _allLearnedItems = practiceItems;
+    
+    print('Starting endless practice with ${_allLearnedItems.length} items');
+    print('Sample items: ${_allLearnedItems.take(20).join(", ")}');
     
     // Close loading dialog
     if (mounted) {
@@ -365,12 +481,12 @@ class HomePageState extends State<HomePage> with RouteAware {
       return;
     }
     
-    // Don't pass items, let EndlessPracticePage fetch fresh data
+    // Pass the learned items to EndlessPracticePage
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => EndlessPracticePage(
-          items: [], // Empty list to force fresh data fetch
+          items: _allLearnedItems, // Pass the actual learned items
           onNavigateToTab: widget.onNavigateToTab,
         ),
       ),
@@ -2139,6 +2255,7 @@ class _EndlessPracticePageState extends State<EndlessPracticePage> {
   final CharacterDictionary _dictionary = CharacterDictionary();
   final StatisticsService _statsService = StatisticsService();
   final LearningService _learningService = LearningService();
+  final CharacterDatabase _characterDatabase = CharacterDatabase();
   
   List<String> _practiceQueue = [];
   final List<String> _reviewQueue = [];
@@ -2157,32 +2274,58 @@ class _EndlessPracticePageState extends State<EndlessPracticePage> {
   void initState() {
     super.initState();
     _sessionStartTime = DateTime.now();
-    _initializeQueue();
+    // Initialize with passed items immediately if available
+    if (widget.items.isNotEmpty) {
+      _practiceQueue = List.from(widget.items);
+      
+      // Debug: Show items before shuffle
+      print('EndlessPracticePage - Before shuffle: ${_practiceQueue.take(10).join(", ")}');
+      
+      // Use a more random seed combining multiple factors
+      final now = DateTime.now();
+      final seed = now.millisecondsSinceEpoch ^ 
+                   now.microsecond ^ 
+                   (now.second * 1000) ^ 
+                   _practiceQueue.length.hashCode;
+      _practiceQueue.shuffle(math.Random(seed));
+      
+      print('EndlessPracticePage - Initialized with ${_practiceQueue.length} items from widget in initState');
+      print('EndlessPracticePage - After shuffle: ${_practiceQueue.take(10).join(", ")}');
+      print('EndlessPracticePage - Seed used: $seed');
+    }
+    _initializeDatabase();
+  }
+  
+  Future<void> _initializeDatabase() async {
+    await _characterDatabase.initialize();
+    // Only fetch from database if we don't have items
+    if (_practiceQueue.isEmpty) {
+      await _initializeQueue();
+    }
   }
 
-  void _initializeQueue() async {
-    // Always get fresh data from database
-    await _refreshLearnedItems();
+  Future<void> _initializeQueue() async {
+    print('EndlessPracticePage - _initializeQueue called');
     
-    // Initialize _currentIndex to 0 only on first load
-    if (_currentIndex == 0 && _practiceQueue.isNotEmpty) {
-      // Start from beginning
-      setState(() {
-        _practiceQueue.shuffle();
-      });
+    // If items were already set in initState, we're done
+    if (_practiceQueue.isNotEmpty) {
+      print('EndlessPracticePage - Queue already has ${_practiceQueue.length} items, skipping');
+      return;
     }
     
+    // Otherwise get fresh data from database
+    print('EndlessPracticePage - Fetching from database');
+    await _refreshLearnedItems();
+    
     // If still empty after refresh, show error message
-    if (_practiceQueue.isEmpty) {
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No learned items found. Please learn some characters first!'),
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
+    if (_practiceQueue.isEmpty && mounted) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No learned items found. Please learn some characters first!'),
+          duration: Duration(seconds: 3),
+        ),
+      );
     }
   }
   
@@ -2198,34 +2341,65 @@ class _EndlessPracticePageState extends State<EndlessPracticePage> {
       _learningService.clearCache();
       _statsService.clearCache();
       
-      // Get ALL learned items from database
+      // Get ALL learned items from both services to ensure we don't miss anything
       final learnedCharacters = await _statsService.getLearnedCharacters();
       final learnedWords = await _statsService.getLearnedWords();
-      final allLearned = [...learnedCharacters, ...learnedWords];
       
-      // Debug: Learned characters: ${learnedCharacters.length}
-      // Debug: Learned words: ${learnedWords.length}
-      // Debug: Check if 一切 is in learned words
+      // Also check learning service
+      final learningServiceChars = await _learningService.getLearnedCharacters();
+      final learningServiceWords = await _learningService.getLearnedWords();
+      
+      // Combine all sources
+      final allCharacters = {...learnedCharacters, ...learningServiceChars}.toList();
+      final allWords = {...learnedWords, ...learningServiceWords}.toList();
+      
+      print('Endless Practice - StatisticsService characters: ${learnedCharacters.length}');
+      print('Endless Practice - StatisticsService words: ${learnedWords.length}');
+      print('Endless Practice - LearningService characters: ${learningServiceChars.length}');
+      print('Endless Practice - LearningService words: ${learningServiceWords.length}');
+      print('Endless Practice - Total unique characters: ${allCharacters.length}');
+      print('Endless Practice - Total unique words: ${allWords.length}');
+      
+      // Combine all items for practice
+      final allItems = [...allCharacters, ...allWords];
       
       // Filter valid items
-      final validItems = allLearned.where((item) {
-        if (item.isEmpty) return false;
-        if (item.length == 1) return true;
-        return _dictionary.isMultiCharacterItem(item);
-      }).toList();
+      final validItems = allItems.where((item) => item.isNotEmpty).toList();
+      
+      print('Endless Practice - Valid items: ${validItems.length}');
+      print('Endless Practice - Sample items: ${validItems.take(5).toList()}');
       
       // Always rebuild the entire queue with fresh data
       setState(() {
-        _practiceQueue = List.from(validItems)..shuffle();
+        _practiceQueue = List.from(validItems);
+        // Use the same randomization as in initState
+        final now = DateTime.now();
+        final seed = now.millisecondsSinceEpoch ^ 
+                     now.microsecond ^ 
+                     (now.second * 1000) ^ 
+                     _practiceQueue.length.hashCode;
+        _practiceQueue.shuffle(math.Random(seed));
       });
+    } catch (e) {
+      print('Error refreshing learned items: $e');
     } finally {
       setState(() {
         _isRefreshing = false;
       });
     }
   }
+  
+  bool _isChineseCharacter(String char) {
+    if (char.isEmpty) return false;
+    final codeUnit = char.codeUnitAt(0);
+    return (codeUnit >= 0x4E00 && codeUnit <= 0x9FFF) ||
+           (codeUnit >= 0x3400 && codeUnit <= 0x4DBF);
+  }
 
   void _handlePracticeComplete(bool success) {
+    // Ensure practice queue is not empty
+    if (_practiceQueue.isEmpty) return;
+    
     // Calculate actual queue position (for looping)
     final queueIndex = _currentIndex % _practiceQueue.length;
     final currentItem = _practiceQueue[queueIndex];
@@ -2251,12 +2425,14 @@ class _EndlessPracticePageState extends State<EndlessPracticePage> {
       if (!_recentlyReviewed.contains(currentItem)) {
         _recentlyReviewed.add(currentItem);
         
-        // Add back to queue after 6-9 items for better spaced repetition
-        final reviewPosition = _currentIndex + 6 + (DateTime.now().millisecondsSinceEpoch % 4);
+        // Add back to queue after 10 items
+        final reviewPosition = _currentIndex + 10;
         
-        if (reviewPosition < _practiceQueue.length) {
-          // Insert at the calculated position
-          _practiceQueue.insert(reviewPosition, currentItem);
+        // Calculate the actual insertion position considering the current queue size
+        if (reviewPosition - _currentIndex < _practiceQueue.length) {
+          // Insert at the calculated position relative to current position
+          final insertIndex = (reviewPosition % _practiceQueue.length);
+          _practiceQueue.insert(insertIndex, currentItem);
         } else {
           // Add to review queue to be inserted later
           if (!_reviewQueue.contains(currentItem)) {
@@ -2271,7 +2447,7 @@ class _EndlessPracticePageState extends State<EndlessPracticePage> {
       _currentIndex++;
       
       // Check if we need to loop or add review items
-      if (_currentIndex >= _practiceQueue.length) {
+      if (_currentIndex >= _practiceQueue.length && _practiceQueue.isNotEmpty) {
         if (_reviewQueue.isNotEmpty) {
           // Add review items and continue
           _practiceQueue.addAll(_reviewQueue);
@@ -2281,8 +2457,13 @@ class _EndlessPracticePageState extends State<EndlessPracticePage> {
           _refreshLearnedItems().then((_) {
             if (mounted) {
               setState(() {
-                // Shuffle the refreshed queue
-                _practiceQueue.shuffle();
+                // Shuffle the refreshed queue with better randomization
+                final now = DateTime.now();
+                final seed = now.millisecondsSinceEpoch ^ 
+                             now.microsecond ^ 
+                             (now.second * 1000) ^ 
+                             _practiceQueue.length.hashCode;
+                _practiceQueue.shuffle(math.Random(seed));
                 // Clear recently reviewed set for next round
                 _recentlyReviewed.clear();
               });
@@ -2458,7 +2639,14 @@ class _EndlessPracticePageState extends State<EndlessPracticePage> {
     Navigator.of(context).pop();
     setState(() {
       // Create new queue with only incorrect items
-      _practiceQueue = List.from(_incorrectItems)..shuffle();
+      _practiceQueue = List.from(_incorrectItems);
+      // Use better randomization
+      final now = DateTime.now();
+      final seed = now.millisecondsSinceEpoch ^ 
+                   now.microsecond ^ 
+                   (now.second * 1000) ^ 
+                   _practiceQueue.length.hashCode;
+      _practiceQueue.shuffle(math.Random(seed));
       // Keep _currentIndex to preserve continuous count
       _incorrectItems.clear();
       _itemResults.clear();
@@ -2560,8 +2748,8 @@ class _EndlessPracticePageState extends State<EndlessPracticePage> {
 
   @override
   Widget build(BuildContext context) {
-    // Show loading while refreshing
-    if (_isRefreshing && _practiceQueue.isEmpty) {
+    // Show loading while initializing
+    if (_practiceQueue.isEmpty && (_isRefreshing || widget.items.isNotEmpty)) {
       return const Scaffold(
         body: Center(
           child: CircularProgressIndicator(),
@@ -2569,32 +2757,14 @@ class _EndlessPracticePageState extends State<EndlessPracticePage> {
       );
     }
     
-    // Handle empty queue
+    // Handle empty queue after initialization
     if (_practiceQueue.isEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No valid characters found for practice'),
-          ),
-        );
-      });
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-    
-    // Handle empty queue
-    if (_practiceQueue.isEmpty) {
-      // Try to refresh once more
-      _refreshLearnedItems().then((_) {
-        if (_practiceQueue.isEmpty && mounted) {
+        if (mounted) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('No learned items found for practice'),
+              content: Text('No valid characters found for practice'),
             ),
           );
         }

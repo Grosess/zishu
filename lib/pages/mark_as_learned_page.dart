@@ -567,7 +567,9 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
                             contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                           ),
                         ),
-                        const PopupMenuDivider(),
+                        PopupMenuDivider(
+                          height: 1,
+                        ),
                         PopupMenuItem<String>(
                           value: 'skritter',
                           child: ListTile(

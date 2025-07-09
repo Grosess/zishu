@@ -306,7 +306,7 @@ class StrokeValidator {
     List<Offset> userStroke,
     List<List<double>> medianPoints,
     Size canvasSize,
-    {double tolerance = 0.45, bool isMultiDirectional = false}  // Strict tolerance
+    {double tolerance = 0.50, bool isMultiDirectional = false}  // More lenient tolerance
   ) {
     
     if (userStroke.length < 2 || medianPoints.length < 2) {
@@ -564,7 +564,7 @@ class StrokeValidator {
           if (medianIdx < medianPoints.length && userIdx < userStroke.length) {
             // Check that user stroke point is near the corresponding median point
             final dist = (userStroke[userIdx] - medianPoints[medianIdx]).distance;
-            if (dist > tolerance * 0.8) { // More lenient distance check for curve following
+            if (dist > tolerance * 1.2) { // Much more lenient for hooks and curves
               return false;
             }
           }
@@ -589,7 +589,7 @@ class StrokeValidator {
           maxAngleChange = 1.0 - dot; // Convert to angle measure
           
           // For hooks and curves, we need significant angle change
-          if (maxAngleChange > 0.3) { // About 35 degrees minimum
+          if (maxAngleChange > 0.2) { // About 25 degrees minimum - more lenient
             userHasDirectionChange = true;
           }
         }

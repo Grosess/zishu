@@ -751,7 +751,7 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
     final isDuotone = Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true;
     
     return Container(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
         color: isDuotone 
           ? Theme.of(context).colorScheme.surface
@@ -786,7 +786,6 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
                 ),
             ],
           ),
-          const SizedBox(height: 2),
           // Fraction display
           RichText(
             text: TextSpan(
@@ -794,7 +793,7 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
                 TextSpan(
                   text: current.toString(),
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: isDuotone ? Theme.of(context).colorScheme.primary : color,
                   ),
@@ -802,7 +801,7 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
                 TextSpan(
                   text: ' / $total',
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 14,
                     color: isDuotone 
                       ? Theme.of(context).colorScheme.primary.withOpacity(0.6)
                       : color.withOpacity(0.7),
@@ -811,10 +810,10 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
               ],
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           // Progress bar
           Container(
-            height: 3,
+            height: 4,
             decoration: BoxDecoration(
               color: isDuotone 
                 ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
@@ -830,7 +829,7 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           Text(
             title,
             style: TextStyle(

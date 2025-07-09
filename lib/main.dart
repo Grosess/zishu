@@ -652,6 +652,13 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
           foregroundColor: foregroundColor,
           elevation: 0,
           iconTheme: IconThemeData(color: foregroundColor),
+          systemOverlayStyle: SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+            statusBarBrightness: backgroundColor.computeLuminance() > 0.5 ? Brightness.light : Brightness.dark,
+            systemNavigationBarColor: backgroundColor,
+            systemNavigationBarIconBrightness: backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+          ),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
@@ -749,6 +756,13 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
             color: Colors.grey[800],
             fontSize: 24,
             fontWeight: FontWeight.w600,
+          ),
+          systemOverlayStyle: SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: Brightness.dark,
+            statusBarBrightness: Brightness.light,
+            systemNavigationBarColor: Colors.grey[50],
+            systemNavigationBarIconBrightness: Brightness.dark,
           ),
         ),
       );

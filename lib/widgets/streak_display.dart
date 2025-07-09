@@ -103,6 +103,7 @@ class _StreakDisplayState extends State<StreakDisplay> {
     
     // Full display for progress page
     return Card(
+      margin: EdgeInsets.zero, // Remove default Card margin
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
