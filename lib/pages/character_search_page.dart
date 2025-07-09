@@ -398,6 +398,21 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
     }
   }
   
+  Brightness _getKeyboardAppearance(BuildContext context) {
+    final isDuotone = Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true;
+    
+    if (isDuotone) {
+      // For duotone themes, check if background is dark
+      final duotoneExt = Theme.of(context).extension<DuotoneThemeExtension>()!;
+      final backgroundColor = duotoneExt.duotoneColor1!;
+      final isLightBackground = backgroundColor.computeLuminance() > 0.5;
+      return isLightBackground ? Brightness.light : Brightness.dark;
+    } else {
+      // For regular themes, use the theme brightness
+      return Theme.of(context).brightness;
+    }
+  }
+  
   @override
   Widget build(BuildContext context) {
     final isDuotone = Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true;
@@ -417,6 +432,7 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
               children: [
                 TextField(
                   controller: _searchController,
+                  keyboardAppearance: _getKeyboardAppearance(context),
                   decoration: InputDecoration(
                     hintText: 'Search by pinyin, Chinese, or English',
                     prefixIcon: const Icon(Icons.search),
@@ -616,7 +632,7 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
                           children: [
                             // Top row with character and action button
                             Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 // Character display
                                 Container(
@@ -630,7 +646,8 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
                                   child: Text(
                                     entry.simplified,
                                     style: TextStyle(
-                                      fontSize: entry.simplified.length <= 2 ? 24 : 
+                                      fontSize: entry.simplified.length == 1 ? 32 :
+                                               entry.simplified.length == 2 ? 24 : 
                                                entry.simplified.length <= 4 ? 16 : 
                                                entry.simplified.length <= 6 ? 12 : 10,
                                       fontWeight: FontWeight.w500,
@@ -686,26 +703,24 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
                                     ],
                                   ),
                                 ),
-                                // Action button
+                                // Action button with ripple effect
                                 Container(
                                   margin: const EdgeInsets.only(left: 8),
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.5),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: IconButton(
-                                    icon: Icon(
-                                      isLearned ? Icons.edit : Icons.school,
-                                      size: 20,
+                                  height: 36,
+                                  width: 36,
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: () => _handleCharacterTap(entry.simplified),
+                                      borderRadius: BorderRadius.circular(18),
+                                      child: Center(
+                                        child: Icon(
+                                          isLearned ? Icons.edit : Icons.school,
+                                          size: 20,
+                                          color: Theme.of(context).colorScheme.primary,
+                                        ),
+                                      ),
                                     ),
-                                    onPressed: () => _handleCharacterTap(entry.simplified),
-                                    tooltip: isLearned ? 'Practice' : 'Learn',
-                                    color: Theme.of(context).colorScheme.primary,
-                                    constraints: const BoxConstraints(
-                                      minWidth: 36,
-                                      minHeight: 36,
-                                    ),
-                                    padding: EdgeInsets.zero,
                                   ),
                                 ),
                               ],

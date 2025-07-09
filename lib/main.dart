@@ -19,7 +19,7 @@ import 'services/streak_service.dart';
 import 'services/learning_service.dart';
 import 'services/haptic_service.dart';
 import 'widgets/streak_display.dart';
-import 'pages/feedback_form_page.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // Theme extension for duotone themes
 class DuotoneThemeExtension extends ThemeExtension<DuotoneThemeExtension> {
@@ -405,7 +405,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       case 'lightpink':
         return const Color(0xFFFFC1CC); // Light pink
       case 'hotpink':
-        return const Color(0xFFFF69B4); // Hot pink
+        return const Color(0xFFFF1493); // True hot pink (DeepPink)
       case 'black':
         return Colors.black;
       case 'white':
@@ -423,7 +423,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     if (color == Colors.orange) return 'orange';
     if (color == const Color(0xFF037A76)) return 'teal';
     if (color == const Color(0xFFFFC1CC)) return 'lightpink';
-    if (color == const Color(0xFFFF69B4)) return 'hotpink';
+    if (color == const Color(0xFFFF1493)) return 'hotpink';
     if (color == Colors.black) return 'black';
     if (color == Colors.white) return 'white';
     return 'blue';
@@ -459,7 +459,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         backgroundColor = const Color(0xFFFFC1CC); // Light pink
         break;
       case 'hotpink':
-        backgroundColor = const Color(0xFFFF69B4); // Hot pink
+        backgroundColor = const Color(0xFFFF1493); // True hot pink (DeepPink)
         break;
       case 'gold':
         backgroundColor = const Color(0xFFFF8F00);
@@ -510,8 +510,8 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       case 'hotpink':
         // Hot pink - use different shades for contrast
         foregroundColor = (background == 'black' || background == 'hotpink' || background == 'purple') 
-          ? const Color(0xFFFF69B4) // Standard hot pink for dark backgrounds
-          : const Color(0xFFFF1493); // Deep pink for white background
+          ? const Color(0xFFFF69B4) // Lighter hot pink for dark backgrounds
+          : const Color(0xFFFF1493); // True hot pink (DeepPink) for white background
         break;
       case 'gold':
         foregroundColor = (background == 'black' || background == 'gold') 
@@ -799,8 +799,9 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       themeMode: _themeMode,
       home: MainScreen(key: mainScreenKey),
       builder: (context, child) {
-        // Determine status bar style based on theme
+        // Determine status bar style and keyboard appearance based on theme
         SystemUiOverlayStyle statusBarStyle;
+        Brightness keyboardAppearance;
         
         if (_isDuotoneTheme) {
           // For duotone themes, check if background is light or dark
@@ -813,10 +814,12 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
             statusBarIconBrightness: isLightBackground ? Brightness.dark : Brightness.light,
             statusBarBrightness: isLightBackground ? Brightness.light : Brightness.dark,
           );
+          keyboardAppearance = isLightBackground ? Brightness.light : Brightness.dark;
         } else if (_themeMode == ThemeMode.dark || 
                    (_themeMode == ThemeMode.system && MediaQuery.of(context).platformBrightness == Brightness.dark)) {
           // Dark theme or system dark mode
           statusBarStyle = SystemUiOverlayStyle.light;
+          keyboardAppearance = Brightness.dark;
         } else {
           // Light theme or system light mode
           final accentColorName = _getColorName(_accentColor);
@@ -830,11 +833,44 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
             // Other colors - use default dark status bar for light theme
             statusBarStyle = SystemUiOverlayStyle.dark;
           }
+          keyboardAppearance = Brightness.light;
         }
         
-        return AnnotatedRegion<SystemUiOverlayStyle>(
-          value: statusBarStyle,
-          child: child!,
+        // Apply keyboard appearance to all text fields
+        return Theme(
+          data: Theme.of(context).copyWith(
+            textSelectionTheme: TextSelectionThemeData(
+              cursorColor: Theme.of(context).colorScheme.primary,
+              selectionColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+              selectionHandleColor: Theme.of(context).colorScheme.primary,
+            ),
+            inputDecorationTheme: Theme.of(context).inputDecorationTheme.copyWith(
+              // This doesn't directly set keyboard appearance but ensures consistent theming
+            ),
+          ),
+          child: Builder(
+            builder: (context) {
+              // Set the keyboard appearance for all text fields
+              return DefaultTextEditingShortcuts(
+                child: Actions(
+                  actions: <Type, Action<Intent>>{},
+                  child: FocusScope(
+                    child: AnnotatedRegion<SystemUiOverlayStyle>(
+                      value: statusBarStyle.copyWith(
+                        systemNavigationBarColor: _isDuotoneTheme 
+                          ? _getDuotoneColors(_duotoneBackground, _duotoneColor)[0]
+                          : Theme.of(context).scaffoldBackgroundColor,
+                        systemNavigationBarIconBrightness: keyboardAppearance == Brightness.dark 
+                          ? Brightness.light 
+                          : Brightness.dark,
+                      ),
+                      child: child!,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
         );
       },
     );
@@ -1259,14 +1295,11 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
               title: const Text('Give Feedback'),
               onTap: () async {
                 Navigator.pop(context);
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const FeedbackFormPage(),
-                  ),
-                );
-                
-                // Form completed or cancelled, no action needed
+                // Open feedback form in browser
+                final Uri url = Uri.parse('https://docs.google.com/forms/d/e/1FAIpQLSdGjp1NhjeoLslMKkrN0RkfSuqy6_YCDUkt14rqy55Zf4ap3w/viewform');
+                if (await canLaunchUrl(url)) {
+                  await launchUrl(url, mode: LaunchMode.externalApplication);
+                }
               },
             ),
           ],

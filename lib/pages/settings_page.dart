@@ -3,7 +3,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../main.dart';
 import '../services/haptic_service.dart';
-import 'feedback_form_page.dart';
 
 enum StrokeType {
   invisible,
@@ -132,48 +131,6 @@ class _SettingsPageState extends State<SettingsPage> {
   }
   
   void _updateTheme(String mode) async {
-    // Check if trying to switch to duotone
-    if (mode == 'duotone') {
-      // Check if user has completed form or entered code
-      final hasCompletedForm = _prefs.getBool('has_completed_feedback_form') ?? false;
-      final unlockedMoreThemes = _prefs.getBool('unlocked_more_themes') ?? false;
-      
-      if (!hasCompletedForm && !unlockedMoreThemes) {
-        // Show dialog to complete form or enter code
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Unlock Duotone Themes'),
-            content: const Text('Complete our feedback form to unlock duotone themes!'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  Navigator.pop(context);
-                  final result = await Navigator.push<bool>(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const FeedbackFormPage(),
-                    ),
-                  );
-                  
-                  if (result == true && mounted) {
-                    // Form was completed, refresh UI
-                    setState(() {});
-                  }
-                },
-                child: const Text('Complete Form'),
-              ),
-            ],
-          ),
-        );
-        return;
-      }
-    }
-    
     setState(() {
       _themeMode = mode;
     });
@@ -441,57 +398,52 @@ class _SettingsPageState extends State<SettingsPage> {
                       );
                     },
                   ),
-                  // Invert Colors Button (show with lock if not unlocked)
+                  // Invert Colors Button
                   ListTile(
                     title: const Text('Invert Colors'),
                     subtitle: Text('Swap background and foreground colors'),
                     leading: Icon(Icons.swap_vert, color: Theme.of(context).colorScheme.primary),
-                    trailing: (_prefs.getBool('unlocked_more_themes') ?? false)
-                        ? FilledButton.icon(
-                            onPressed: () async {
-                              // Store current colors
-                              final currentBg = _duotoneBackground;
-                              final currentAccent = _duotoneColor;
-                              
-                              // Determine new colors based on swap
-                              String newBackground;
-                              String newAccent;
-                              
-                              // If background is a neutral (black/white), swap with accent
-                              if (currentBg == 'white' || currentBg == 'black') {
-                                newBackground = currentAccent; // accent becomes background
-                                newAccent = currentBg; // background (white/black) becomes accent
-                              } else {
-                                // If background is already a color, swap back
-                                newBackground = currentAccent;
-                                newAccent = currentBg;
-                              }
-                              
-                              setState(() {
-                                _duotoneBackground = newBackground;
-                                _duotoneColor = newAccent;
-                              });
-                              
-                              await _saveStringSetting('duotone_background', newBackground);
-                              await _saveStringSetting('duotone_color', newAccent);
-                              
-                              if (mounted) {
-                                MainApp.of(context)?.updateTheme('duotone', 
-                                  duotoneBackground: newBackground, 
-                                  duotoneColor: newAccent
-                                );
-                              }
-                            },
-                            icon: const Icon(Icons.swap_horiz, size: 18),
-                            label: const Text('Invert'),
-                            style: FilledButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            ),
-                          )
-                        : IconButton(
-                            icon: const Icon(Icons.lock, size: 18),
-                            onPressed: () => _showUnlockDialog(),
-                          ),
+                    trailing: FilledButton.icon(
+                      onPressed: () async {
+                        // Store current colors
+                        final currentBg = _duotoneBackground;
+                        final currentAccent = _duotoneColor;
+                        
+                        // Determine new colors based on swap
+                        String newBackground;
+                        String newAccent;
+                        
+                        // If background is a neutral (black/white), swap with accent
+                        if (currentBg == 'white' || currentBg == 'black') {
+                          newBackground = currentAccent; // accent becomes background
+                          newAccent = currentBg; // background (white/black) becomes accent
+                        } else {
+                          // If background is already a color, swap back
+                          newBackground = currentAccent;
+                          newAccent = currentBg;
+                        }
+                        
+                        setState(() {
+                          _duotoneBackground = newBackground;
+                          _duotoneColor = newAccent;
+                        });
+                        
+                        await _saveStringSetting('duotone_background', newBackground);
+                        await _saveStringSetting('duotone_color', newAccent);
+                        
+                        if (mounted) {
+                          MainApp.of(context)?.updateTheme('duotone', 
+                            duotoneBackground: newBackground, 
+                            duotoneColor: newAccent
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.swap_horiz, size: 18),
+                      label: const Text('Invert'),
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      ),
+                    ),
                   ),
                 ],
                 
@@ -858,7 +810,7 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
   
-  Widget _buildBackgroundOption(String label, String value, {bool isLocked = false}) {
+  Widget _buildBackgroundOption(String label, String value) {
     Color displayColor;
     switch (value) {
       case 'white':
@@ -908,12 +860,8 @@ class _SettingsPageState extends State<SettingsPage> {
       title: Text(label),
       trailing: _duotoneBackground == value 
           ? const Icon(Icons.check) 
-          : isLocked 
-              ? const Icon(Icons.lock, size: 18)
-              : null,
-      onTap: isLocked 
-          ? () => _showUnlockDialog()
-          : () async {
+          : null,
+      onTap: () async {
         // Prevent selecting the same color as accent
         if (value == _duotoneColor) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -941,7 +889,7 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
   
-  Widget _buildDuotoneColorOption(String label, String value, {bool isLocked = false}) {
+  Widget _buildDuotoneColorOption(String label, String value) {
     return ListTile(
       leading: Container(
         width: 24,
@@ -955,12 +903,8 @@ class _SettingsPageState extends State<SettingsPage> {
       title: Text(label),
       trailing: _duotoneColor == value 
           ? const Icon(Icons.check) 
-          : isLocked 
-              ? const Icon(Icons.lock, size: 18)
-              : null,
-      onTap: isLocked 
-          ? () => _showUnlockDialog()
-          : () async {
+          : null,
+      onTap: () async {
         // Prevent selecting the same color as background
         if (value == _duotoneBackground) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -988,101 +932,6 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
   
-  void _submitCode(String code, TextEditingController controller) async {
-    if (code.toLowerCase() == 'moreduo') {
-      await _prefs.setBool('unlocked_more_themes', true);
-      
-      if (mounted) {
-        Navigator.pop(context); // Close dialog
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('All themes unlocked!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        setState(() {}); // Refresh UI
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Invalid code'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      controller.clear();
-    }
-  }
-  
-  void _showUnlockDialog() {
-    final TextEditingController codeController = TextEditingController();
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text('Unlock More Themes'),
-            IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: () => Navigator.pop(context),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Complete our feedback form to get the unlock code!',
-              style: TextStyle(fontSize: 14),
-            ),
-            const SizedBox(height: 16),
-            const Text('Enter unlock code:'),
-            const SizedBox(height: 8),
-            TextField(
-              controller: codeController,
-              decoration: const InputDecoration(
-                hintText: 'Enter code here',
-                border: OutlineInputBorder(),
-              ),
-              autofocus: true,
-              onSubmitted: (code) => _submitCode(code, codeController),
-            ),
-          ],
-        ),
-        actions: [
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () => _submitCode(codeController.text, codeController),
-                  child: const Text('Submit'),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: () async {
-                    Navigator.pop(context);
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const FeedbackFormPage(),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.open_in_new, size: 16),
-                  label: const Text('Open Form'),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
   
   void _validateDuotoneColorsSync() {
     final isBackgroundNeutral = _duotoneBackground == 'white' || _duotoneBackground == 'black';
@@ -1123,8 +972,8 @@ class _SettingsPageState extends State<SettingsPage> {
     
     // Only black and white are valid backgrounds
     options.addAll([
-      _buildBackgroundOption('White', 'white', isLocked: false),
-      _buildBackgroundOption('Black', 'black', isLocked: false),
+      _buildBackgroundOption('White', 'white'),
+      _buildBackgroundOption('Black', 'black'),
     ]);
     
     return options;
@@ -1132,13 +981,10 @@ class _SettingsPageState extends State<SettingsPage> {
   
   List<Widget> _getAccentColorOptions() {
     List<Widget> options = [];
-    final unlockedMoreThemes = _prefs.getBool('unlocked_more_themes') ?? false;
     
-    // Always allow blue (default)
-    options.add(_buildDuotoneColorOption('Blue', 'blue', isLocked: false));
-    
-    // Show all other colors with lock icon if not unlocked
-    final otherColors = [
+    // All colors are now available
+    final allColors = [
+      ['Blue', 'blue'],
       ['Green', 'green'],
       ['Blue Green', 'bluegreen'],
       ['Red', 'red'],
@@ -1148,8 +994,8 @@ class _SettingsPageState extends State<SettingsPage> {
       ['Purple', 'purple'],
     ];
     
-    for (final color in otherColors) {
-      options.add(_buildDuotoneColorOption(color[0], color[1], isLocked: !unlockedMoreThemes));
+    for (final color in allColors) {
+      options.add(_buildDuotoneColorOption(color[0], color[1]));
     }
     
     return options;
