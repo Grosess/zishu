@@ -794,11 +794,8 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                       child: _buildWordProgressBoxes(),
                     ),
                   ] else ...[
-                    // For single characters, show pronunciation and definition
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: _buildCharacterInfoSection(),
-                    ),
+                    // For single characters, show pronunciation and definition only if available
+                    _buildCharacterInfoIfAvailable(),
                   ],
                   
                   // Drawing area (square) with all buttons right below
@@ -2493,7 +2490,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       final cedictEntry = _cedictService.lookup(currentWord);
       if (cedictEntry != null) {
         pinyin = PinyinUtils.convertToneNumbersToMarks(cedictEntry.pinyin);
-        definition = cedictEntry.definition;
+        definition = _formatDefinition(cedictEntry.definition, currentCharacter);
       }
     }
     
@@ -2792,6 +2789,53 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     return pinyinParts.join(' ');
   }
   
+  /// Format definition to include Chinese characters in parentheses
+  String _formatDefinition(String definition, String character) {
+    // Special handling for specific characters that need Chinese in definition
+    if (character == '么') {
+      // Replace "what" with "what (什么)" if it's not already there
+      if (definition.contains('what') && !definition.contains('什么')) {
+        return definition.replaceAll('what', 'what (什么)');
+      }
+    }
+    return definition;
+  }
+  
+  Widget _buildCharacterInfoIfAvailable() {
+    // Quick check if we have any info available
+    String? pinyin;
+    String? definition;
+    
+    // Check CEDICT first
+    if (_cedictService.isLoaded) {
+      final cedictEntry = _cedictService.lookup(currentCharacter);
+      if (cedictEntry != null) {
+        pinyin = PinyinUtils.convertToneNumbersToMarks(cedictEntry.pinyin);
+        definition = _formatDefinition(cedictEntry.definition, currentCharacter);
+      }
+    }
+    
+    // Fall back to dictionary
+    if (pinyin == null || definition == null) {
+      final charInfo = _dictionary.getCharacterInfo(currentCharacter);
+      if (charInfo != null) {
+        pinyin ??= charInfo.pinyin != null ? PinyinUtils.convertToneNumbersToMarks(charInfo.pinyin) : null;
+        definition ??= charInfo.definition != null ? _formatDefinition(charInfo.definition, currentCharacter) : null;
+      }
+    }
+    
+    // If no info available, don't show anything
+    if (pinyin == null && definition == null) {
+      return const SizedBox.shrink();
+    }
+    
+    // Otherwise show the info section
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: _buildCharacterInfoSection(),
+    );
+  }
+  
   Widget _buildCharacterInfoSection() {
     // Try CEDICT first, then fall back to dictionary
     CharacterInfo? charInfo;
@@ -2851,7 +2895,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         charInfo = _dictionary.getCharacterInfo(currentCharacter);
         if (charInfo != null) {
           pinyin ??= charInfo.pinyin != null ? PinyinUtils.convertToneNumbersToMarks(charInfo.pinyin) : null;
-          definition ??= charInfo.definition;
+          definition ??= charInfo.definition != null ? _formatDefinition(charInfo.definition, currentCharacter) : null;
           // Found in CharacterDictionary
         } else {
           // Not found in CharacterDictionary either

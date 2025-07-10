@@ -341,14 +341,19 @@ class HomePageState extends State<HomePage> with RouteAware {
     final allSetItems = <String, MapEntry<String, bool>>{}; // item -> (setName, isFromWordSet)
     final setProgressMap = <String, double>{}; // setName -> progress
     
+    // Load all items from all sets first
+    for (final set in allSets) {
+      for (final item in set.characters) {
+        allSetItems[item] = MapEntry(set.name, set.isWordSet || item.length > 1);
+      }
+    }
+    
+    print('Loaded ${allSetItems.length} total cards from ${allSets.length} sets');
+    
     // Calculate progress for each set
     for (final set in allSets) {
       final progress = await _learningService.getSetProgress(set.characters);
       setProgressMap[set.name] = progress;
-      
-      for (final item in set.characters) {
-        allSetItems[item] = MapEntry(set.name, set.isWordSet || item.length > 1);
-      }
     }
     
     // Debug: Print all set progress
@@ -434,35 +439,30 @@ class HomePageState extends State<HomePage> with RouteAware {
     final practiceItems = <String>[];
     final addedItems = <String>{};
     
-    // Process all cards regardless of allowed sets if we have learned items
+    // Process all learned items for endless practice
     if (allLearnedChars.isNotEmpty || allLearnedWords.isNotEmpty) {
-      print('Processing cards for endless practice...');
+      print('Processing items for endless practice...');
       
-      // If no allowed sets, use all sets
-      if (allowedSets.isEmpty) {
-        print('No allowed sets found, using all sets');
-        for (final set in allSets) {
-          allowedSets.add(set.name);
+      // First add all learned words exactly as they are
+      for (final word in allLearnedWords) {
+        if (!addedItems.contains(word)) {
+          practiceItems.add(word);
+          addedItems.add(word);
+          print('Adding learned word: "$word"');
         }
       }
       
-      // Process all cards
-      for (final entry in allSetItems.entries) {
-        final card = entry.key;
-        final setName = entry.value.key;
+      // If we have character sets loaded, try to find multi-character cards
+      if (allSetItems.isNotEmpty) {
+        print('Processing ${allSetItems.length} cards from sets...');
         
-        // Check if this card is learned
-        bool cardIsLearned = false;
-        
-        if (card.length == 1) {
-          // Single character card
-          cardIsLearned = allLearnedChars.contains(card);
-        } else {
-          // Multi-character card
-          if (allLearnedWords.contains(card)) {
-            cardIsLearned = true;
-          } else {
-            // Check if all characters are learned
+        // Check for multi-character cards where all characters are learned
+        for (final entry in allSetItems.entries) {
+          final card = entry.key;
+          final setName = entry.value.key;
+          
+          if (card.length > 1 && !addedItems.contains(card)) {
+            // Check if all characters in this card are learned
             bool allCharsLearned = true;
             for (int i = 0; i < card.length; i++) {
               if (!allLearnedChars.contains(card[i])) {
@@ -470,32 +470,107 @@ class HomePageState extends State<HomePage> with RouteAware {
                 break;
               }
             }
-            cardIsLearned = allCharsLearned;
+            
+            if (allCharsLearned) {
+              practiceItems.add(card);
+              addedItems.add(card);
+              print('Adding multi-char card: "$card" from set: $setName');
+            }
           }
-        }
-        
-        if (cardIsLearned && !addedItems.contains(card)) {
-          practiceItems.add(card);
-          addedItems.add(card);
-          print('Adding card: "$card" from set: $setName');
         }
       }
       
-      // If still no cards found, just use all learned items directly
-      if (practiceItems.isEmpty) {
-        print('No cards found in sets, using learned items directly');
-        practiceItems.addAll(allLearnedWords);
+      // Try to form common multi-character words from learned characters
+      final commonWords = {
+        '衣服': ['衣', '服'],
+        '什么': ['什', '么'],
+        '不仅': ['不', '仅'],
+        '可以': ['可', '以'],
+        '中国': ['中', '国'],
+        '时间': ['时', '间'],
+        '工作': ['工', '作'],
+        '朋友': ['朋', '友'],
+        '学习': ['学', '习'],
+        '喜欢': ['喜', '欢'],
+        '漂亮': ['漂', '亮'],
+        '高兴': ['高', '兴'],
+        '电话': ['电', '话'],
+        '开始': ['开', '始'],
+        '介绍': ['介', '绍'],
+        '名字': ['名', '字'],
+        '告诉': ['告', '诉'],
+        '知道': ['知', '道'],
+        '认识': ['认', '识'],
+        '怎么': ['怎', '么'],
+        '明天': ['明', '天'],
+        '今天': ['今', '天'],
+        '昨天': ['昨', '天'],
+        '星期': ['星', '期'],
+        '医院': ['医', '院'],
+        '飞机': ['飞', '机'],
+        '咖啡': ['咖', '啡'],
+        '西瓜': ['西', '瓜'],
+        '苹果': ['苹', '果'],
+        '葡萄': ['葡', '萄'],
+        '房间': ['房', '间'],
+        '身体': ['身', '体'],
+        '眼睛': ['眼', '睛'],
+        '妹妹': ['妹', '妹'],
+        '姐姐': ['姐', '姐'],
+        '哥哥': ['哥', '哥'],
+        '弟弟': ['弟', '弟'],
+        '爸爸': ['爸', '爸'],
+        '妈妈': ['妈', '妈'],
+        '谢谢': ['谢', '谢'],
+        '对不起': ['对', '不', '起'],
+        '没关系': ['没', '关', '系'],
+      };
+      
+      // Check which common words can be formed from learned characters
+      for (final entry in commonWords.entries) {
+        final word = entry.key;
+        final chars = entry.value;
         
-        // Add learned characters that aren't part of words
-        for (final char in allLearnedChars) {
-          bool isPartOfWord = false;
-          for (final word in allLearnedWords) {
-            if (word.contains(char)) {
-              isPartOfWord = true;
+        if (!addedItems.contains(word)) {
+          // Check if all characters in this word are learned
+          bool canFormWord = true;
+          for (final char in chars) {
+            if (!allLearnedChars.contains(char)) {
+              canFormWord = false;
               break;
             }
           }
-          if (!isPartOfWord && !practiceItems.contains(char)) {
+          
+          if (canFormWord) {
+            practiceItems.add(word);
+            addedItems.add(word);
+            print('Adding common word: "$word"');
+            
+            // Mark the individual characters as part of a word
+            for (final char in chars) {
+              addedItems.add(char); // Prevent individual char from being added
+            }
+          }
+        }
+      }
+      
+      // Add single characters that aren't part of any added multi-char cards
+      for (final char in allLearnedChars) {
+        if (!addedItems.contains(char)) {
+          practiceItems.add(char);
+          addedItems.add(char);
+        }
+      }
+      
+      // Ensure we have at least some items to practice
+      if (practiceItems.isEmpty && (allLearnedWords.isNotEmpty || allLearnedChars.isNotEmpty)) {
+        print('No items found, using all learned items directly');
+        // Add all learned words
+        practiceItems.addAll(allLearnedWords);
+        
+        // Add all learned characters
+        for (final char in allLearnedChars) {
+          if (!practiceItems.contains(char)) {
             practiceItems.add(char);
           }
         }

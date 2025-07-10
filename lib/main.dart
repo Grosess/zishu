@@ -1162,6 +1162,15 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
             DrawerHeader(
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.inversePrimary,
+                border: Border(
+                  bottom: BorderSide(
+                    color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true &&
+                           Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 != null
+                        ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                        : Theme.of(context).dividerColor,
+                    width: 0.5,
+                  ),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1254,7 +1263,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
               color: () {
                 final duotone = Theme.of(context).extension<DuotoneThemeExtension>();
                 if (duotone?.isDuotoneTheme == true && duotone?.duotoneColor2 != null) {
-                  return duotone!.duotoneColor2!.withValues(alpha: 0.2);
+                  return duotone!.duotoneColor2!.withValues(alpha: 0.5);
                 }
                 return Theme.of(context).colorScheme.outline.withValues(alpha: 0.2);
               }(),
@@ -1318,7 +1327,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
               color: () {
                 final duotone = Theme.of(context).extension<DuotoneThemeExtension>();
                 if (duotone?.isDuotoneTheme == true && duotone?.duotoneColor2 != null) {
-                  return duotone!.duotoneColor2!.withValues(alpha: 0.2);
+                  return duotone!.duotoneColor2!.withValues(alpha: 0.5);
                 }
                 return Theme.of(context).colorScheme.outline.withValues(alpha: 0.2);
               }(),
