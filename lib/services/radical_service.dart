@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'package:flutter/services.dart';
 import 'decomposition_service.dart';
 
 class RadicalInfo {
@@ -37,7 +35,7 @@ class RadicalService {
 
   bool _isInitialized = false;
   Map<String, RadicalInfo> _radicalDatabase = {};
-  Map<String, CharacterRadicalAnalysis> _cache = {};
+  final Map<String, CharacterRadicalAnalysis> _cache = {};
   final DecompositionService _decompositionService = DecompositionService();
 
   Future<void> initialize() async {

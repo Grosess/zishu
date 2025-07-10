@@ -818,17 +818,36 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         Brightness keyboardAppearance;
         
         if (_isDuotoneTheme) {
-          // For duotone themes, check if background is light or dark
+          // For duotone themes, special rules for black/white
           final colors = _getDuotoneColors(_duotoneBackground, _duotoneColor);
           final backgroundColor = colors[0];
-          final isLightBackground = backgroundColor.computeLuminance() > 0.5;
           
-          statusBarStyle = SystemUiOverlayStyle(
-            statusBarColor: Colors.transparent,
-            statusBarIconBrightness: isLightBackground ? Brightness.dark : Brightness.light,
-            statusBarBrightness: isLightBackground ? Brightness.light : Brightness.dark,
-          );
-          keyboardAppearance = isLightBackground ? Brightness.light : Brightness.dark;
+          // If background is black OR accent is black, use dark keyboard
+          // If background is white OR accent is white, use light keyboard
+          if (_duotoneBackground == 'black' || _duotoneColor == 'black') {
+            keyboardAppearance = Brightness.dark;
+            statusBarStyle = SystemUiOverlayStyle(
+              statusBarColor: Colors.transparent,
+              statusBarIconBrightness: Brightness.light,
+              statusBarBrightness: Brightness.dark,
+            );
+          } else if (_duotoneBackground == 'white' || _duotoneColor == 'white') {
+            keyboardAppearance = Brightness.light;
+            statusBarStyle = SystemUiOverlayStyle(
+              statusBarColor: Colors.transparent,
+              statusBarIconBrightness: Brightness.dark,
+              statusBarBrightness: Brightness.light,
+            );
+          } else {
+            // Fallback to luminance check for other color combinations
+            final isLightBackground = backgroundColor.computeLuminance() > 0.5;
+            keyboardAppearance = isLightBackground ? Brightness.light : Brightness.dark;
+            statusBarStyle = SystemUiOverlayStyle(
+              statusBarColor: Colors.transparent,
+              statusBarIconBrightness: isLightBackground ? Brightness.dark : Brightness.light,
+              statusBarBrightness: isLightBackground ? Brightness.light : Brightness.dark,
+            );
+          }
         } else if (_themeMode == ThemeMode.dark || 
                    (_themeMode == ThemeMode.system && MediaQuery.of(context).platformBrightness == Brightness.dark)) {
           // Dark theme or system dark mode

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../lib/services/character_database.dart';
-import '../lib/services/character_stroke_service.dart';
+import 'package:zishu/services/character_database.dart';
+import 'package:zishu/services/character_stroke_service.dart';
 
 void main() async {
   // Initialize Flutter bindings

@@ -7,10 +7,10 @@ class CharacterLoadingIndicator extends StatefulWidget {
   final bool showOverlay;
   
   const CharacterLoadingIndicator({
-    Key? key,
+    super.key,
     required this.child,
     this.showOverlay = true,
-  }) : super(key: key);
+  });
   
   @override
   State<CharacterLoadingIndicator> createState() => _CharacterLoadingIndicatorState();
@@ -112,12 +112,12 @@ class CharacterSetLoadingIndicator extends StatelessWidget {
   final String? message;
   
   const CharacterSetLoadingIndicator({
-    Key? key,
+    super.key,
     required this.isLoading,
     this.loaded = 0,
     this.total = 0,
     this.message,
-  }) : super(key: key);
+  });
   
   @override
   Widget build(BuildContext context) {

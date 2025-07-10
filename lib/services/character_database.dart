@@ -519,7 +519,7 @@ class CharacterDatabase {
           if (lineIndex < _graphicsLines!.length) {
             try {
               final line = _graphicsLines![lineIndex].trim();
-              if (!line.isEmpty) {
+              if (line.isNotEmpty) {
                 final json = jsonDecode(line);
                 if (json['character'] == character) {
                   return CharacterStroke.fromJson(json);

@@ -24,7 +24,7 @@ class DecompositionService {
   DecompositionService._internal();
 
   bool _isInitialized = false;
-  Map<String, DecompositionInfo> _decompositionData = {};
+  final Map<String, DecompositionInfo> _decompositionData = {};
   
   // IDS (Ideographic Description Sequence) characters
   static const Map<String, String> _idsDescriptions = {
