@@ -2264,7 +2264,12 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                   : Theme.of(context).colorScheme.secondary),
               
               if (_incorrectItems.isNotEmpty) ...[
-                const Divider(height: 24),
+                Divider(
+                  height: 24,
+                  color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                    ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.3)
+                    : null,
+                ),
                 Text(
                   'Items to Review (${_incorrectItems.length}):',
                   style: Theme.of(context).textTheme.titleSmall,
@@ -2273,18 +2278,30 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: _incorrectItems.take(10).map((item) => Chip(
-                    label: Text(
-                      item,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    backgroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                  children: _incorrectItems.take(10).map((item) => Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                         ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.1)
                         : Theme.of(context).colorScheme.errorContainer,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                          ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.3)
+                          : Theme.of(context).colorScheme.error.withValues(alpha: 0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      item,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                          ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                          : Theme.of(context).colorScheme.onErrorContainer,
+                      ),
+                    ),
                   )).toList(),
                 ),
                 if (_incorrectItems.length > 10)
@@ -2465,17 +2482,25 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Created custom set: $setName'),
+          content: Text(
+            'Created custom set: $setName',
+            style: TextStyle(
+              color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                  : null,
+            ),
+          ),
           backgroundColor: _getSuccessColor(),
           action: SnackBarAction(
             label: 'View',
+            textColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                : null,
             onPressed: () {
               // Navigate to home and then to sets tab
               Navigator.of(context).popUntil((route) => route.isFirst);
-              // Use a post-frame callback to navigate after the current frame
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                _navigateToCustomSets();
-              });
+              // Refresh the sets progress to show the new set
+              refreshSetsProgress();
             },
           ),
         ),
@@ -2489,29 +2514,6 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     }
   }
   
-  void _navigateToCustomSets() {
-    // Just pop back to the previous screen
-    if (mounted) {
-      // Pop all the way back
-      Navigator.of(context).popUntil((route) => route.isFirst);
-      
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text('Created custom set: ${widget.characterSet}'),
-            backgroundColor: _getSuccessColor(),
-            action: SnackBarAction(
-              label: 'View',
-              onPressed: () {
-                // Navigate to sets tab
-                Navigator.of(context).popUntil((route) => route.isFirst);
-              },
-            ),
-          ),
-        );
-        Navigator.of(context).pop();
-      }
-    }
   
   Widget _buildWordPronunciation() {
     // Get pronunciation for the word
@@ -4326,7 +4328,7 @@ class CompletedStrokesPainter extends CustomPainter {
     // Add a subtle outline paint to separate overlapping strokes
     final outlinePaint = Paint()
       ..color = isDuotone 
-        ? duotoneTheme!.duotoneColor1!.withValues(alpha: 0.2) // Use background color for outline in duotone
+        ? duotoneTheme!.duotoneColor2!.withValues(alpha: 0.3) // Use accent color for outline in duotone
         : fillColor.withValues(alpha: 0.3)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
