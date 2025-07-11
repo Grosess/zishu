@@ -435,6 +435,50 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
     );
   }
 
+  void _showLearningCalculationDialog() {
+    final daysRemaining = _goalDeadline?.difference(DateTime.now()).inDays ?? 0;
+    final remainingCharacters = _characterGoal - _totalCharactersLearned;
+    final charactersPerDay = daysRemaining > 0 ? (remainingCharacters / daysRemaining).ceil() : 0;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Learning Calculation'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Total Characters Goal: $_characterGoal'),
+            Text('Characters Learned: $_totalCharactersLearned'),
+            Text('Characters Remaining: $remainingCharacters'),
+            const SizedBox(height: 12),
+            Text('Deadline: ${_goalDeadline?.toString().split(' ')[0] ?? 'Not set'}'),
+            Text('Days Remaining: $daysRemaining'),
+            const SizedBox(height: 12),
+            Text(
+              'Daily Learning Target: $charactersPerDay characters/day',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'This is calculated by dividing the remaining characters by the days until your deadline.',
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Got it'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -597,7 +641,7 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
                     color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                       ? Theme.of(context).colorScheme.primary
                       : Colors.blue,
-                    onTap: null,
+                    onTap: _showLearningCalculationDialog,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -782,7 +826,7 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
               if (onTap != null)
                 GestureDetector(
                   onTap: onTap,
-                  child: Icon(Icons.settings, size: 14, color: isDuotone ? Theme.of(context).colorScheme.primary : color),
+                  child: Icon(Icons.settings, size: 20, color: isDuotone ? Theme.of(context).colorScheme.primary : color),
                 ),
             ],
           ),

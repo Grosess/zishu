@@ -131,6 +131,10 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   int _correctItems = 0;
   DateTime? _sessionStartTime;
   
+  // Timer for endless practice
+  Timer? _endlessTimer;
+  Duration _elapsedTime = Duration.zero;
+  
   // Stroke bounce animation
   AnimationController? _bounceController;
   Animation<double>? _bounceAnimation;
@@ -170,6 +174,17 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   void initState() {
     super.initState();
     _sessionStartTime = DateTime.now();
+    
+    // Start timer for endless practice
+    if (widget.characterSet == 'Endless Practice') {
+      _endlessTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (mounted) {
+          setState(() {
+            _elapsedTime = DateTime.now().difference(_sessionStartTime!);
+          });
+        }
+      });
+    }
     // Load settings immediately with default values
     SharedPreferences.getInstance().then((prefs) {
       setState(() {
@@ -234,6 +249,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     _bounceController?.dispose();
     _updateTimer?.cancel();
     _classicStrokeController?.dispose();
+    _endlessTimer?.cancel();
     
     // In learning mode, save progress for completed characters when backing out
     if (widget.mode == PracticeMode.learning && widget.allCharacters != null) {
@@ -380,10 +396,8 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     final duotoneTheme = Theme.of(context).extension<DuotoneThemeExtension>();
     
     if (duotoneTheme?.isDuotoneTheme == true) {
-      // For duotone theme, use a darker shade of the foreground color
-      final foregroundColor = duotoneTheme!.duotoneColor2!;
-      final hslColor = HSLColor.fromColor(foregroundColor);
-      return hslColor.withLightness((hslColor.lightness * 0.3).clamp(0.0, 1.0)).toColor();
+      // For duotone theme, use the primary color (background color)
+      return duotoneTheme!.duotoneColor1!;
     } else {
       return Colors.green;
     }
@@ -741,9 +755,8 @@ class _WritingPracticePageState extends State<WritingPracticePage>
               // Check if this is individual character practice
               final isIndividualPractice = widget.allCharacters != null && widget.allCharacters!.length == 1;
               
-              // Show summary if in testing mode and not endless practice or individual practice
+              // Show summary if in testing mode and has studied items
               if (widget.mode == PracticeMode.testing && 
-                  widget.characterSet != 'Endless Practice' && 
                   !isIndividualPractice &&
                   _totalItemsStudied > 0) {
                 _showCompletionDialog();
@@ -1322,9 +1335,8 @@ class _WritingPracticePageState extends State<WritingPracticePage>
           if (widget.characterSet == 'Tutorial') {
             return;
           }
-          // Show summary if in testing mode and not endless practice
+          // Show summary if in testing mode and has studied items
           if (widget.mode == PracticeMode.testing && 
-              widget.characterSet != 'Endless Practice' && 
               _totalItemsStudied > 0) {
             _showCompletionDialog();
           } else {
@@ -1528,6 +1540,21 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     return Theme.of(context).colorScheme.outline;
   }
   
+  int _calculateAllowedMisses(int totalStrokes) {
+    // Scale allowed misses based on stroke count
+    if (totalStrokes <= 3) {
+      return 1; // 1 miss allowed for simple characters (1-3 strokes)
+    } else if (totalStrokes <= 6) {
+      return 1; // 1 miss allowed for 4-6 strokes
+    } else if (totalStrokes <= 10) {
+      return 2; // 2 misses allowed for 7-10 strokes
+    } else if (totalStrokes <= 15) {
+      return 3; // 3 misses allowed for 11-15 strokes
+    } else {
+      return 4; // 4 misses allowed for 16+ strokes
+    }
+  }
+  
   void _onCharacterComplete() {
     HapticService().mediumImpact(); // Medium haptic for character completion
     // Check if this is individual character practice of an already learned character
@@ -1618,8 +1645,10 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     
     // Don't save practice data here - wait for manual grading
     
-    // Determine auto-grading - fail if missed 2 different strokes
-    _autoGradedAsCorrect = !_usedHint && _missedStrokeIndices.length < 2;
+    // Determine auto-grading - scale leniency based on stroke count
+    final totalStrokes = _characterStroke?.strokes.length ?? 1;
+    final allowedMisses = _calculateAllowedMisses(totalStrokes);
+    _autoGradedAsCorrect = !_usedHint && _missedStrokeIndices.length <= allowedMisses;
     
     // Don't call completion callback here for endless practice
     // It will be called in _proceedWithGrade
@@ -2451,6 +2480,9 @@ class _WritingPracticePageState extends State<WritingPracticePage>
           ),
         ),
       );
+      
+      // Refresh sets progress before navigating back
+      refreshSetsProgress();
       
       // Navigate back to home
       Navigator.of(context).pop();
@@ -3562,6 +3594,36 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       }
     }
     
+    // For endless practice, show timer alongside title
+    if (isEndlessPractice) {
+      final minutes = _elapsedTime.inMinutes;
+      final seconds = _elapsedTime.inSeconds % 60;
+      final timeString = '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+      
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.timer, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
+          const SizedBox(width: 4),
+          Text(
+            timeString,
+            style: TextStyle(
+              fontSize: 16,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Flexible(
+            child: Text(
+              title,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
+          ),
+        ],
+      );
+    }
+    
     return Text(
       title,
       overflow: TextOverflow.ellipsis,
@@ -4253,8 +4315,7 @@ class CompletedStrokesPainter extends CustomPainter {
       if (isDuotone) {
         fillColor = duotoneTheme!.duotoneColor2!.withValues(alpha: 0.95);
       } else {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        fillColor = isDark ? Colors.white.withValues(alpha: 0.95) : Colors.black.withValues(alpha: 0.95);
+        fillColor = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.95);
       }
     }
     
@@ -4264,7 +4325,9 @@ class CompletedStrokesPainter extends CustomPainter {
     
     // Add a subtle outline paint to separate overlapping strokes
     final outlinePaint = Paint()
-      ..color = fillColor.withValues(alpha: 0.3)
+      ..color = isDuotone 
+        ? duotoneTheme!.duotoneColor1!.withValues(alpha: 0.2) // Use background color for outline in duotone
+        : fillColor.withValues(alpha: 0.3)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
     

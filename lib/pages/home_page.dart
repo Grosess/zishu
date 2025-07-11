@@ -1564,7 +1564,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
           ],
           
           // Goal visualization section with glassmorphic effect
@@ -1574,7 +1574,7 @@ class HomePageState extends State<HomePage> with RouteAware {
               widget.onNavigateToTab?.call(2);
             },
             child: Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: _getCardBackgroundColor() ?? Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(24),
@@ -1637,13 +1637,13 @@ class HomePageState extends State<HomePage> with RouteAware {
                     alignment: Alignment.center,
                     children: [
                       SizedBox(
-                        height: 170,
-                        width: 170,
+                        height: 140,
+                        width: 140,
                         child: Stack(
                           alignment: Alignment.center,
                           children: [
                             CustomPaint(
-                              size: const Size(170, 170),
+                              size: const Size(140, 140),
                               painter: CleanProgressPainter(
                                 progress: _progressPercentage,
                                 primaryColor: _paceOffset >= 0 ? _getProgressColor() : Colors.orange,
