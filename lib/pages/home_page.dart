@@ -1660,7 +1660,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                               size: const Size(180, 180),
                               painter: CleanProgressPainter(
                                 progress: _progressPercentage,
-                                primaryColor: _paceOffset >= 0 ? _getProgressColor() : Colors.orange,
+                                primaryColor: _getProgressColor(),
                                 backgroundColor: _getProgressBackgroundColor(),
                               ),
                             ),
@@ -1674,7 +1674,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                                     style: TextStyle(
                                       fontSize: 40,
                                       fontWeight: FontWeight.w600,
-                                      color: _paceOffset >= 0 ? _getProgressColor() : Colors.orange,
+                                      color: _getProgressColor(),
                                       height: 1,
                                     ),
                                   ),
@@ -1692,14 +1692,10 @@ class HomePageState extends State<HomePage> with RouteAware {
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                     decoration: BoxDecoration(
-                                      color: (_paceOffset > 0 
-                                        ? _getProgressColor()
-                                        : Colors.red).withValues(alpha: 0.15),
+                                      color: _getProgressColor().withValues(alpha: 0.15),
                                       borderRadius: BorderRadius.circular(14),
                                       border: Border.all(
-                                        color: (_paceOffset > 0 
-                                          ? _getProgressColor()
-                                          : Colors.red).withValues(alpha: 0.3),
+                                        color: _getProgressColor().withValues(alpha: 0.3),
                                         width: 1,
                                       ),
                                     ),
@@ -1707,9 +1703,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                                       '${_paceOffset.abs()} ${_paceOffset > 0 ? "ahead" : "behind"}',
                                       style: TextStyle(
                                         fontSize: 11,
-                                        color: _paceOffset > 0 
-                                          ? _getProgressColor()
-                                          : Colors.red,
+                                        color: _getProgressColor(),
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
