@@ -1305,9 +1305,9 @@ class _WritingPracticePageState extends State<WritingPracticePage>
             ),
           ),
           
-          // Radical analysis (only in learning mode stage 0 - not for "from memory" stages)
+          // Radical analysis (only in learning mode stages 0 and 1 - not for "from memory" stage 2)
           if (widget.mode == PracticeMode.learning && 
-              _learningStage == 0 &&  // Only show in stage 0 (with visual help)
+              _learningStage < 2 &&  // Show in stage 0 (filled) and stage 1 (outline), not stage 2 (from memory)
               _radicalAnalysis != null)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -1718,6 +1718,8 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   }
   
   void _proceedWithGrade(bool wasCorrect) {
+    // Debug: _proceedWithGrade called with wasCorrect: $wasCorrect
+    
     // Skip statistics for learning mode
     if (widget.mode != PracticeMode.learning) {
       // Save practice data only after manual grading
@@ -1900,29 +1902,23 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       }
       
       // Handle multi-character word progression in practice all mode
-      print("DEBUG: Checking multi-char conditions - isWord: ${widget.isWord}, wordChars: ${_wordCharacters.length}, allChars: ${widget.allCharacters}");
+      // DEBUG: Checking multi-char conditions
       
       if (widget.isWord && _wordCharacters.length > 1) {
-        print("DEBUG: Multi-character word progression in practice all mode");
-        print("  Current word character index: $_currentWordCharacterIndex");
-        print("  Learning stage: $_learningStage");
-        print("  Mode: ${widget.mode}");
+        // DEBUG: Multi-character word progression in practice all mode
         
         // In learning mode, we need to cycle through characters at each stage
         if (widget.mode == PracticeMode.learning) {
           final nextCharacterIndex = (_currentWordCharacterIndex + 1) % _wordCharacters.length;
           
-          print("DEBUG: Multi-char learning mode progression");
-          print("  Next character index: $nextCharacterIndex");
-          print("  Current word character index: $_currentWordCharacterIndex");
-          print("  Learning stage: $_learningStage");
-          print("  Widget allCharacters: ${widget.allCharacters}");
-          print("  Current character index: $_currentCharacterIndex");
+          // DEBUG: Multi-char learning mode progression
           
-          // Check if we've completed all characters at stage 2
+          // Check if we've completed the last character at stage 2
+          // For a 2-character word: when we complete char 2 at stage 2, nextCharacterIndex will be 0
           if (_learningStage == 2 && nextCharacterIndex == 0) {
-            print("DEBUG: Completed all stages for multi-char word in learn all mode");
+            // DEBUG: Completed all stages for multi-char word in learn all mode
             // Mark as learned and proceed to next item
+            
             if (widget.allCharacters != null && _currentCharacterIndex < widget.allCharacters!.length - 1) {
               if (wasCorrect) {
                 final completedItem = widget.allCharacters![_currentCharacterIndex];
@@ -1965,6 +1961,13 @@ class _WritingPracticePageState extends State<WritingPracticePage>
               return;
             } else {
               // No more items, exit
+              // DEBUG: No more items in the set, exiting
+              
+              // Mark the set as learned if in learning mode
+              if (widget.mode == PracticeMode.learning && widget.allCharacters != null) {
+                _learningService.markSetAsLearned(widget.characterSet, widget.allCharacters!);
+              }
+              
               if (mounted) Navigator.pop(context);
               return;
             }
@@ -1975,7 +1978,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
           if (nextCharacterIndex == 0) {
             // Completed all characters at current stage, advance stage
             nextStage = _learningStage + 1;
-            print("DEBUG: Advancing to stage $nextStage");
+            // DEBUG: Advancing to stage $nextStage
           }
           
           setState(() {
@@ -2091,29 +2094,22 @@ class _WritingPracticePageState extends State<WritingPracticePage>
             }
           }
         }
-      } else if (widget.allCharacters != null && widget.allCharacters!.length >= 1) {
+        // IMPORTANT: Don't fall through to the else if block below for multi-character words
+        return;
+      } else if (widget.allCharacters != null && widget.allCharacters!.isNotEmpty) {
         // Handle progression in learn all mode for both single and multi-character items
-        print("DEBUG: Learn all mode progression (else if block)");
-        print("  Current index: $_currentCharacterIndex of ${widget.allCharacters!.length}");
-        print("  Is word: ${widget.isWord}");
-        print("  Word characters: $_wordCharacters");
-        print("  Learning stage: $_learningStage");
+        // DEBUG: Learn all mode progression (else if block)
         
         // Special handling for multi-character words that didn't get caught above
         if (widget.isWord && _wordCharacters.length > 1 && widget.mode == PracticeMode.learning) {
-          print("DEBUG: Multi-char word in learn all that wasn't caught in main block!");
+          // DEBUG: Multi-char word in learn all that wasn't caught in main block!
           
           // For multi-character words, we need to check if we've completed all stages
           if (_learningStage == 2) {
-            // Completed all stages, move to next item
+            // Completed all stages
+            // The marking as learned already happened above, so just check if we can move to next item
             if (_currentCharacterIndex < widget.allCharacters!.length - 1) {
-              print("DEBUG: Moving to next item after completing multi-char word");
-              
-              // Mark as learned
-              if (wasCorrect) {
-                final completedItem = widget.allCharacters![_currentCharacterIndex];
-                await _learningService.markWordAsLearned(completedItem);
-              }
+              // DEBUG: Moving to next item after completing multi-char word
               
               // Move to next item
               setState(() {
@@ -2149,14 +2145,22 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                 _loadCharacterData();
               });
               return;
+            } else {
+              // This is the last item in the set, but it's a multi-character word at stage 2
+              // Don't exit immediately - let it fall through to the completion logic below
+              // DEBUG: Completed last multi-char word at stage 2
             }
+          } else {
+            // Multi-character word but not at stage 2 yet
+            // This will be handled by the normal stage progression logic below
+            // DEBUG: Multi-char word not at stage 2 yet, stage: $_learningStage
           }
         }
         
         // For learning mode single characters, check if we need to advance stages
         if (widget.mode == PracticeMode.learning && _learningStage < 2 && _wordCharacters.length == 1) {
           // Still have more stages to complete for current item
-          print("DEBUG: Advancing learning stage for single character");
+          // DEBUG: Advancing learning stage for single character
           setState(() {
             _learningStage++;
             
@@ -2183,10 +2187,8 @@ class _WritingPracticePageState extends State<WritingPracticePage>
           return;
         }
         
-        // Check if we have more items to learn
-        if (_currentCharacterIndex < widget.allCharacters!.length - 1) {
-        
         // Mark the current item as learned if we completed stage 2 successfully
+        // This needs to happen BEFORE checking if there are more items
         if (widget.mode == PracticeMode.learning && _learningStage == 2 && wasCorrect) {
           final completedItem = widget.allCharacters![_currentCharacterIndex];
           
@@ -2208,6 +2210,9 @@ class _WritingPracticePageState extends State<WritingPracticePage>
           // Update streak progress when learning
           StreakService().updateProgress(1);
         }
+        
+        // Check if we have more items to learn
+        if (_currentCharacterIndex < widget.allCharacters!.length - 1) {
         
         // Move to next item (could be character or word)
         setState(() {
@@ -2244,7 +2249,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         });
         } else {
           // No more items in the set - we're done
-          print("DEBUG: Completed all items in learn all mode");
+          // DEBUG: Completed all items in learn all mode
           if (widget.mode == PracticeMode.learning) {
             // Mark the set as learned
             if (widget.allCharacters != null) {
@@ -2267,13 +2272,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         }
         return;
       } else {
-        print("DEBUG: Reached final else block");
-        print("  widget.isWord: ${widget.isWord}");
-        print("  _wordCharacters.length: ${_wordCharacters.length}");
-        print("  widget.allCharacters: ${widget.allCharacters}");
-        print("  _currentCharacterIndex: $_currentCharacterIndex");
-        print("  widget.mode: ${widget.mode}");
-        print("  _learningStage: $_learningStage");
+        // DEBUG: Reached final else block
         
         // Only show completion dialog in testing mode
         if (widget.mode == PracticeMode.testing) {
