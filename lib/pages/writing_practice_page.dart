@@ -1900,19 +1900,84 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       
       // Handle multi-character word progression in practice all mode
       if (widget.isWord && _wordCharacters.length > 1) {
-        // Handle multi-character word progression in practice all mode
-        if (_currentWordCharacterIndex < _wordCharacters.length - 1) {
+        print("DEBUG: Multi-character word progression in practice all mode");
+        print("  Current word character index: $_currentWordCharacterIndex");
+        print("  Learning stage: $_learningStage");
+        print("  Mode: ${widget.mode}");
+        
+        // In learning mode, we need to cycle through characters at each stage
+        if (widget.mode == PracticeMode.learning) {
+          final nextCharacterIndex = (_currentWordCharacterIndex + 1) % _wordCharacters.length;
+          
+          // Check if we've completed all characters at stage 2
+          if (_learningStage == 2 && nextCharacterIndex == 0) {
+            print("DEBUG: Completed all stages for multi-char word in learn all mode");
+            // Mark as learned and proceed to next item
+            if (widget.allCharacters != null && _currentCharacterIndex < widget.allCharacters!.length - 1) {
+              if (wasCorrect) {
+                final completedItem = widget.allCharacters![_currentCharacterIndex];
+                await _learningService.markWordAsLearned(completedItem);
+              }
+              
+              // Move to next item in the set
+              setState(() {
+                _currentCharacterIndex++;
+                _currentWordCharacterIndex = 0;
+                _wordCharacterResults.clear();
+                _learningStage = 0; // Reset for new word
+                
+                // Clear all visual state
+                _completedStrokeIndices.clear();
+                _userStrokes.clear();
+                _currentStroke.clear();
+                _currentStrokeTimestamps.clear();
+                _showSuccess = false;
+                _showManualGrading = false;
+                _autoGradedAsCorrect = false;
+                _testingCharacterRevealed = false;
+                _showHintPath = false;
+                _showFullCharacter = false;
+                _usedHint = false;
+                _missedStrokes = 0;
+                _strokeDeviation = 0.0;
+                _autoProceedTimer?.cancel();
+                _progressTimer?.cancel();
+                _timerProgress = 1.0;
+                
+                final nextItem = widget.allCharacters![_currentCharacterIndex];
+                if (_dictionary.isMultiCharacterItem(nextItem)) {
+                  _wordCharacters = _dictionary.splitIntoCharacters(nextItem);
+                } else {
+                  _wordCharacters = [nextItem];
+                }
+                _loadCharacterData();
+              });
+              return;
+            } else {
+              // No more items, exit
+              if (mounted) Navigator.pop(context);
+              return;
+            }
+          }
+          
+          // Progress through learning stages
+          int nextStage = _learningStage;
+          if (nextCharacterIndex == 0) {
+            // Completed all characters at current stage, advance stage
+            nextStage = _learningStage + 1;
+            print("DEBUG: Advancing to stage $nextStage");
+          }
+          
           setState(() {
-            // Track the result for this character
             _wordCharacterResults[_currentWordCharacterIndex] = wasCorrect;
-            _currentWordCharacterIndex++;
-            _learningStage = 0; // Reset to stage 0 for new character
+            _currentWordCharacterIndex = nextCharacterIndex;
+            _learningStage = nextStage;
             
-            // Clear all visual state immediately
+            // Clear all visual state
             _completedStrokeIndices.clear();
             _userStrokes.clear();
             _currentStroke.clear();
-        _currentStrokeTimestamps.clear();
+            _currentStrokeTimestamps.clear();
             _showSuccess = false;
             _showManualGrading = false;
             _autoGradedAsCorrect = false;
@@ -1928,37 +1993,16 @@ class _WritingPracticePageState extends State<WritingPracticePage>
             
             _loadCharacterData();
           });
-        } else if (widget.allCharacters != null &&
-                   _currentCharacterIndex < widget.allCharacters!.length - 1) {
-          // Track the result for the last character
-          _wordCharacterResults[_currentWordCharacterIndex] = wasCorrect;
-          
-          // Mark the current item as learned if we completed stage 2 successfully
-          if (widget.mode == PracticeMode.learning && _learningStage == 2 && wasCorrect) {
-            final completedItem = widget.allCharacters![_currentCharacterIndex];
-            
-            // Debug: Check current learned status before marking
-            if (completedItem.length > 1) {
-              final isAlreadyLearned = await _learningService.isWordLearned(completedItem);
-              // Production: removed debug print
-              await _learningService.markWordAsLearned(completedItem);
-              final isNowLearned = await _learningService.isWordLearned(completedItem);
-              // Production: removed debug print
-            } else {
-              final isAlreadyLearned = await _learningService.isCharacterLearned(completedItem);
-              // Production: removed debug print
-              await _learningService.markCharacterAsLearned(completedItem);
-              final isNowLearned = await _learningService.isCharacterLearned(completedItem);
-              // Production: removed debug print
-            }
-          }
-          
-          // Move to next item in the set
+          return;
+        }
+        
+        // Testing mode - just move to next character
+        if (_currentWordCharacterIndex < _wordCharacters.length - 1) {
           setState(() {
-            _currentCharacterIndex++;
-            _currentWordCharacterIndex = 0;
-            _wordCharacterResults.clear(); // Clear results for new word
-            _learningStage = 0; // Reset to stage 0 for new character
+            // Track the result for this character
+            _wordCharacterResults[_currentWordCharacterIndex] = wasCorrect;
+            _currentWordCharacterIndex++;
+            _learningStage = 0; // Reset to stage 0 for new character in testing mode
             
             // Clear all visual state immediately
             _completedStrokeIndices.clear();
@@ -1978,12 +2022,6 @@ class _WritingPracticePageState extends State<WritingPracticePage>
             _progressTimer?.cancel();
             _timerProgress = 1.0;
             
-            final nextItem = widget.allCharacters![_currentCharacterIndex];
-            if (_dictionary.isMultiCharacterItem(nextItem)) {
-              _wordCharacters = _dictionary.splitIntoCharacters(nextItem);
-            } else {
-              _wordCharacters = [nextItem];
-            }
             _loadCharacterData();
           });
         } else if (widget.characterSet == 'Endless Practice') {
@@ -2727,7 +2765,8 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       final wasCorrect = widget.isWord 
           ? (_wordCharacterResults[index] ?? true)  // Default to true for learning mode
           : !_usedHint;
-      final showCharacter = isCompletedBox || (_showHintPath && isCurrentBox);
+      // Don't show character in box when hints are active - only show when completed
+      final showCharacter = isCompletedBox;
       
       return Container(
         margin: EdgeInsets.symmetric(horizontal: horizontalMargin),
