@@ -681,6 +681,18 @@ class HomePageState extends State<HomePage> with RouteAware {
     }
   }
   
+  Color _getProgressBackgroundColor() {
+    final duotoneTheme = Theme.of(context).extension<DuotoneThemeExtension>();
+    
+    if (duotoneTheme?.isDuotoneTheme == true) {
+      // In duotone mode, use a lighter version of the duotone color
+      return duotoneTheme!.duotoneColor2!.withValues(alpha: 0.2);
+    } else {
+      // Use the theme's primary color with opacity
+      return Theme.of(context).colorScheme.primary.withValues(alpha: 0.2);
+    }
+  }
+  
   LinearGradient? _buildCardGradient() {
     final duotoneTheme = Theme.of(context).extension<DuotoneThemeExtension>();
     
@@ -1605,7 +1617,9 @@ class HomePageState extends State<HomePage> with RouteAware {
                           'characters by',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7),
+                            color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.7)
+                                : Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                             letterSpacing: 1.2,
                           ),
                         ),
@@ -1637,28 +1651,28 @@ class HomePageState extends State<HomePage> with RouteAware {
                     alignment: Alignment.center,
                     children: [
                       SizedBox(
-                        height: 140,
-                        width: 140,
+                        height: 180,
+                        width: 180,
                         child: Stack(
                           alignment: Alignment.center,
                           children: [
                             CustomPaint(
-                              size: const Size(140, 140),
+                              size: const Size(180, 180),
                               painter: CleanProgressPainter(
                                 progress: _progressPercentage,
                                 primaryColor: _paceOffset >= 0 ? _getProgressColor() : Colors.orange,
-                                backgroundColor: _getProgressColor().withOpacity(0.2),
+                                backgroundColor: _getProgressBackgroundColor(),
                               ),
                             ),
                             SizedBox(
-                              width: 110, // Constrain width to keep text centered and away from edges
+                              width: 130, // Constrain width to keep text centered and away from edges
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
                                     '${(_progressPercentage * 100).toInt()}%',
                                     style: TextStyle(
-                                      fontSize: 36, // Reduced from 42
+                                      fontSize: 40,
                                       fontWeight: FontWeight.w600,
                                       color: _paceOffset >= 0 ? _getProgressColor() : Colors.orange,
                                       height: 1,
@@ -1668,8 +1682,8 @@ class HomePageState extends State<HomePage> with RouteAware {
                                   Text(
                                     'there',
                                     style: TextStyle(
-                                      fontSize: 14, // Reduced from 16
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      fontSize: 15,
+                                      color: _getProgressColor().withValues(alpha: 0.7),
                                       letterSpacing: 0.5,
                                     ),
                                   ),
@@ -1680,12 +1694,12 @@ class HomePageState extends State<HomePage> with RouteAware {
                                     decoration: BoxDecoration(
                                       color: (_paceOffset > 0 
                                         ? _getProgressColor()
-                                        : Colors.red).withOpacity(0.15),
+                                        : Colors.red).withValues(alpha: 0.15),
                                       borderRadius: BorderRadius.circular(14),
                                       border: Border.all(
                                         color: (_paceOffset > 0 
                                           ? _getProgressColor()
-                                          : Colors.red).withOpacity(0.3),
+                                          : Colors.red).withValues(alpha: 0.3),
                                         width: 1,
                                       ),
                                     ),
