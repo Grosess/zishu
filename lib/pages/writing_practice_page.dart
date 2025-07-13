@@ -1305,8 +1305,9 @@ class _WritingPracticePageState extends State<WritingPracticePage>
             ),
           ),
           
-          // Radical analysis (only in learning mode) - moved to bottom
+          // Radical analysis (only in learning mode stage 0 - not for "from memory" stages)
           if (widget.mode == PracticeMode.learning && 
+              _learningStage == 0 &&  // Only show in stage 0 (with visual help)
               _radicalAnalysis != null)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -1899,6 +1900,8 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       }
       
       // Handle multi-character word progression in practice all mode
+      print("DEBUG: Checking multi-char conditions - isWord: ${widget.isWord}, wordChars: ${_wordCharacters.length}, allChars: ${widget.allCharacters}");
+      
       if (widget.isWord && _wordCharacters.length > 1) {
         print("DEBUG: Multi-character word progression in practice all mode");
         print("  Current word character index: $_currentWordCharacterIndex");
@@ -1908,6 +1911,13 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         // In learning mode, we need to cycle through characters at each stage
         if (widget.mode == PracticeMode.learning) {
           final nextCharacterIndex = (_currentWordCharacterIndex + 1) % _wordCharacters.length;
+          
+          print("DEBUG: Multi-char learning mode progression");
+          print("  Next character index: $nextCharacterIndex");
+          print("  Current word character index: $_currentWordCharacterIndex");
+          print("  Learning stage: $_learningStage");
+          print("  Widget allCharacters: ${widget.allCharacters}");
+          print("  Current character index: $_currentCharacterIndex");
           
           // Check if we've completed all characters at stage 2
           if (_learningStage == 2 && nextCharacterIndex == 0) {
@@ -2081,9 +2091,100 @@ class _WritingPracticePageState extends State<WritingPracticePage>
             }
           }
         }
-      } else if (widget.allCharacters != null &&
-          widget.allCharacters!.length > 1 &&
-          _currentCharacterIndex < widget.allCharacters!.length - 1) {
+      } else if (widget.allCharacters != null && widget.allCharacters!.length >= 1) {
+        // Handle progression in learn all mode for both single and multi-character items
+        print("DEBUG: Learn all mode progression (else if block)");
+        print("  Current index: $_currentCharacterIndex of ${widget.allCharacters!.length}");
+        print("  Is word: ${widget.isWord}");
+        print("  Word characters: $_wordCharacters");
+        print("  Learning stage: $_learningStage");
+        
+        // Special handling for multi-character words that didn't get caught above
+        if (widget.isWord && _wordCharacters.length > 1 && widget.mode == PracticeMode.learning) {
+          print("DEBUG: Multi-char word in learn all that wasn't caught in main block!");
+          
+          // For multi-character words, we need to check if we've completed all stages
+          if (_learningStage == 2) {
+            // Completed all stages, move to next item
+            if (_currentCharacterIndex < widget.allCharacters!.length - 1) {
+              print("DEBUG: Moving to next item after completing multi-char word");
+              
+              // Mark as learned
+              if (wasCorrect) {
+                final completedItem = widget.allCharacters![_currentCharacterIndex];
+                await _learningService.markWordAsLearned(completedItem);
+              }
+              
+              // Move to next item
+              setState(() {
+                _currentCharacterIndex++;
+                _currentWordCharacterIndex = 0;
+                _wordCharacterResults.clear();
+                _learningStage = 0;
+                
+                // Clear all visual state
+                _completedStrokeIndices.clear();
+                _userStrokes.clear();
+                _currentStroke.clear();
+                _currentStrokeTimestamps.clear();
+                _showSuccess = false;
+                _showManualGrading = false;
+                _autoGradedAsCorrect = false;
+                _testingCharacterRevealed = false;
+                _showHintPath = false;
+                _showFullCharacter = false;
+                _usedHint = false;
+                _missedStrokes = 0;
+                _strokeDeviation = 0.0;
+                _autoProceedTimer?.cancel();
+                _progressTimer?.cancel();
+                _timerProgress = 1.0;
+                
+                final nextItem = widget.allCharacters![_currentCharacterIndex];
+                if (_dictionary.isMultiCharacterItem(nextItem)) {
+                  _wordCharacters = _dictionary.splitIntoCharacters(nextItem);
+                } else {
+                  _wordCharacters = [nextItem];
+                }
+                _loadCharacterData();
+              });
+              return;
+            }
+          }
+        }
+        
+        // For learning mode single characters, check if we need to advance stages
+        if (widget.mode == PracticeMode.learning && _learningStage < 2 && _wordCharacters.length == 1) {
+          // Still have more stages to complete for current item
+          print("DEBUG: Advancing learning stage for single character");
+          setState(() {
+            _learningStage++;
+            
+            // Clear all visual state
+            _completedStrokeIndices.clear();
+            _userStrokes.clear();
+            _currentStroke.clear();
+            _currentStrokeTimestamps.clear();
+            _showSuccess = false;
+            _showManualGrading = false;
+            _autoGradedAsCorrect = false;
+            _testingCharacterRevealed = false;
+            _showHintPath = false;
+            _showFullCharacter = false;
+            _usedHint = false;
+            _missedStrokes = 0;
+            _strokeDeviation = 0.0;
+            _autoProceedTimer?.cancel();
+            _progressTimer?.cancel();
+            _timerProgress = 1.0;
+            
+            _loadCharacterData();
+          });
+          return;
+        }
+        
+        // Check if we have more items to learn
+        if (_currentCharacterIndex < widget.allCharacters!.length - 1) {
         
         // Mark the current item as learned if we completed stage 2 successfully
         if (widget.mode == PracticeMode.learning && _learningStage == 2 && wasCorrect) {
@@ -2141,6 +2242,20 @@ class _WritingPracticePageState extends State<WritingPracticePage>
           }
           _loadCharacterData();
         });
+        } else {
+          // No more items in the set - we're done
+          print("DEBUG: Completed all items in learn all mode");
+          if (widget.mode == PracticeMode.learning) {
+            // Mark the set as learned
+            if (widget.allCharacters != null) {
+              _learningService.markSetAsLearned(widget.characterSet, widget.allCharacters!);
+            }
+          }
+          // Exit
+          if (mounted) {
+            Navigator.pop(context);
+          }
+        }
       } else if (widget.characterSet == 'Endless Practice') {
         // For endless practice, call the completion callback
         if (widget.onComplete != null) {
@@ -2152,6 +2267,14 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         }
         return;
       } else {
+        print("DEBUG: Reached final else block");
+        print("  widget.isWord: ${widget.isWord}");
+        print("  _wordCharacters.length: ${_wordCharacters.length}");
+        print("  widget.allCharacters: ${widget.allCharacters}");
+        print("  _currentCharacterIndex: $_currentCharacterIndex");
+        print("  widget.mode: ${widget.mode}");
+        print("  _learningStage: $_learningStage");
+        
         // Only show completion dialog in testing mode
         if (widget.mode == PracticeMode.testing) {
           _showCompletionDialog();
