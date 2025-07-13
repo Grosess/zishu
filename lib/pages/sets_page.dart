@@ -1364,9 +1364,20 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                               final learnedWords = await _statsService.getLearnedWords();
                               final allLearned = {...learnedCharacters, ...learnedWords};
                               
+                              print("DEBUG: Practice mode - set.isWordSet: ${set.isWordSet}");
+                              print("DEBUG: Practice mode - validItems: $validItems");
+                              print("DEBUG: Practice mode - learnedCharacters: $learnedCharacters");
+                              print("DEBUG: Practice mode - learnedWords: $learnedWords");
+                              print("DEBUG: Practice mode - allLearned: $allLearned");
+                              
                               // Filter this set's items against fresh learned data
                               final learnedItems = validItems.where((item) => allLearned.contains(item)).toList();
+                              
+                              print("DEBUG: Practice mode - learnedItems before shuffle: $learnedItems");
+                              
                               learnedItems.shuffle(); // Randomize order
+                              
+                              print("DEBUG: Practice mode - learnedItems after shuffle: $learnedItems");
                               
                               // Close loading dialog
                               Navigator.pop(context);

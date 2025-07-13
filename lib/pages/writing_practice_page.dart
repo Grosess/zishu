@@ -1902,28 +1902,55 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       }
       
       // Handle multi-character word progression in practice all mode
-      // DEBUG: Checking multi-char conditions
+      print("DEBUG: Checking multi-char conditions - widget.isWord: ${widget.isWord}, _wordCharacters.length: ${_wordCharacters.length}");
       
       if (widget.isWord && _wordCharacters.length > 1) {
-        // DEBUG: Multi-character word progression in practice all mode
+        print("DEBUG: Multi-character word progression in practice all mode");
         
         // In learning mode, we need to cycle through characters at each stage
         if (widget.mode == PracticeMode.learning) {
           final nextCharacterIndex = (_currentWordCharacterIndex + 1) % _wordCharacters.length;
           
-          // DEBUG: Multi-char learning mode progression
+          print("DEBUG: Multi-char learning mode progression - nextCharacterIndex: $nextCharacterIndex, _learningStage: $_learningStage");
           
           // Check if we've completed the last character at stage 2
           // For a 2-character word: when we complete char 2 at stage 2, nextCharacterIndex will be 0
           if (_learningStage == 2 && nextCharacterIndex == 0) {
-            // DEBUG: Completed all stages for multi-char word in learn all mode
-            // Mark as learned and proceed to next item
+            print("DEBUG: Completed all stages for multi-char word in learn all mode");
+            print("DEBUG: _currentCharacterIndex: $_currentCharacterIndex, allCharacters.length: ${widget.allCharacters?.length}");
+            print("DEBUG: widget.isWord: ${widget.isWord}, _wordCharacters: $_wordCharacters");
             
-            if (widget.allCharacters != null && _currentCharacterIndex < widget.allCharacters!.length - 1) {
+            // Special handling for single-word practice mode
+            if (widget.allCharacters == null || widget.allCharacters!.length == 1) {
+              print("DEBUG: Single word practice mode - marking as learned and exiting");
+              // Mark as learned for single word practice
               if (wasCorrect) {
-                final completedItem = widget.allCharacters![_currentCharacterIndex];
-                await _learningService.markWordAsLearned(completedItem);
+                await _learningService.markWordAsLearned(widget.character);
               }
+              
+              // Exit practice
+              if (mounted) {
+                // Refresh progress before exiting
+                try {
+                  refreshSetsProgress();
+                } catch (_) {
+                  // Ignore if main screen is not available
+                }
+                Navigator.pop(context);
+              }
+              return;
+            }
+            
+            // Mark as learned FIRST before checking if we should continue
+            if (wasCorrect && widget.allCharacters != null) {
+              final completedItem = widget.allCharacters![_currentCharacterIndex];
+              print("DEBUG: Marking word as learned: $completedItem");
+              await _learningService.markWordAsLearned(completedItem);
+            }
+            
+            // Now check if there are more items to learn
+            if (widget.allCharacters != null && _currentCharacterIndex < widget.allCharacters!.length - 1) {
+              print("DEBUG: Moving to next item in the set");
               
               // Move to next item in the set
               setState(() {
@@ -1951,6 +1978,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                 _timerProgress = 1.0;
                 
                 final nextItem = widget.allCharacters![_currentCharacterIndex];
+                print("DEBUG: Next item: $nextItem");
                 if (_dictionary.isMultiCharacterItem(nextItem)) {
                   _wordCharacters = _dictionary.splitIntoCharacters(nextItem);
                 } else {
@@ -1961,7 +1989,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
               return;
             } else {
               // No more items, exit
-              // DEBUG: No more items in the set, exiting
+              print("DEBUG: No more items in the set, exiting");
               
               // Mark the set as learned if in learning mode
               if (widget.mode == PracticeMode.learning && widget.allCharacters != null) {
