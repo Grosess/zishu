@@ -1985,7 +1985,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                   isCustom: true,
                   progress: _setProgress[set.id] ?? 0.0,
                   onTap: isLoading ? null : () => _showSetSynopsis(set),
-                  onLongPress: () => _showDeleteDialog(set),
+                  onLongPress: null,
                   onMenuTap: () => _showSetMenu(set),
                 );
                   },
@@ -2095,7 +2095,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
               isCustom: true,
               progress: _setProgress[item.id] ?? 0.0,
               onTap: isLoading ? null : () => _showSetSynopsis(item),
-              onLongPress: () => _showDeleteDialog(item),
+              onLongPress: null,
               onMenuTap: () => _showSetMenu(item),
             ),
           );
@@ -2156,14 +2156,16 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                 _showRenameSetDialog(set);
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.color_lens),
-              title: const Text('Change Color'),
-              onTap: () {
-                Navigator.pop(context);
-                _showColorPickerDialog(set);
-              },
-            ),
+            // Only show color picker in non-duotone themes
+            if (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme != true)
+              ListTile(
+                leading: const Icon(Icons.color_lens),
+                title: const Text('Change Color'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showColorPickerDialog(set);
+                },
+              ),
             if (_folders.isNotEmpty)
               ListTile(
                 leading: const Icon(Icons.folder),
@@ -2171,6 +2173,16 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                 onTap: () {
                   Navigator.pop(context);
                   _showMoveToFolderDialog(set);
+                },
+              ),
+            // Add merge option if there are other custom sets to merge with
+            if (_customSets.where((s) => s.id != set.id).isNotEmpty)
+              ListTile(
+                leading: const Icon(Icons.merge),
+                title: const Text('Merge with Another Set'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showMergeDialog(set);
                 },
               ),
             ListTile(
@@ -2620,6 +2632,141 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
     );
   }
 
+  Future<void> _showMergeDialog(CharacterSet sourceSet) async {
+    // Get other custom sets that can be merged with
+    final otherSets = _customSets.where((s) => s.id != sourceSet.id).toList();
+    
+    if (otherSets.isEmpty) {
+      return;
+    }
+    
+    CharacterSet? targetSet;
+    
+    final selected = await showDialog<CharacterSet?>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Merge Sets'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Select the set to merge "${sourceSet.name}" into:'),
+            const SizedBox(height: 16),
+            Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.4,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  children: otherSets.map((set) => RadioListTile<CharacterSet>(
+                    title: Text(set.name),
+                    subtitle: Text('${set.characters.length} ${set.isWordSet ? "words" : "characters"}'),
+                    value: set,
+                    groupValue: targetSet,
+                    onChanged: (value) {
+                      Navigator.pop(context, value);
+                    },
+                  )).toList(),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+    
+    if (selected != null && mounted) {
+      // Confirm merge
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Confirm Merge'),
+          content: Text(
+            'This will merge all unique items from "${sourceSet.name}" into "${selected.name}" and delete "${sourceSet.name}".\n\n'
+            'The merged set will keep the name "${selected.name}".\n\n'
+            'This action cannot be undone.'
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primary,
+              ),
+              child: const Text('Merge'),
+            ),
+          ],
+        ),
+      );
+      
+      if (confirmed == true && mounted) {
+        // Perform the merge
+        await _mergeSets(sourceSet, selected);
+      }
+    }
+  }
+  
+  Future<void> _mergeSets(CharacterSet sourceSet, CharacterSet targetSet) async {
+    try {
+      // Get all unique characters/words
+      final Set<String> mergedItems = {...targetSet.characters};
+      mergedItems.addAll(sourceSet.characters);
+      
+      // Update the target set with merged items
+      final prefs = await SharedPreferences.getInstance();
+      final customSets = prefs.getStringList('custom_sets') ?? [];
+      
+      // Find and update the target set
+      final updatedSets = customSets.map((setJson) {
+        final setData = jsonDecode(setJson) as Map<String, dynamic>;
+        if (setData['id'] == targetSet.id) {
+          setData['characters'] = mergedItems.toList();
+        }
+        return jsonEncode(setData);
+      }).toList();
+      
+      // Remove the source set
+      updatedSets.removeWhere((setJson) {
+        final setData = jsonDecode(setJson) as Map<String, dynamic>;
+        return setData['id'] == sourceSet.id;
+      });
+      
+      await prefs.setStringList('custom_sets', updatedSets);
+      
+      // Remove from any folders
+      await _folderService.moveSetToFolder(sourceSet.id, null);
+      
+      // Reload data
+      await _loadCharacterSets();
+      await _loadFolders();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Merged "${sourceSet.name}" into "${targetSet.name}"'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to merge sets'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   Widget _buildEmptyCustomSets() {
     return Center(
       child: Padding(
@@ -2935,24 +3082,52 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
   }
   
   Future<void> _showDeleteDialog(CharacterSet set) async {
+    final isDuotone = Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true;
+    final duotoneExt = Theme.of(context).extension<DuotoneThemeExtension>();
+    
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Custom Set'),
+        title: Row(
+          children: [
+            Icon(
+              Icons.warning,
+              color: isDuotone 
+                  ? duotoneExt!.duotoneColor2!
+                  : Theme.of(context).colorScheme.error,
+            ),
+            const SizedBox(width: 8),
+            const Text('Delete Custom Set'),
+          ],
+        ),
         content: Text('Are you sure you want to delete "${set.name}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: isDuotone
+                    ? duotoneExt!.duotoneColor2!
+                    : null,
+              ),
+            ),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                  ? Theme.of(context).colorScheme.error
-                  : Colors.red,
+              backgroundColor: isDuotone
+                  ? duotoneExt!.duotoneColor2!
+                  : Theme.of(context).colorScheme.error,
             ),
-            child: const Text('Delete'),
+            child: Text(
+              'Delete',
+              style: TextStyle(
+                color: isDuotone
+                    ? duotoneExt!.duotoneColor1!
+                    : null,
+              ),
+            ),
           ),
         ],
       ),

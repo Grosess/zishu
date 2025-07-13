@@ -2412,14 +2412,45 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     );
   }
   
+  String _getUniqueSetName(String baseName, List<String> existingNames) {
+    if (!existingNames.contains(baseName)) {
+      return baseName;
+    }
+    
+    // Find the highest number suffix
+    int highestNumber = 1;
+    final basePattern = RegExp(r'^' + RegExp.escape(baseName) + r' \((\d+)\)$');
+    
+    for (final name in existingNames) {
+      final match = basePattern.firstMatch(name);
+      if (match != null) {
+        final number = int.parse(match.group(1)!);
+        if (number > highestNumber) {
+          highestNumber = number;
+        }
+      }
+    }
+    
+    return '$baseName (${highestNumber + 1})';
+  }
+
   Future<void> _createCustomSetFromIncorrect() async {
     // First, close the current dialog
     Navigator.of(context).pop();
     
+    // Get existing set names
+    final prefs = await SharedPreferences.getInstance();
+    final customSets = prefs.getStringList('custom_sets') ?? [];
+    final existingNames = customSets.map((setJson) {
+      final setData = jsonDecode(setJson) as Map<String, dynamic>;
+      return setData['name'] as String;
+    }).toList();
+    
     // Show dialog to get set name
     final TextEditingController nameController = TextEditingController();
     final baseName = '${widget.characterSet} - Review';
-    nameController.text = baseName;
+    final uniqueName = _getUniqueSetName(baseName, existingNames);
+    nameController.text = uniqueName;
     
     final setName = await showDialog<String>(
       context: context,
@@ -2459,31 +2490,39 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     
     if (setName == null || !mounted) return;
     
-    final prefs = await SharedPreferences.getInstance();
+    // Re-fetch to ensure we have the latest data
+    final prefs2 = await SharedPreferences.getInstance();
+    final updatedCustomSets = prefs2.getStringList('custom_sets') ?? [];
+    final updatedExistingNames = updatedCustomSets.map((setJson) {
+      final setData = jsonDecode(setJson) as Map<String, dynamic>;
+      return setData['name'] as String;
+    }).toList();
+    
+    // Ensure name is unique
+    final finalSetName = _getUniqueSetName(setName, updatedExistingNames);
     
     // Generate unique set ID
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final setId = 'custom_$timestamp';
     
     // Save custom set
-    final customSets = prefs.getStringList('custom_sets') ?? [];
     final setData = {
       'id': setId,
-      'name': setName,
+      'name': finalSetName,
       'characters': _incorrectItems,
       'isWordSet': widget.isWord,
       'createdAt': DateTime.now().toIso8601String(),
     };
     
-    customSets.add(jsonEncode(setData));
-    await prefs.setStringList('custom_sets', customSets);
+    updatedCustomSets.add(jsonEncode(setData));
+    await prefs2.setStringList('custom_sets', updatedCustomSets);
     
     if (mounted) {
       // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Created custom set: $setName',
+            'Created custom set: $finalSetName',
             style: TextStyle(
               color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                   ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
