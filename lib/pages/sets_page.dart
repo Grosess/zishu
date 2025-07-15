@@ -2190,14 +2190,14 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
               leading: Icon(
                 Icons.delete, 
                 color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                    ? Theme.of(context).colorScheme.error
+                    ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2
                     : Colors.red,
               ),
               title: Text(
                 'Delete', 
                 style: TextStyle(
                   color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                      ? Theme.of(context).colorScheme.error
+                      ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2
                       : Colors.red,
                 ),
               ),
@@ -2342,14 +2342,14 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
             leading: Icon(
               Icons.delete, 
               color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                  ? Theme.of(context).colorScheme.error
+                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2
                   : Colors.red,
             ),
             title: Text(
               'Delete Folder', 
               style: TextStyle(
                 color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                    ? Theme.of(context).colorScheme.error
+                    ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2
                     : Colors.red,
               ),
             ),

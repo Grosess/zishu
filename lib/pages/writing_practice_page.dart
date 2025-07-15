@@ -1861,7 +1861,6 @@ class _WritingPracticePageState extends State<WritingPracticePage>
           // Check if we've completed the last character at stage 2
           // For a 2-character word: when we complete char 2 at stage 2, nextCharacterIndex will be 0
           if (_learningStage == 2 && nextCharacterIndex == 0) {
-            print("DEBUG: Multi-char word completed all stages in learn all mode");
             
             // Special handling for single-word practice mode
             if (widget.allCharacters == null || widget.allCharacters!.length == 1) {
@@ -2063,8 +2062,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         // IMPORTANT: Don't fall through to the else if block below for multi-character words
         return;
       } else if (widget.allCharacters != null && widget.allCharacters!.isNotEmpty) {
-        // Handle progression in learn all mode for both single and multi-character items
-        // DEBUG: Learn all mode progression (else if block)
+        // Handle progression for both learning and testing modes
         
         // Special handling for multi-character words that didn't get caught above
         if (widget.isWord && _wordCharacters.length > 1 && widget.mode == PracticeMode.learning) {
@@ -2177,7 +2175,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
           StreakService().updateProgress(1);
         }
         
-        // Check if we have more items to learn
+        // Check if we have more items to practice/learn
         if (_currentCharacterIndex < widget.allCharacters!.length - 1) {
         
         // Move to next item (could be character or word)
@@ -2215,16 +2213,18 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         });
         } else {
           // No more items in the set - we're done
-          // DEBUG: Completed all items in learn all mode
           if (widget.mode == PracticeMode.learning) {
             // Mark the set as learned
             if (widget.allCharacters != null) {
               _learningService.markSetAsLearned(widget.characterSet, widget.allCharacters!);
             }
-          }
-          // Exit
-          if (mounted) {
-            Navigator.pop(context);
+            // Exit learning mode
+            if (mounted) {
+              Navigator.pop(context);
+            }
+          } else if (widget.mode == PracticeMode.testing) {
+            // Show completion dialog for testing mode
+            _showCompletionDialog();
           }
         }
       } else if (widget.characterSet == 'Endless Practice') {
@@ -2238,20 +2238,11 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         }
         return;
       } else {
-        // DEBUG: Reached final else block
         
-        // Only show completion dialog in testing mode
-        if (widget.mode == PracticeMode.testing) {
-          _showCompletionDialog();
-        } else {
-          // In learning mode, mark the set as learned if we completed all characters
-          if (widget.allCharacters != null) {
-            _learningService.markSetAsLearned(widget.characterSet, widget.allCharacters!);
-          }
-          // Just exit
-          if (mounted) {
-            Navigator.pop(context);
-          }
+        // This else block should rarely be reached - only for single character practice
+        // without allCharacters list
+        if (mounted) {
+          Navigator.pop(context);
         }
       }
     });
