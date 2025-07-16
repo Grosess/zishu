@@ -50,7 +50,6 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
   int _currentTabIndex = 0;
   String? _selectedFolderId;
   bool _controllersInitialized = false;
-  final Set<String> _expandedFolderIds = {}; // Track which folders are expanded
   
   // Search and multi-select functionality
   final TextEditingController _searchController = TextEditingController();
@@ -97,7 +96,6 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
     _initializeProcessor();
     _loadFolders();
     _initializeCedict();
-    _loadExpandedFolders();
     _initializeCharacterDatabase();
     
     // Check if there's a pending set to show (from recent sets)
@@ -281,18 +279,6 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
     await cache.preloadCharacters(iconCharacters.toList());
   }
   
-  Future<void> _loadExpandedFolders() async {
-    final prefs = await SharedPreferences.getInstance();
-    final expandedFolders = prefs.getStringList('expanded_folders') ?? [];
-    setState(() {
-      _expandedFolderIds.addAll(expandedFolders);
-    });
-  }
-  
-  Future<void> _saveExpandedFolders() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList('expanded_folders', _expandedFolderIds.toList());
-  }
   
   Future<void> _initializeCedict() async {
     // Production: removed debug print
@@ -2006,12 +1992,6 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
     
     for (final folder in _folders) {
       displayItems.add(folder);
-      
-      // If folder is expanded, add its sets
-      if (_expandedFolderIds.contains(folder.id)) {
-        final folderSets = sets.where((s) => folder.setIds.contains(s.id)).toList();
-        displayItems.addAll(folderSets);
-      }
     }
     
     // Add unfiled sets at the end
@@ -2052,45 +2032,18 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
           return _FolderCard(
             folder: item,
             setCount: setCount,
-            isExpanded: _expandedFolderIds.contains(item.id),
             onTap: () {
               setState(() {
                 _selectedFolderId = item.id;
               });
             },
             onLongPress: () => _showDeleteFolderDialog(item),
-            onExpandToggle: () {
-              setState(() {
-                if (_expandedFolderIds.contains(item.id)) {
-                  _expandedFolderIds.remove(item.id);
-                } else {
-                  _expandedFolderIds.add(item.id);
-                }
-              });
-              _saveExpandedFolders();
-            },
           );
         } else if (item is CharacterSet) {
           // Show character set card
           final isLoading = _loadingStates[item.id] ?? false;
           
-          // Check if this set belongs to an expanded folder
-          final isInExpandedFolder = _setFolders.containsKey(item.id) && 
-              _expandedFolderIds.contains(_setFolders[item.id]);
-          
-          return Container(
-            // Add a subtle left border for sets in expanded folders
-            decoration: isInExpandedFolder ? BoxDecoration(
-              border: Border(
-                left: BorderSide(
-                  color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                      ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.3)
-                      : Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-                  width: 3,
-                ),
-              ),
-            ) : null,
-            child: _CharacterSetSquareCard(
+          return _CharacterSetSquareCard(
               set: item,
               isLoading: isLoading,
               isCustom: true,
@@ -2098,7 +2051,6 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
               onTap: isLoading ? null : () => _showSetSynopsis(item),
               onLongPress: null,
               onMenuTap: () => _showSetMenu(item),
-            ),
           );
         }
         
@@ -2419,7 +2371,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                  ? Theme.of(context).colorScheme.error
+                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2
                   : Colors.red,
             ),
             child: const Text('Delete'),
@@ -3526,18 +3478,14 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
 class _FolderCard extends StatelessWidget {
   final SetFolder folder;
   final int setCount;
-  final bool isExpanded;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
-  final VoidCallback? onExpandToggle;
 
   const _FolderCard({
     required this.folder,
     required this.setCount,
-    required this.isExpanded,
     this.onTap,
     this.onLongPress,
-    this.onExpandToggle,
   });
 
   @override
@@ -3564,39 +3512,15 @@ class _FolderCard extends StatelessWidget {
                 children: [
                   Expanded(
                     flex: 3,
-                    child: Stack(
-                      children: [
-                        Center(
-                          child: FittedBox(
-                            fit: BoxFit.contain,
-                            child: Icon(
-                              isExpanded ? Icons.folder_open : Icons.folder,
-                              size: 48,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                          ),
+                    child: Center(
+                      child: FittedBox(
+                        fit: BoxFit.contain,
+                        child: Icon(
+                          Icons.folder,
+                          size: 48,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
-                        // Expand/Collapse button
-                        Positioned(
-                          top: 0,
-                          right: 0,
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: onExpandToggle,
-                              borderRadius: BorderRadius.circular(12),
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                child: Icon(
-                                  isExpanded ? Icons.expand_less : Icons.expand_more,
-                                  size: 20,
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                   Expanded(
@@ -3813,7 +3737,7 @@ class _CharacterSetSquareCard extends StatelessWidget {
                                   valueColor: AlwaysStoppedAnimation<Color>(
                                     isDuotone 
                                       ? (duotoneExt?.duotoneColor2 ?? Theme.of(context).colorScheme.primary)
-                                      : Colors.white.withOpacity(0.5)
+                                      : Colors.white.withValues(alpha: 0.5)
                                   ),
                                   borderRadius: BorderRadius.circular(2),
                                 ),
