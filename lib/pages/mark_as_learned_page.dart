@@ -132,10 +132,23 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
   Future<void> _showImportDialog() async {
     final controller = TextEditingController();
     
+    final duotoneTheme = Theme.of(context).extension<DuotoneThemeExtension>();
+    final isDuotone = duotoneTheme?.isDuotoneTheme == true;
+    
     final result = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Import Known Characters'),
+        backgroundColor: isDuotone 
+            ? duotoneTheme!.duotoneColor1 
+            : null,
+        title: Text(
+          'Import Known Characters',
+          style: TextStyle(
+            color: isDuotone 
+                ? duotoneTheme!.duotoneColor2 
+                : null,
+          ),
+        ),
         content: ConstrainedBox(
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.5,
@@ -148,16 +161,51 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
               children: [
                 Text(
                   'Enter all characters you already know:',
-                  style: Theme.of(context).textTheme.bodyMedium,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: isDuotone 
+                        ? duotoneTheme!.duotoneColor2 
+                        : null,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: controller,
                   maxLines: null,
                   keyboardType: TextInputType.multiline,
-                  decoration: const InputDecoration(
+                  style: TextStyle(
+                    color: isDuotone 
+                        ? duotoneTheme!.duotoneColor2 
+                        : null,
+                  ),
+                  decoration: InputDecoration(
                     hintText: '你好世界学习中文...',
-                    border: OutlineInputBorder(),
+                    hintStyle: TextStyle(
+                      color: isDuotone 
+                          ? duotoneTheme!.duotoneColor2?.withValues(alpha: 0.5)
+                          : null,
+                    ),
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: isDuotone 
+                            ? duotoneTheme!.duotoneColor2!.withValues(alpha: 0.3)
+                            : Theme.of(context).colorScheme.outline,
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: isDuotone 
+                            ? duotoneTheme!.duotoneColor2!.withValues(alpha: 0.3)
+                            : Theme.of(context).colorScheme.outline,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: isDuotone 
+                            ? duotoneTheme!.duotoneColor2!
+                            : Theme.of(context).colorScheme.primary,
+                        width: 2,
+                      ),
+                    ),
                   ),
                   autofocus: true,
                 ),
@@ -165,7 +213,9 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
                 Text(
                   'Tip: You can paste characters from other sources.',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    color: isDuotone 
+                        ? duotoneTheme!.duotoneColor2?.withValues(alpha: 0.7)
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -175,10 +225,21 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
+            style: isDuotone 
+                ? TextButton.styleFrom(
+                    foregroundColor: duotoneTheme!.duotoneColor2,
+                  )
+                : null,
             child: const Text('Cancel'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, controller.text),
+            style: isDuotone 
+                ? FilledButton.styleFrom(
+                    backgroundColor: duotoneTheme!.duotoneColor2,
+                    foregroundColor: duotoneTheme!.duotoneColor1,
+                  )
+                : null,
             child: const Text('Import'),
           ),
         ],
@@ -261,32 +322,99 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
   }
   
   Future<void> _importFromCSV() async {
+    final duotoneTheme = Theme.of(context).extension<DuotoneThemeExtension>();
+    final isDuotone = duotoneTheme?.isDuotoneTheme == true;
+    
     // Show instructions dialog
     final shouldProceed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Import from CSV/TSV'),
-        content: const Column(
+        backgroundColor: isDuotone 
+            ? duotoneTheme!.duotoneColor1 
+            : null,
+        title: Text(
+          'Import from CSV/TSV',
+          style: TextStyle(
+            color: isDuotone 
+                ? duotoneTheme!.duotoneColor2 
+                : null,
+          ),
+        ),
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Import Chinese characters from a CSV or TSV file.'),
-            SizedBox(height: 12),
-            Text('File format:'),
-            Text('• First column should contain Chinese characters'),
-            Text('• Can include words or individual characters'),
-            Text('• Other columns will be ignored'),
-            SizedBox(height: 12),
-            Text('Supported formats: .csv, .tsv'),
+            Text(
+              'Import Chinese characters from a CSV or TSV file.',
+              style: TextStyle(
+                color: isDuotone 
+                    ? duotoneTheme!.duotoneColor2 
+                    : null,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'File format:',
+              style: TextStyle(
+                color: isDuotone 
+                    ? duotoneTheme!.duotoneColor2 
+                    : null,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              '• First column should contain Chinese characters',
+              style: TextStyle(
+                color: isDuotone 
+                    ? duotoneTheme!.duotoneColor2?.withValues(alpha: 0.8)
+                    : null,
+              ),
+            ),
+            Text(
+              '• Can include words or individual characters',
+              style: TextStyle(
+                color: isDuotone 
+                    ? duotoneTheme!.duotoneColor2?.withValues(alpha: 0.8)
+                    : null,
+              ),
+            ),
+            Text(
+              '• Other columns will be ignored',
+              style: TextStyle(
+                color: isDuotone 
+                    ? duotoneTheme!.duotoneColor2?.withValues(alpha: 0.8)
+                    : null,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Supported formats: .csv, .tsv',
+              style: TextStyle(
+                color: isDuotone 
+                    ? duotoneTheme!.duotoneColor2?.withValues(alpha: 0.7)
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
+            style: isDuotone 
+                ? TextButton.styleFrom(
+                    foregroundColor: duotoneTheme!.duotoneColor2,
+                  )
+                : null,
             child: const Text('Cancel'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
+            style: isDuotone 
+                ? FilledButton.styleFrom(
+                    backgroundColor: duotoneTheme!.duotoneColor2,
+                    foregroundColor: duotoneTheme!.duotoneColor1,
+                  )
+                : null,
             child: const Text('Select File'),
           ),
         ],
@@ -361,20 +489,53 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
       // Show confirmation dialog
       final shouldImport = await showDialog<bool>(
         context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Confirm Import'),
-          content: Text('Found ${characters.length} unique characters to import. Continue?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
+        builder: (context) {
+          final duotoneTheme = Theme.of(context).extension<DuotoneThemeExtension>();
+          final isDuotone = duotoneTheme?.isDuotoneTheme == true;
+          
+          return AlertDialog(
+            backgroundColor: isDuotone 
+                ? duotoneTheme!.duotoneColor1 
+                : null,
+            title: Text(
+              'Confirm Import',
+              style: TextStyle(
+                color: isDuotone 
+                    ? duotoneTheme!.duotoneColor2 
+                    : null,
+              ),
             ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Import'),
+            content: Text(
+              'Found ${characters.length} unique characters to import. Continue?',
+              style: TextStyle(
+                color: isDuotone 
+                    ? duotoneTheme!.duotoneColor2 
+                    : null,
+              ),
             ),
-          ],
-        ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                style: isDuotone 
+                    ? TextButton.styleFrom(
+                        foregroundColor: duotoneTheme!.duotoneColor2,
+                      )
+                    : null,
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: isDuotone 
+                    ? FilledButton.styleFrom(
+                        backgroundColor: duotoneTheme!.duotoneColor2,
+                        foregroundColor: duotoneTheme!.duotoneColor1,
+                      )
+                    : null,
+                child: const Text('Import'),
+              ),
+            ],
+          );
+        },
       );
       
       if (shouldImport == true) {
