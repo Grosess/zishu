@@ -1,4 +1,4 @@
-// Generated from Skritter CSV and pronunciation rules
+// Generated from CSV and pronunciation rules
 // Do not edit manually - regenerate using tools/generate_common_definitions.dart
 
 class CommonDefinition {

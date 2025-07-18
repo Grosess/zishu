@@ -260,25 +260,24 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
     );
   }
   
-  Future<void> _importFromSkritter() async {
+  Future<void> _importFromCSV() async {
     // Show instructions dialog
     final shouldProceed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Import from Skritter'),
+        title: const Text('Import from CSV/TSV'),
         content: const Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('To export your words from Skritter:'),
+            Text('Import Chinese characters from a CSV or TSV file.'),
             SizedBox(height: 12),
-            Text('1. Login to skritter.com'),
-            Text('2. Press the three bars in the top left'),
-            Text('3. Click "My Words"'),
-            Text('4. Click "Export"'),
-            Text('5. Save the file (.tsv or .csv)'),
+            Text('File format:'),
+            Text('• First column should contain Chinese characters'),
+            Text('• Can include words or individual characters'),
+            Text('• Other columns will be ignored'),
             SizedBox(height: 12),
-            Text('Then select the exported file to import.'),
+            Text('Supported formats: .csv, .tsv'),
           ],
         ),
         actions: [
@@ -304,11 +303,11 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
     
     if (result != null && result.files.single.path != null) {
       final file = File(result.files.single.path!);
-      await _parseSkritterFile(file);
+      await _parseCSVFile(file);
     }
   }
   
-  Future<void> _parseSkritterFile(File file) async {
+  Future<void> _parseCSVFile(File file) async {
     try {
       // Show progress dialog
       showDialog(
@@ -424,8 +423,8 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(importedCount == 1
-                ? 'Imported 1 new character from Skritter'
-                : 'Imported $importedCount new characters from Skritter'),
+                ? 'Imported 1 new character from CSV'
+                : 'Imported $importedCount new characters from CSV'),
           ),
         );
       }
@@ -550,8 +549,8 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
                       onSelected: (value) {
                         if (value == 'text') {
                           _showImportDialog();
-                        } else if (value == 'skritter') {
-                          _importFromSkritter();
+                        } else if (value == 'csv') {
+                          _importFromCSV();
                         }
                       },
                       itemBuilder: (BuildContext context) => [
@@ -571,14 +570,14 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
                           height: 1,
                         ),
                         PopupMenuItem<String>(
-                          value: 'skritter',
+                          value: 'csv',
                           child: ListTile(
                             leading: Icon(
                               Icons.file_upload,
                               color: Theme.of(context).colorScheme.primary,
                             ),
-                            title: const Text('Import from Skritter'),
-                            subtitle: const Text('Upload .tsv or .csv file'),
+                            title: const Text('Import from CSV/TSV'),
+                            subtitle: const Text('Upload .csv or .tsv file'),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                           ),
                         ),

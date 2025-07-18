@@ -767,36 +767,35 @@ class _CharacterListPageState extends State<CharacterListPage> {
                         // Get fresh learned status
                         await _loadLearnedStatus();
                         
-                        // Filter only learned characters from displayed set for testing mode
-                        final learnedTerms = _displayedCharacters
-                            .where((item) {
-                              final term = _extractTerm(item);
-                              return _learnedCharacters.contains(term) || _learnedCharacters.contains(item);
-                            })
+                        // Get ALL characters from the displayed set for Practice All
+                        final allTerms = _displayedCharacters
                             .map((item) => _extractTerm(item))
                             .toList();
+                        
+                        // Shuffle for variety in practice
+                        final shuffledTerms = List<String>.from(allTerms)..shuffle();
                         
                         // Close loading
                         if (mounted) Navigator.pop(context);
                         
-                        if (learnedTerms.isEmpty) {
+                        if (allTerms.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('No learned items in this set yet. Use Learning Mode first!'),
+                              content: Text('No items in this set!'),
                             ),
                           );
                           return;
                         }
                         
-                        // Don't shuffle - use the same order as displayed
+                        // Use shuffled order for practice
                         HapticService().lightImpact();
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => WritingPracticePage(
-                              character: learnedTerms.first,
+                              character: shuffledTerms.first,
                               characterSet: _currentSetName,
-                              allCharacters: learnedTerms,
+                              allCharacters: shuffledTerms,
                               isWord: widget.isWordSet,
                               mode: PracticeMode.testing,
                             ),

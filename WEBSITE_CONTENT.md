@@ -79,7 +79,7 @@ Zishu (字书) is a comprehensive Chinese character learning app that helps user
 
 #### Import Options
 1. **Text Import**: Paste any Chinese text to mark characters as learned
-2. **Skritter Import**: Import your learned characters from Skritter exports (.tsv/.csv)
+2. **CSV/TSV Import**: Import your learned characters from CSV or TSV files
 3. **Backup Import**: Restore from app backup files
 
 #### Export Features
@@ -172,7 +172,7 @@ Zishu (字书) is a comprehensive Chinese character learning app that helps user
 4. **Progress Tracking**: Daily goal visualization
 5. **Themes**: Light, dark, and duotone theme examples
 6. **Statistics**: Progress charts and streak display
-7. **Import Feature**: Skritter import dialog
+7. **Import Feature**: CSV/TSV import dialog
 8. **Radical Analysis**: Character breakdown view
 
 ## Marketing Taglines
@@ -203,7 +203,7 @@ Start with guided learning, progress through increasing challenges, and master t
 | Offline Functionality | ✓ | Often Limited |
 | Custom Character Sets | ✓ | Sometimes |
 | No Subscription | ✓ | Rare |
-| Skritter Import | ✓ | No |
+| CSV/TSV Import | ✓ | Limited |
 | Spaced Repetition | ✓ | Common |
 | Radical Analysis | ✓ | Sometimes |
 | Multiple Themes | ✓ | Limited |

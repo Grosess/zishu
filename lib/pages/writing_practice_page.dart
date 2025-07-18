@@ -1814,6 +1814,23 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         // Single word continuous practice - cycle through characters infinitely
         final nextCharacterIndex = (_currentWordCharacterIndex + 1) % _wordCharacters.length;
         
+        // For endless practice, we need to complete the word and move to next item
+        if (widget.characterSet == 'Endless Practice' && nextCharacterIndex == 0) {
+          // Track the result for the last character
+          _wordCharacterResults[_currentWordCharacterIndex] = wasCorrect;
+          
+          // Call completion callback to move to next item in endless queue
+          if (widget.onComplete != null) {
+            widget.onComplete!(wasCorrect);
+          }
+          
+          // Update streak progress for endless practice
+          if (wasCorrect) {
+            StreakService().updateProgress(1);
+          }
+          return;
+        }
+        
         setState(() {
           // Track the result for this character
           _wordCharacterResults[_currentWordCharacterIndex] = wasCorrect;
@@ -2044,17 +2061,55 @@ class _WritingPracticePageState extends State<WritingPracticePage>
               Navigator.pop(context);
             }
           } else {
-            // Only show completion dialog in testing mode for sets
-            if (widget.mode == PracticeMode.testing) {
-              _showCompletionDialog();
+            // We've completed the last character of a multi-character word
+            // Check if there are more items in the set
+            if (widget.allCharacters != null && _currentCharacterIndex < widget.allCharacters!.length - 1) {
+              // Move to next item in the set
+              setState(() {
+                _currentCharacterIndex++;
+                _currentWordCharacterIndex = 0;
+                _wordCharacterResults.clear();
+                _learningStage = 0;
+                
+                // Clear all visual state
+                _completedStrokeIndices.clear();
+                _userStrokes.clear();
+                _currentStroke.clear();
+                _currentStrokeTimestamps.clear();
+                _showSuccess = false;
+                _showManualGrading = false;
+                _autoGradedAsCorrect = false;
+                _testingCharacterRevealed = false;
+                _showHintPath = false;
+                _showFullCharacter = false;
+                _usedHint = false;
+                _missedStrokes = 0;
+                _strokeDeviation = 0.0;
+                _autoProceedTimer?.cancel();
+                _progressTimer?.cancel();
+                _timerProgress = 1.0;
+                
+                final nextItem = widget.allCharacters![_currentCharacterIndex];
+                if (_dictionary.isMultiCharacterItem(nextItem)) {
+                  _wordCharacters = _dictionary.splitIntoCharacters(nextItem);
+                } else {
+                  _wordCharacters = [nextItem];
+                }
+                _loadCharacterData();
+              });
             } else {
-              // In learning mode, mark the set as learned if we completed all characters
-              if (widget.allCharacters != null) {
-                _learningService.markSetAsLearned(widget.characterSet, widget.allCharacters!);
-              }
-              // Just exit
-              if (mounted) {
-                Navigator.pop(context);
+              // No more items - show completion dialog or exit
+              if (widget.mode == PracticeMode.testing) {
+                _showCompletionDialog();
+              } else {
+                // In learning mode, mark the set as learned if we completed all characters
+                if (widget.allCharacters != null) {
+                  _learningService.markSetAsLearned(widget.characterSet, widget.allCharacters!);
+                }
+                // Just exit
+                if (mounted) {
+                  Navigator.pop(context);
+                }
               }
             }
           }

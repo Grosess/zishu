@@ -1,9 +1,10 @@
 import 'dart:io';
 
-/// Tool to generate common definitions from Skritter CSV and other sources
+/// Tool to generate common definitions from CSV sources
 void main(List<String> args) async {
   if (args.isEmpty) {
-    print('Usage: dart generate_common_definitions.dart <skritter_csv_path>');
+    print('Usage: dart generate_common_definitions.dart <csv_path>');
+    print('CSV format: simplified,traditional,pinyin,definition');
     exit(1);
   }
 
@@ -15,7 +16,7 @@ void main(List<String> args) async {
     exit(1);
   }
 
-  print('Processing Skritter CSV...');
+  print('Processing CSV file...');
   final lines = await csvFile.readAsLines();
   
   final definitions = <String, CommonDefinition>{};
@@ -45,14 +46,14 @@ void main(List<String> args) async {
     }
   }
   
-  print('Processed ${definitions.length} entries from Skritter CSV');
+  print('Processed ${definitions.length} entries from CSV file');
   
   // Add pronunciation rules for common multi-pronunciation characters
   _addPronunciationRules(definitions);
   
   // Generate the Dart file
   final output = StringBuffer();
-  output.writeln('// Generated from Skritter CSV and pronunciation rules');
+  output.writeln('// Generated from CSV and pronunciation rules');
   output.writeln('// Do not edit manually - regenerate using tools/generate_common_definitions.dart');
   output.writeln();
   output.writeln('class CommonDefinition {');
@@ -107,7 +108,7 @@ void main(List<String> args) async {
   _generateSummary(definitions);
 }
 
-/// Add pronunciation rules for characters not in Skritter or with multiple common uses
+/// Add pronunciation rules for characters not in CSV or with multiple common uses
 void _addPronunciationRules(Map<String, CommonDefinition> definitions) {
   // Common particles and their preferred pronunciations
   final particleRules = {
@@ -134,7 +135,7 @@ void _addPronunciationRules(Map<String, CommonDefinition> definitions) {
   print('Added ${particleRules.length} pronunciation rules');
 }
 
-/// Assign priority based on position in Skritter (earlier = more common)
+/// Assign priority based on position in CSV (earlier = more common)
 int _getPriority(String character, int position) {
   // Single characters get higher priority
   if (character.length == 1) {

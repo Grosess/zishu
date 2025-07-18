@@ -1,14 +1,14 @@
 # Common Definitions Implementation
 
 ## Overview
-I've implemented an automated system to ensure the most common definitions and pronunciations are used for all characters in the app. This system works beyond just the Skritter CSV by using rules and patterns.
+I've implemented an automated system to ensure the most common definitions and pronunciations are used for all characters in the app. This system works beyond just CSV imports by using rules and patterns.
 
 ## How It Works
 
 ### 1. Automated Import Tool
 Created `tools/generate_common_definitions.dart` that:
-- Imports the Skritter CSV automatically
-- Processes 294 entries (139 single characters, 155 multi-character words)
+- Imports CSV files automatically
+- Processes entries from CSV (single characters and multi-character words)
 - Adds pronunciation rules for common particles
 - Generates `lib/data/common_definitions.dart`
 
@@ -32,7 +32,7 @@ Pronunciation preferences are stored in `lib/data/common_definitions.dart` as pa
 
 ### How It Works for All Characters
 
-1. **Skritter CSV Data**: 294 entries with learner-friendly definitions
+1. **CSV Data**: Entries with learner-friendly definitions
 2. **Pronunciation Rules**: Added for particles like:
    - 的 → de5 (possessive particle)
    - 得 → de5 (complement particle)
@@ -59,9 +59,9 @@ Pronunciation preferences are stored in `lib/data/common_definitions.dart` as pa
 
 To add more common definitions:
 
-1. Add entries to the Skritter CSV
+1. Add entries to a CSV file (format: simplified,traditional,pinyin,definition)
 2. Or modify `tools/generate_common_definitions.dart` to add rules
-3. Run: `dart tools/generate_common_definitions.dart skritter.csv`
+3. Run: `dart tools/generate_common_definitions.dart yourfile.csv`
 
 The system is designed to be extensible - you can add frequency data, HSK correlations, or linguistic research data in the future.
 
