@@ -1010,7 +1010,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${set.characters.length} ${set.isWordSet ? 'words' : 'characters'}',
+                  '${set.characters.length} cards',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -2170,7 +2170,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
       builder: (context) => AlertDialog(
         title: const Text('Mark All as Learned'),
         content: Text(
-          'Do you really want to mark all ${set.characters.length} ${set.isWordSet ? "words" : "characters"} in "${set.name}" as learned?\n\nYou will not be able to undo this action.',
+          'Do you really want to mark all ${set.characters.length} cards in "${set.name}" as learned?\n\nYou will not be able to undo this action.',
         ),
         actions: [
           TextButton(
@@ -3717,7 +3717,7 @@ class _CharacterSetSquareCard extends StatelessWidget {
                               ),
                               const SizedBox(height: 1),
                               Text(
-                                '${set.characters.length} ${set.isWordSet ? 'words' : 'characters'}',
+                                '${set.characters.length} cards',
                                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                   color: subtextColor,
                                   fontSize: 10,

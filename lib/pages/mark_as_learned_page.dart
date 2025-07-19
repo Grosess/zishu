@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../services/character_set_manager.dart';
 import '../main.dart' show DuotoneThemeExtension, refreshStreakDisplay, refreshSetsProgress;
 import '../services/character_database.dart';
 import '../services/learning_service.dart';
 import '../services/statistics_service.dart';
+import '../services/character_set_manager.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
@@ -254,6 +254,9 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
   Future<void> _importCharacters(String text) async {
     // Extract all Chinese characters from the text
     final characters = <String>{};
+    final words = <String>{};
+    
+    // First, extract individual characters
     for (int i = 0; i < text.length; i++) {
       final char = text[i];
       if (_isChineseCharacter(char)) {
@@ -279,10 +282,49 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
       ),
     );
     
+    // Get all character sets to find multi-character words
+    final characterSetManager = CharacterSetManager();
+    await characterSetManager.loadPredefinedSets();
+    final allSets = characterSetManager.getAllSets();
+    
+    // Collect all multi-character words from sets
+    final allMultiCharWords = <String>{};
+    for (final set in allSets) {
+      for (final item in set.characters) {
+        // Extract term (remove annotation)
+        final parenIndex = item.indexOf('(');
+        final term = parenIndex > 0 ? item.substring(0, parenIndex).trim() : item.trim();
+        if (term.length > 1) {
+          allMultiCharWords.add(term);
+        }
+      }
+    }
+    
+    // Check which multi-character words can be formed from the imported characters
+    for (final word in allMultiCharWords) {
+      bool canFormWord = true;
+      for (int i = 0; i < word.length; i++) {
+        if (!characters.contains(word[i])) {
+          canFormWord = false;
+          break;
+        }
+      }
+      if (canFormWord) {
+        words.add(word);
+      }
+    }
+    
     // Mark all characters as learned in batch
     final charactersList = characters.toList();
     await _learningService.markCharactersAsLearned(charactersList, updateTodayProgress: false);
+    
+    // Mark all multi-character words as learned
+    for (final word in words) {
+      await _learningService.markWordAsLearned(word);
+    }
+    
     final importedCount = charactersList.length;
+    final wordsCount = words.length;
     
     // Close progress dialog
     Navigator.pop(context);
@@ -314,9 +356,11 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
     
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(importedCount == 1 
-            ? 'Imported 1 new character'
-            : 'Imported $importedCount new characters'),
+        content: Text(wordsCount > 0
+            ? 'Imported $importedCount characters and $wordsCount multi-character words'
+            : importedCount == 1 
+                ? 'Imported 1 new character'
+                : 'Imported $importedCount new characters'),
       ),
     );
   }
@@ -548,10 +592,50 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
           ),
         );
         
+        // Get all character sets to find multi-character words
+        final characterSetManager = CharacterSetManager();
+        await characterSetManager.loadPredefinedSets();
+        final allSets = characterSetManager.getAllSets();
+        
+        // Collect all multi-character words from sets
+        final allMultiCharWords = <String>{};
+        for (final set in allSets) {
+          for (final item in set.characters) {
+            // Extract term (remove annotation)
+            final parenIndex = item.indexOf('(');
+            final term = parenIndex > 0 ? item.substring(0, parenIndex).trim() : item.trim();
+            if (term.length > 1) {
+              allMultiCharWords.add(term);
+            }
+          }
+        }
+        
+        // Check which multi-character words can be formed from the imported characters
+        final words = <String>{};
+        for (final word in allMultiCharWords) {
+          bool canFormWord = true;
+          for (int i = 0; i < word.length; i++) {
+            if (!characters.contains(word[i])) {
+              canFormWord = false;
+              break;
+            }
+          }
+          if (canFormWord) {
+            words.add(word);
+          }
+        }
+        
         // Mark all characters as learned in batch
         final charactersList = characters.toList();
         await _learningService.markCharactersAsLearned(charactersList, updateTodayProgress: false);
+        
+        // Mark all multi-character words as learned
+        for (final word in words) {
+          await _learningService.markWordAsLearned(word);
+        }
+        
         final importedCount = charactersList.length;
+        final wordsCount = words.length;
         
         // Close progress dialog
         Navigator.pop(context);
@@ -583,9 +667,11 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(importedCount == 1
-                ? 'Imported 1 new character from CSV'
-                : 'Imported $importedCount new characters from CSV'),
+            content: Text(wordsCount > 0
+                ? 'Imported $importedCount characters and $wordsCount multi-character words from CSV'
+                : importedCount == 1
+                    ? 'Imported 1 new character from CSV'
+                    : 'Imported $importedCount new characters from CSV'),
           ),
         );
       }

@@ -407,21 +407,8 @@ class LearningService {
       return learnedCharacters.contains(item);
     }
     
-    // If it's a multi-character word, check if:
-    // 1. The word itself is marked as learned, OR
-    // 2. All individual characters in the word are learned
-    if (learnedWords.contains(item)) {
-      return true;
-    }
-    
-    // Check if all characters in the word are learned
-    for (int i = 0; i < item.length; i++) {
-      final char = item[i];
-      if (!learnedCharacters.contains(char)) {
-        return false;
-      }
-    }
-    
-    return true;
+    // If it's a multi-character word, only consider it learned if explicitly marked
+    // Don't auto-mark as learned just because all characters are learned
+    return learnedWords.contains(item);
   }
 }

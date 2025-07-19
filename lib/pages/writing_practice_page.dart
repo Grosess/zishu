@@ -1810,7 +1810,8 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       }
       
       // For single word practice mode, handle continuous cycling
-      if (widget.isWord && _wordCharacters.length > 1 && (widget.allCharacters == null || widget.allCharacters!.length == 1)) {
+      // Only enter this branch if allCharacters is null (not when it has 1 item)
+      if (widget.isWord && _wordCharacters.length > 1 && widget.allCharacters == null) {
         // Single word continuous practice - cycle through characters infinitely
         final nextCharacterIndex = (_currentWordCharacterIndex + 1) % _wordCharacters.length;
         

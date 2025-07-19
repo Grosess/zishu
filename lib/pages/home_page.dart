@@ -162,8 +162,8 @@ class HomePageState extends State<HomePage> with RouteAware {
     // Calculate pace
     _calculatePace();
     
-    // Combine all learned items
-    _allLearnedItems = [...learnedCharacters, ...learnedWords];
+    // Build practice items for endless practice
+    await _buildEndlessPracticeItems();
     
     // Load recent practice sets asynchronously
     _loadRecentSets().then((_) {
@@ -305,17 +305,7 @@ class HomePageState extends State<HomePage> with RouteAware {
     }
   }
 
-  void _startEndlessPractice() async {
-    HapticService().mediumImpact();
-    // Show loading indicator while refreshing
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
-    
+  Future<void> _buildEndlessPracticeItems() async {
     // Clear cache to get fresh data
     _learningService.clearCache();
     _statsService.clearCache();
@@ -362,71 +352,57 @@ class HomePageState extends State<HomePage> with RouteAware {
       print('  ${entry.key}: ${(entry.value * 100).toStringAsFixed(1)}%');
     }
     
-    // For HSK sets, only include completed sets and the highest incomplete one
+    // Improved HSK set selection logic
     final hskSets = ['HSK 1', 'HSK 2', 'HSK 3', 'HSK 4', 'HSK 5', 'HSK 6'];
     final allowedSets = <String>{};
-    String? highestIncompleteHSK;
     
     // First check if we have any learned items at all
     if (allLearnedChars.isNotEmpty || allLearnedWords.isNotEmpty) {
-      // If we have learned items but no set progress, include all sets
-      bool hasAnyProgress = false;
-      for (final progress in setProgressMap.values) {
-        if (progress > 0) {
-          hasAnyProgress = true;
-          break;
+      // Find the highest completed HSK level
+      int highestCompletedLevel = 0;
+      int lowestIncompleteLevel = 7; // Start with an impossible level
+      
+      for (int i = 0; i < hskSets.length; i++) {
+        final progress = setProgressMap[hskSets[i]] ?? 0.0;
+        if (progress >= 1.0) {
+          highestCompletedLevel = i + 1;
+        } else if (progress > 0 && i + 1 < lowestIncompleteLevel) {
+          lowestIncompleteLevel = i + 1;
         }
       }
       
-      if (!hasAnyProgress) {
-        print('No set progress found, but have learned items. Including all sets.');
-        // Add all sets that contain our learned items
-        for (final entry in allSetItems.entries) {
-          final card = entry.key;
-          final setName = entry.value.key;
-          
-          // Check if this card or its characters are learned
-          bool isRelevant = false;
-          if (allLearnedWords.contains(card)) {
-            isRelevant = true;
-          } else if (card.length == 1 && allLearnedChars.contains(card)) {
-            isRelevant = true;
-          } else {
-            // Check if any character in the card is learned
-            for (int i = 0; i < card.length; i++) {
-              if (allLearnedChars.contains(card[i])) {
-                isRelevant = true;
-                break;
-              }
-            }
-          }
-          
-          if (isRelevant) {
-            allowedSets.add(setName);
-          }
+      // Determine which HSK sets to include
+      if (highestCompletedLevel > 0) {
+        // Include all completed levels
+        for (int i = 0; i < highestCompletedLevel; i++) {
+          allowedSets.add(hskSets[i]);
+          print('Adding completed HSK set: ${hskSets[i]}');
         }
+        // Include the next level after the highest completed
+        if (highestCompletedLevel < hskSets.length) {
+          allowedSets.add(hskSets[highestCompletedLevel]);
+          print('Adding next HSK level: ${hskSets[highestCompletedLevel]}');
+        }
+      } else if (lowestIncompleteLevel <= 6) {
+        // No completed levels, but have started some
+        // Include the lowest incomplete level and the one below it (if exists)
+        if (lowestIncompleteLevel > 1) {
+          allowedSets.add(hskSets[lowestIncompleteLevel - 2]);
+          print('Adding previous HSK level: ${hskSets[lowestIncompleteLevel - 2]}');
+        }
+        allowedSets.add(hskSets[lowestIncompleteLevel - 1]);
+        print('Adding current HSK level: ${hskSets[lowestIncompleteLevel - 1]}');
       } else {
-        // Use the normal HSK progression logic
-        for (final hskSet in hskSets) {
-          final progress = setProgressMap[hskSet] ?? 0.0;
-          if (progress >= 1.0) {
-            // Set is completed, include it
-            allowedSets.add(hskSet);
-            print('Adding completed HSK set: $hskSet');
-          } else if (progress > 0 && highestIncompleteHSK == null) {
-            // This is the highest incomplete HSK set with progress
-            highestIncompleteHSK = hskSet;
-            allowedSets.add(hskSet);
-            print('Adding incomplete HSK set: $hskSet (${(progress * 100).toStringAsFixed(1)}%)');
-          }
-        }
-        
-        // Include all non-HSK sets that have any progress
-        for (final entry in setProgressMap.entries) {
-          if (!hskSets.contains(entry.key) && entry.value > 0) {
-            allowedSets.add(entry.key);
-            print('Adding non-HSK set: ${entry.key} (${(entry.value * 100).toStringAsFixed(1)}%)');
-          }
+        // No HSK progress, include HSK 1 by default
+        allowedSets.add('HSK 1');
+        print('No HSK progress, adding HSK 1 by default');
+      }
+      
+      // Include all non-HSK sets that have any progress
+      for (final entry in setProgressMap.entries) {
+        if (!hskSets.contains(entry.key) && entry.value > 0) {
+          allowedSets.add(entry.key);
+          print('Adding non-HSK set: ${entry.key} (${(entry.value * 100).toStringAsFixed(1)}%)');
         }
       }
     }
@@ -554,11 +530,26 @@ class HomePageState extends State<HomePage> with RouteAware {
         }
       }
       
-      // Add single characters that aren't part of any added multi-char cards
+      // Add single characters only if they were learned as individual cards
+      // Check if the character exists as a single-character card in any allowed set
       for (final char in allLearnedChars) {
         if (!addedItems.contains(char)) {
-          practiceItems.add(char);
-          addedItems.add(char);
+          // Check if this character exists as a single-character card in the allowed sets
+          bool isSingleCharCard = false;
+          for (final entry in allSetItems.entries) {
+            final card = entry.key;
+            final setName = entry.value.key;
+            if (card == char && allowedSets.contains(setName)) {
+              isSingleCharCard = true;
+              break;
+            }
+          }
+          
+          // Only add if it's actually a single-character card, not just part of a multi-char word
+          if (isSingleCharCard) {
+            practiceItems.add(char);
+            addedItems.add(char);
+          }
         }
       }
       
@@ -577,10 +568,27 @@ class HomePageState extends State<HomePage> with RouteAware {
       }
     }
     
-    _allLearnedItems = practiceItems;
+    setState(() {
+      _allLearnedItems = practiceItems;
+    });
     
-    print('Starting endless practice with ${_allLearnedItems.length} items');
+    print('Built practice items with ${_allLearnedItems.length} items');
     print('Sample items: ${_allLearnedItems.take(20).join(", ")}');
+  }
+  
+  void _startEndlessPractice() async {
+    HapticService().mediumImpact();
+    // Show loading indicator while refreshing
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+    
+    // Rebuild practice items with fresh data
+    await _buildEndlessPracticeItems();
     
     // Close loading dialog
     if (mounted) {
