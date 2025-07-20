@@ -1258,7 +1258,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.primary,
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -1282,7 +1282,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.primary,
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -1358,7 +1358,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.primary,
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
                         letterSpacing: 0.5,
                       ),
                     ),
