@@ -1189,7 +1189,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
               child: Container(
                 width: double.infinity,
                 padding: EdgeInsets.only(
-                  top: MediaQuery.of(context).padding.top + 16,
+                  top: MediaQuery.of(context).padding.top + 60,
                   left: 20,
                   right: 20,
                   bottom: 20,
@@ -1249,7 +1249,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                   colors: [
                     Theme.of(context).colorScheme.primary.withOpacity(0.15),
                     Theme.of(context).colorScheme.primary.withOpacity(0.05),
-                    Colors.white.withOpacity(0.0),
+                    Colors.transparent,
                   ],
                   stops: const [0.0, 0.5, 1.0],
                 ),
