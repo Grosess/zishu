@@ -1233,15 +1233,15 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
               ),
             ),
             Container(
-              height: 30,
+              height: 12,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Theme.of(context).colorScheme.primary,
-                    Theme.of(context).colorScheme.primary.withOpacity(0.5),
-                    Colors.white,
+                    Theme.of(context).colorScheme.primary.withOpacity(0.15),
+                    Theme.of(context).colorScheme.primary.withOpacity(0.05),
+                    Colors.white.withOpacity(0.0),
                   ],
                   stops: const [0.0, 0.5, 1.0],
                 ),
