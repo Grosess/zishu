@@ -1175,7 +1175,11 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         ],
       ),
       drawer: Drawer(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+            ? Theme.of(context).colorScheme.surface
+            : Theme.of(context).brightness == Brightness.dark 
+                ? Theme.of(context).colorScheme.surface
+                : Colors.white,
         child: Column(
           children: [
             InkWell(
@@ -1195,13 +1199,19 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                   bottom: 20,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                      ? Theme.of(context).colorScheme.surface
+                      : Theme.of(context).brightness == Brightness.dark 
+                          ? Theme.of(context).colorScheme.surface
+                          : Colors.white,
                 ),
                 child: Row(
                   children: [
                     CircleAvatar(
                       radius: 30,
-                      backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                      backgroundColor: Theme.of(context).brightness == Brightness.dark
+                        ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
+                        : Theme.of(context).colorScheme.primary.withOpacity(0.1),
                       child: Text(
                         _profileService.firstName.isNotEmpty ? _profileService.firstName[0].toUpperCase() : 'U',
                         style: TextStyle(
@@ -1222,7 +1232,9 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
-                              color: Theme.of(context).colorScheme.primary,
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.white
+                                  : Theme.of(context).colorScheme.primary,
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -1230,7 +1242,9 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                             'Tap to edit profile',
                             style: TextStyle(
                               fontSize: 13,
-                              color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.white.withOpacity(0.7)
+                                  : Theme.of(context).colorScheme.primary.withOpacity(0.7),
                             ),
                           ),
                         ],
@@ -1266,14 +1280,23 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white.withOpacity(0.6)
+                            : Theme.of(context).colorScheme.primary.withOpacity(0.6),
                         letterSpacing: 0.5,
                       ),
                     ),
                   ),
                   ListTile(
                     leading: Icon(Icons.settings, color: Theme.of(context).colorScheme.primary),
-                    title: const Text('Settings'),
+                    title: Text(
+                      'Settings',
+                      style: TextStyle(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white
+                            : null,
+                      ),
+                    ),
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.push(
@@ -1290,7 +1313,9 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white.withOpacity(0.6)
+                            : Theme.of(context).colorScheme.primary.withOpacity(0.6),
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -1300,7 +1325,14 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                       Icons.cloud_upload,
                       color: Theme.of(context).colorScheme.primary,
                     ),
-                    title: const Text('Data Backup'),
+                    title: Text(
+                      'Data Backup',
+                      style: TextStyle(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white
+                            : null,
+                      ),
+                    ),
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.push(
@@ -1316,7 +1348,14 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                       Icons.history,
                       color: Theme.of(context).colorScheme.primary,
                     ),
-                    title: const Text('Practice History'),
+                    title: Text(
+                      'Practice History',
+                      style: TextStyle(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white
+                            : null,
+                      ),
+                    ),
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.push(
@@ -1332,7 +1371,14 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                       Icons.check_circle,
                       color: Theme.of(context).colorScheme.primary,
                     ),
-                    title: const Text('Mark as Learned'),
+                    title: Text(
+                      'Mark as Learned',
+                      style: TextStyle(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white
+                            : null,
+                      ),
+                    ),
                     onTap: () async {
                       Navigator.pop(context);
                       final result = await Navigator.push(
@@ -1366,7 +1412,9 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white.withOpacity(0.6)
+                            : Theme.of(context).colorScheme.primary.withOpacity(0.6),
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -1376,7 +1424,14 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                       Icons.feedback,
                       color: Theme.of(context).colorScheme.primary,
                     ),
-                    title: const Text('Give Feedback'),
+                    title: Text(
+                      'Give Feedback',
+                      style: TextStyle(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white
+                            : null,
+                      ),
+                    ),
                 onTap: () async {
                   Navigator.pop(context);
                   // Open feedback form in browser
