@@ -83,17 +83,23 @@ class CharacterSetManager {
   
   // Load predefined sets from JSON
   Future<void> loadPredefinedSets() async {
-    if (_predefinedSetsLoaded) return;
+    if (_predefinedSetsLoaded) {
+      print('CharacterSetManager: Predefined sets already loaded, found ${_predefinedSets.length} sets');
+      return;
+    }
     
+    print('CharacterSetManager: Loading predefined sets from JSON...');
     try {
-      final String jsonString = await rootBundle.loadString('assets/character_sets.json');
+      final String jsonString = await rootBundle.loadString('assets/character_sets_full.json');
       final Map<String, dynamic> jsonData = jsonDecode(jsonString);
       final List<dynamic> setsData = jsonData['sets'] ?? [];
+      
+      print('CharacterSetManager: Found ${setsData.length} sets in JSON');
       
       for (final setData in setsData) {
         if (setData['characters'] != null) {
           final String charactersStr = setData['characters'] as String;
-          final bool isWordSet = setData['type'] == 'word';
+          final bool isWordSet = setData['isWordSet'] ?? false;
           
           List<String> characters;
           if (isWordSet) {
@@ -116,7 +122,9 @@ class CharacterSetManager {
       }
       
       _predefinedSetsLoaded = true;
+      print('CharacterSetManager: Successfully loaded ${_predefinedSets.length} predefined sets');
     } catch (e) {
+      print('CharacterSetManager: Error loading predefined sets: $e');
       // Error loading predefined sets
     }
   }

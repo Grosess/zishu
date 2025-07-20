@@ -33,6 +33,7 @@ flutter:
     - assets/characters/
     - assets/character_data.json
     - assets/character_sets.json
+    - assets/character_sets_full.json
     - assets/additional_sets.json
     - database/makemeahanzi-master/makemeahanzi-master/graphics.txt
     - database-sample/makemeahanzi-master/makemeahanzi-master/graphics.txt

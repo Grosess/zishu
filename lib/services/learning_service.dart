@@ -288,6 +288,10 @@ class LearningService {
       final key = 'learned_word_$word';
       await _prefs.setString(key, DateTime.now().toIso8601String());
       
+      // Update cache with new data
+      _cachedLearnedWords = learned.toSet();
+      _lastCacheUpdate = DateTime.now();
+      
       // Force sync to ensure persistence
       await _prefs.reload();
       
@@ -335,6 +339,13 @@ class LearningService {
     if (newLearned.isNotEmpty) {
       await _prefs.setStringList('learned_words', learned);
       
+      // Update cache with new data
+      _cachedLearnedWords = learned.toSet();
+      _lastCacheUpdate = DateTime.now();
+      
+      // Force sync to ensure persistence
+      await _prefs.reload();
+      
       // Update streak progress with count of newly learned items
       final streakService = StreakService();
       await streakService.updateLearnedProgress(newLearned.length);
@@ -344,7 +355,20 @@ class LearningService {
   // Get all learned words
   Future<List<String>> getLearnedWords() async {
     await initialize();
-    return _prefs.getStringList('learned_words') ?? [];
+    
+    // Check if cache is valid (within last 5 minutes)
+    if (_cachedLearnedWords != null && 
+        _lastCacheUpdate != null &&
+        DateTime.now().difference(_lastCacheUpdate!).inMinutes < 5) {
+      return _cachedLearnedWords!.toList();
+    }
+    
+    // Reload from preferences
+    final words = _prefs.getStringList('learned_words') ?? [];
+    _cachedLearnedWords = words.toSet();
+    _lastCacheUpdate = DateTime.now();
+    
+    return words;
   }
 
   // Check if a word is learned

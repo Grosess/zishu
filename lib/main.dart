@@ -1180,14 +1180,15 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
           children: [
             DrawerHeader(
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.inversePrimary,
+                color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                    ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!
+                    : Theme.of(context).colorScheme.inversePrimary,
                 border: Border(
                   bottom: BorderSide(
-                    color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true &&
-                           Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 != null
-                        ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                    color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                        ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.3)
                         : Theme.of(context).dividerColor,
-                    width: 0.5,
+                    width: 1.0,
                   ),
                 ),
               ),
@@ -1236,14 +1237,18 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onSurface,
+                      color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                          ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                          : Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   Text(
                     'Tap to edit profile',
                     style: TextStyle(
                       fontSize: 14,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                          ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.7)
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -1278,15 +1283,13 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                 );
               },
             ),
-            Divider(
-              color: () {
-                final duotone = Theme.of(context).extension<DuotoneThemeExtension>();
-                if (duotone?.isDuotoneTheme == true && duotone?.duotoneColor2 != null) {
-                  return duotone!.duotoneColor2!.withValues(alpha: 0.5);
-                }
-                return Theme.of(context).colorScheme.outline.withValues(alpha: 0.2);
-              }(),
+            Container(
               height: 1,
+              decoration: BoxDecoration(
+                color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                    ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.3)
+                    : Theme.of(context).dividerColor,
+              ),
             ),
             ListTile(
               leading: const Icon(Icons.backup),
@@ -1342,15 +1345,13 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                 }
               },
             ),
-            Divider(
-              color: () {
-                final duotone = Theme.of(context).extension<DuotoneThemeExtension>();
-                if (duotone?.isDuotoneTheme == true && duotone?.duotoneColor2 != null) {
-                  return duotone!.duotoneColor2!.withValues(alpha: 0.5);
-                }
-                return Theme.of(context).colorScheme.outline.withValues(alpha: 0.2);
-              }(),
+            Container(
               height: 1,
+              decoration: BoxDecoration(
+                color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                    ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.3)
+                    : Theme.of(context).dividerColor,
+              ),
             ),
             ListTile(
               leading: const Icon(Icons.feedback_outlined),

@@ -264,6 +264,9 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
       }
     }
     
+    print('Import text: $text');
+    print('Extracted characters (${characters.length}): ${characters.toList().join(', ')}');
+    
     if (characters.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -289,16 +292,31 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
     
     // Collect all multi-character words from sets
     final allMultiCharWords = <String>{};
+    print('Loading multi-char words from ${allSets.length} sets');
     for (final set in allSets) {
+      print('Checking set ${set.name} with ${set.characters.length} items, isWordSet: ${set.isWordSet}');
+      if (set.characters.isNotEmpty) {
+        print('First 3 items: ${set.characters.take(3).toList()}');
+      }
       for (final item in set.characters) {
         // Extract term (remove annotation)
         final parenIndex = item.indexOf('(');
         final term = parenIndex > 0 ? item.substring(0, parenIndex).trim() : item.trim();
         if (term.length > 1) {
           allMultiCharWords.add(term);
+          if (term == '医生') {
+            print('Found 医生 in set: ${set.name}');
+          }
         }
       }
     }
+    print('Total multi-char words in all sets: ${allMultiCharWords.length}');
+    print('医生 is in word list: ${allMultiCharWords.contains('医生')}');
+    
+    // Log imported characters
+    print('Imported characters (${characters.length}): ${characters.toList().take(20).join(', ')}...');
+    print('Contains 医: ${characters.contains('医')}');
+    print('Contains 生: ${characters.contains('生')}');
     
     // Check which multi-character words can be formed from the imported characters
     for (final word in allMultiCharWords) {
@@ -311,8 +329,17 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
       }
       if (canFormWord) {
         words.add(word);
+        print('Found multi-char word to mark as learned: $word');
+      } else if (word == '医生') {
+        print('Cannot form 医生 - missing characters');
+        for (int i = 0; i < word.length; i++) {
+          print('  Character ${word[i]} present: ${characters.contains(word[i])}');
+        }
       }
     }
+    
+    print('Total multi-char words found: ${words.length}');
+    print('Sample words: ${words.take(10).toList()}');
     
     // Mark all characters as learned in batch
     final charactersList = characters.toList();
@@ -320,7 +347,12 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
     
     // Mark all multi-character words as learned
     for (final word in words) {
+      print('Marking word as learned: $word');
       await _learningService.markWordAsLearned(word);
+      
+      // Verify it was saved
+      final verifyList = await _learningService.getLearnedWords();
+      print('Verified $word is in learned words: ${verifyList.contains(word)}');
     }
     
     final importedCount = charactersList.length;
@@ -342,6 +374,12 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
     // Force SharedPreferences to reload to ensure data is persisted
     final prefs = await SharedPreferences.getInstance();
     await prefs.reload();
+    
+    // Verify the words were saved
+    final verifyWords = await _learningService.getLearnedWords();
+    print('After import - total learned words: ${verifyWords.length}');
+    print('After import - learned words contain 医生: ${verifyWords.contains('医生')}');
+    print('After import - learned words contain 电影: ${verifyWords.contains('电影')}');
     
     // Reload all data to update the UI
     await _loadData();
@@ -599,16 +637,26 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
         
         // Collect all multi-character words from sets
         final allMultiCharWords = <String>{};
+        print('CSV import - Loading multi-char words from ${allSets.length} sets');
         for (final set in allSets) {
+          print('CSV import - Checking set ${set.name} with ${set.characters.length} items, isWordSet: ${set.isWordSet}');
+          if (set.characters.isNotEmpty) {
+            print('CSV import - First 3 items: ${set.characters.take(3).toList()}');
+          }
           for (final item in set.characters) {
             // Extract term (remove annotation)
             final parenIndex = item.indexOf('(');
             final term = parenIndex > 0 ? item.substring(0, parenIndex).trim() : item.trim();
             if (term.length > 1) {
               allMultiCharWords.add(term);
+              if (term == '医生') {
+                print('CSV import - Found 医生 in set: ${set.name}');
+              }
             }
           }
         }
+        print('CSV import - Total multi-char words in all sets: ${allMultiCharWords.length}');
+        print('CSV import - 医生 is in word list: ${allMultiCharWords.contains('医生')}');
         
         // Check which multi-character words can be formed from the imported characters
         final words = <String>{};
@@ -622,8 +670,12 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
           }
           if (canFormWord) {
             words.add(word);
+            print('CSV import - Found multi-char word to mark as learned: $word');
           }
         }
+        
+        print('CSV import - Total multi-char words found: ${words.length}');
+        print('CSV import - Sample words: ${words.take(10).toList()}');
         
         // Mark all characters as learned in batch
         final charactersList = characters.toList();
@@ -631,7 +683,12 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
         
         // Mark all multi-character words as learned
         for (final word in words) {
+          print('CSV import - Marking word as learned: $word');
           await _learningService.markWordAsLearned(word);
+          
+          // Verify it was saved
+          final verifyList = await _learningService.getLearnedWords();
+          print('CSV import - Verified $word is in learned words: ${verifyList.contains(word)}');
         }
         
         final importedCount = charactersList.length;
@@ -813,8 +870,15 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
                             contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                           ),
                         ),
-                        PopupMenuDivider(
+                        PopupMenuItem<String>(
+                          enabled: false,
                           height: 1,
+                          child: Container(
+                            height: 1,
+                            color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.3)
+                                : Theme.of(context).dividerColor,
+                          ),
                         ),
                         PopupMenuItem<String>(
                           value: 'csv',
