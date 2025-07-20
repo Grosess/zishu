@@ -1189,43 +1189,51 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
               child: Container(
                 width: double.infinity,
                 padding: EdgeInsets.only(
-                  top: MediaQuery.of(context).padding.top + 20,
+                  top: MediaQuery.of(context).padding.top + 16,
                   left: 20,
                   right: 20,
-                  bottom: 30,
+                  bottom: 20,
                 ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
                     CircleAvatar(
-                      radius: 35,
+                      radius: 30,
                       backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                       child: Text(
                         _profileService.firstName.isNotEmpty ? _profileService.firstName[0].toUpperCase() : 'U',
                         style: TextStyle(
-                          fontSize: 28,
+                          fontSize: 24,
                           color: Theme.of(context).colorScheme.primary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      _profileService.firstName.isNotEmpty ? _profileService.firstName : 'User',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                    Text(
-                      'Tap to edit profile',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _profileService.firstName.isNotEmpty ? _profileService.firstName : 'User',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Tap to edit profile',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
