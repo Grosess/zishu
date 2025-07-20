@@ -1218,14 +1218,14 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
                     Text(
                       'Tap to edit profile',
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.grey[600],
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
                       ),
                     ),
                   ],
@@ -1258,7 +1258,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Colors.grey[500],
+                        color: Theme.of(context).colorScheme.primary,
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -1282,7 +1282,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Colors.grey[500],
+                        color: Theme.of(context).colorScheme.primary,
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -1358,7 +1358,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Colors.grey[500],
+                        color: Theme.of(context).colorScheme.primary,
                         letterSpacing: 0.5,
                       ),
                     ),
