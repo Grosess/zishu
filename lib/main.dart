@@ -1175,195 +1175,212 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         ],
       ),
       drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
+        backgroundColor: Colors.white,
+        child: Column(
           children: [
-            DrawerHeader(
+            InkWell(
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ProfilePage()),
+                );
+              },
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.only(
+                  top: MediaQuery.of(context).padding.top + 20,
+                  left: 20,
+                  right: 20,
+                  bottom: 30,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CircleAvatar(
+                      radius: 35,
+                      backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                      child: Text(
+                        _profileService.firstName.isNotEmpty ? _profileService.firstName[0].toUpperCase() : 'U',
+                        style: TextStyle(
+                          fontSize: 28,
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      _profileService.firstName.isNotEmpty ? _profileService.firstName : 'User',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    Text(
+                      'Tap to edit profile',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+              ),
+              ),
+            ),
+            Container(
+              height: 30,
               decoration: BoxDecoration(
-                color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                    ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!
-                    : Theme.of(context).colorScheme.inversePrimary,
-                border: Border(
-                  bottom: BorderSide(
-                    color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                        ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.3)
-                        : Theme.of(context).dividerColor,
-                    width: 1.0,
-                  ),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Theme.of(context).colorScheme.primary,
+                    Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                    Colors.white,
+                  ],
+                  stops: const [0.0, 0.5, 1.0],
                 ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: 8),
                 children: [
-                  GestureDetector(
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    child: Text(
+                      'SETTINGS',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[500],
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                  ListTile(
+                    leading: Icon(Icons.settings, color: Theme.of(context).colorScheme.primary),
+                    title: const Text('Settings'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const SettingsPage()),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    child: Text(
+                      'DATA & PROGRESS',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[500],
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                  ListTile(
+                    leading: Icon(
+                      Icons.cloud_upload,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    title: const Text('Data Backup'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const DataBackupPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: Icon(
+                      Icons.history,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    title: const Text('Practice History'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PracticeHistoryPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: Icon(
+                      Icons.check_circle,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    title: const Text('Mark as Learned'),
                     onTap: () async {
                       Navigator.pop(context);
                       final result = await Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const ProfilePage(),
+                          builder: (context) => const MarkAsLearnedPage(),
                         ),
                       );
-                      if (result == true) {
-                        await _profileService.loadProfile();
+                      
+                      // Refresh when returning if changes were made
+                      if (result == true && mounted) {
+                        // Refresh home page
+                        _homePageKey.currentState?.refreshData();
+                        
+                        // Refresh progress page
+                        _progressPageKey.currentState?.loadStatistics();
+                        
+                        // Refresh streak display
+                        refreshStreakDisplay();
+                        
+                        // Force UI update
+                        setState(() {});
                       }
                     },
-                    child: CircleAvatar(
-                      radius: 30,
-                      backgroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                          ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
-                          : Theme.of(context).colorScheme.primary,
-                      backgroundImage: _profileService.profileImageBytes != null 
-                          ? MemoryImage(_profileService.profileImageBytes!) 
-                          : null,
-                      child: _profileService.profileImageBytes == null
-                          ? Text(
-                              _profileService.firstName.isNotEmpty ? _profileService.firstName[0].toUpperCase() : 'U',
-                              style: TextStyle(
-                                fontSize: 24,
-                                color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                                    ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!
-                                    : Theme.of(context).colorScheme.onPrimary,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            )
-                          : null,
+                  ),
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    child: Text(
+                      'SUPPORT',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[500],
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    _profileService.firstName.isEmpty ? 'User' : _profileService.firstName,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                          ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
-                          : Theme.of(context).colorScheme.onSurface,
+                  ListTile(
+                    leading: Icon(
+                      Icons.feedback,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
+                    title: const Text('Give Feedback'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  // Open feedback form in browser
+                  final Uri url = Uri.parse('https://docs.google.com/forms/d/e/1FAIpQLSdGjp1NhjeoLslMKkrN0RkfSuqy6_YCDUkt14rqy55Zf4ap3w/viewform');
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                  }
+                    },
                   ),
-                  Text(
-                    'Tap to edit profile',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                          ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.7)
-                          : Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
+                  const SizedBox(height: 20),
                 ],
               ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.account_circle),
-              title: const Text('Profile'),
-              onTap: () async {
-                Navigator.pop(context);
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ProfilePage(),
-                  ),
-                );
-                if (result == true) {
-                  await _profileService.loadProfile();
-                }
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text('Settings'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const SettingsPage(),
-                  ),
-                );
-              },
-            ),
-            Container(
-              height: 1,
-              decoration: BoxDecoration(
-                color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                    ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.3)
-                    : Theme.of(context).dividerColor,
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.backup),
-              title: const Text('Data Backup'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const DataBackupPage(),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.history),
-              title: const Text('Practice History'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const PracticeHistoryPage(),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.check_circle_outline),
-              title: const Text('Mark as Learned'),
-              onTap: () async {
-                Navigator.pop(context);
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const MarkAsLearnedPage(),
-                  ),
-                );
-                
-                // Refresh when returning if changes were made
-                if (result == true && mounted) {
-                  // Refresh home page
-                  _homePageKey.currentState?.refreshData();
-                  
-                  // Refresh progress page
-                  _progressPageKey.currentState?.loadStatistics();
-                  
-                  // Refresh streak display
-                  refreshStreakDisplay();
-                  
-                  // Force UI update
-                  setState(() {});
-                }
-              },
-            ),
-            Container(
-              height: 1,
-              decoration: BoxDecoration(
-                color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                    ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.3)
-                    : Theme.of(context).dividerColor,
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.feedback_outlined),
-              title: const Text('Give Feedback'),
-              onTap: () async {
-                Navigator.pop(context);
-                // Open feedback form in browser
-                final Uri url = Uri.parse('https://docs.google.com/forms/d/e/1FAIpQLSdGjp1NhjeoLslMKkrN0RkfSuqy6_YCDUkt14rqy55Zf4ap3w/viewform');
-                if (await canLaunchUrl(url)) {
-                  await launchUrl(url, mode: LaunchMode.externalApplication);
-                }
-              },
             ),
           ],
         ),
