@@ -11,11 +11,13 @@ class ProfileService extends ChangeNotifier {
   String _firstName = '';
   Uint8List? _profileImageBytes;
   bool _isLoaded = false;
+  bool _hasBeenEdited = false;
 
   String get userName => _userName;
   String get firstName => _firstName;
   Uint8List? get profileImageBytes => _profileImageBytes;
   bool get isLoaded => _isLoaded;
+  bool get hasBeenEdited => _hasBeenEdited;
 
   Future<void> loadProfile() async {
     if (_isLoaded) return; // Already loaded
@@ -35,6 +37,9 @@ class ProfileService extends ChangeNotifier {
         // Production: removed debug print
       }
     }
+    
+    // Check if profile has been edited
+    _hasBeenEdited = prefs.getBool('profile_has_been_edited') ?? false;
     
     _isLoaded = true;
     notifyListeners();
@@ -62,6 +67,10 @@ class ProfileService extends ChangeNotifier {
         _profileImageBytes = null;
         await prefs.remove('user_profile_image');
       }
+      
+      // Mark that profile has been edited
+      _hasBeenEdited = true;
+      await prefs.setBool('profile_has_been_edited', true);
       
       notifyListeners();
     } catch (e) {

@@ -1242,16 +1242,18 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                                   : Theme.of(context).colorScheme.primary,
                             ),
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Tap to edit profile',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Theme.of(context).brightness == Brightness.dark
-                                  ? Colors.white.withOpacity(0.7)
-                                  : Theme.of(context).colorScheme.primary.withOpacity(0.7),
+                          if (!_profileService.hasBeenEdited) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              'Tap to edit profile',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.white.withOpacity(0.7)
+                                    : Theme.of(context).colorScheme.primary.withOpacity(0.7),
+                              ),
                             ),
-                          ),
+                          ],
                         ],
                       ),
                     ),
