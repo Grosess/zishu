@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/services.dart';
 
 /// Dictionary entry with pinyin and definition from CEDICT
@@ -331,9 +330,9 @@ class CedictService {
       // Try to cut at a word boundary
       final cutoff = def.substring(0, 40).lastIndexOf(' ');
       if (cutoff > 20) {
-        def = def.substring(0, cutoff) + '...';
+        def = '${def.substring(0, cutoff)}...';
       } else {
-        def = def.substring(0, 37) + '...';
+        def = '${def.substring(0, 37)}...';
       }
     }
     

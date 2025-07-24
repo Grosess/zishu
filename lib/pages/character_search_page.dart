@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'dart:math' as math;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/cedict_service.dart';
 import '../services/character_database.dart';
 import '../services/learning_service.dart';
 import '../services/character_set_manager.dart';
-import '../widgets/character_preview.dart';
 import 'writing_practice_page.dart';
 import '../main.dart' show DuotoneThemeExtension;
 import '../utils/pinyin_utils.dart';
@@ -271,7 +269,7 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
     for (final entry in results) {
       // For single characters, check if they're available in the database
       if (entry.simplified.length == 1) {
-        final hasStrokeData = await _characterDatabase.hasCharacter(entry.simplified);
+        final hasStrokeData = _characterDatabase.hasCharacter(entry.simplified);
         if (hasStrokeData) {
           availableResults.add(entry);
         }
@@ -281,7 +279,7 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
         for (int i = 0; i < entry.simplified.length; i++) {
           final char = entry.simplified[i];
           if (_isChineseCharacter(char)) {
-            final hasStrokeData = await _characterDatabase.hasCharacter(char);
+            final hasStrokeData = _characterDatabase.hasCharacter(char);
             if (!hasStrokeData) {
               allAvailable = false;
               break;
@@ -449,7 +447,7 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
                       borderRadius: BorderRadius.circular(30),
                     ),
                     filled: true,
-                    fillColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                    fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
                   ),
                   onChanged: (value) {
                     // Cancel previous timer

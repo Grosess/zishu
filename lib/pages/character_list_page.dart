@@ -1283,10 +1283,10 @@ class _CharacterListPageState extends State<CharacterListPage> {
     // Try to cut at a space
     final spaceCutoff = definition.substring(0, maxLength).lastIndexOf(' ');
     if (spaceCutoff > 8) {
-      return definition.substring(0, spaceCutoff) + '...';
+      return '${definition.substring(0, spaceCutoff)}...';
     }
     
-    return definition.substring(0, maxLength - 3) + '...';
+    return '${definition.substring(0, maxLength - 3)}...';
   }
   
   /// Build the display widget for a single character

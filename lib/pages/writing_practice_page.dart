@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import 'dart:convert';
-import 'dart:ui' as ui;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/local_storage_service.dart';
 import '../services/streak_service.dart';
@@ -18,10 +17,7 @@ import '../services/learning_service.dart';
 import '../utils/pinyin_utils.dart';
 import '../main.dart' show DuotoneThemeExtension, refreshSetsProgress;
 import 'settings_page.dart';
-import '../services/image_cache_service.dart';
 import '../services/radical_service.dart';
-import '../services/decomposition_service.dart';
-import '../widgets/radical_analysis_widget.dart';
 import '../widgets/simple_radical_display.dart';
 import '../services/haptic_service.dart';
 
@@ -73,7 +69,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   List<Offset> _currentStroke = [];
   List<int> _currentStrokeTimestamps = []; // Track timestamp for each point
   Timer? _updateTimer;
-  List<Offset> _pendingPoints = [];
+  final List<Offset> _pendingPoints = [];
   static const _updateInterval = Duration(milliseconds: 8); // 120 FPS for smoother strokes
   
   // Stroke validation
@@ -3023,7 +3019,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       
       // Try character dictionary
       final charInfo = _dictionary.getCharacterInfo(char);
-      if (charInfo != null && charInfo.pinyin != null) {
+      if (charInfo != null) {
         pinyinParts.add(PinyinUtils.convertToneNumbersToMarks(charInfo.pinyin));
         continue;
       }

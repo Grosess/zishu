@@ -651,7 +651,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
       
       // Preload icon characters after sets are loaded
       _preloadSetIconCharacters();
-    } catch (e, stackTrace) {
+    } catch (e) {
       // Production: removed debug print
       // Production: removed debug print
       // Only use default sets if we haven't loaded any

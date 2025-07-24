@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
-import 'dart:math' show Random;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/statistics_service.dart';
 import '../services/local_storage_service.dart';
@@ -18,8 +17,6 @@ import 'character_list_page.dart';
 import 'groups_page.dart';
 import '../services/character_set_manager.dart';
 import 'mark_as_learned_page.dart';
-import '../services/cedict_service.dart';
-import '../widgets/character_preview.dart';
 import 'character_search_page.dart';
 import '../services/haptic_service.dart';
 
