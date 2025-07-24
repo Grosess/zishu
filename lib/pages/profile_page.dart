@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import '../services/profile_service.dart';
 import 'help_page.dart';
+import '../main.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -71,10 +72,19 @@ class _ProfilePageState extends State<ProfilePage> {
       }
     } catch (e) {
       if (mounted) {
+        final duotoneExt = Theme.of(context).extension<DuotoneThemeExtension>();
+        final isDuotone = duotoneExt?.isDuotoneTheme ?? false;
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to save profile: $e'),
-            backgroundColor: Colors.red,
+            content: Text('Failed to save profile: ${e.toString().replaceAll('Exception: ', '')}'),
+            backgroundColor: isDuotone 
+                ? duotoneExt!.duotoneColor2
+                : Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
       }

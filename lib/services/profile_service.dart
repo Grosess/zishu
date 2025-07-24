@@ -51,9 +51,9 @@ class ProfileService extends ChangeNotifier {
       }
       
       if (imageBytes != null) {
-        // Check image size (limit to 2MB)
-        if (imageBytes.length > 2 * 1024 * 1024) {
-          throw Exception('Image size too large. Please use an image smaller than 2MB.');
+        // Check image size (limit to 10MB)
+        if (imageBytes.length > 10 * 1024 * 1024) {
+          throw Exception('Image size too large. Please use an image smaller than 10MB.');
         }
         _profileImageBytes = imageBytes;
         await prefs.setString('user_profile_image', base64Encode(imageBytes));
