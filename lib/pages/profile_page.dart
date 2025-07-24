@@ -17,6 +17,7 @@ class _ProfilePageState extends State<ProfilePage> {
   late SharedPreferences _prefs;
   final TextEditingController _nameController = TextEditingController();
   bool _isLoading = true;
+  bool _isSaving = false;
   Uint8List? _profileImageBytes;
 
   @override
@@ -52,16 +53,37 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _saveProfileData() async {
-    final name = _nameController.text.trim();
+    setState(() {
+      _isSaving = true;
+    });
     
-    // Update profile through service
-    await ProfileService().updateProfile(
-      name: name,
-      imageBytes: _profileImageBytes,
-    );
-    
-    if (mounted) {
-      Navigator.pop(context, true); // Return true to indicate changes were made
+    try {
+      final name = _nameController.text.trim();
+      
+      // Update profile through service
+      await ProfileService().updateProfile(
+        name: name,
+        imageBytes: _profileImageBytes,
+      );
+      
+      if (mounted) {
+        Navigator.pop(context, true); // Return true to indicate changes were made
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save profile: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
     }
   }
   
@@ -177,9 +199,18 @@ class _ProfilePageState extends State<ProfilePage> {
               width: double.infinity,
               height: 48,
               child: FilledButton.icon(
-                onPressed: _saveProfileData,
-                icon: const Icon(Icons.save),
-                label: const Text('Save Profile'),
+                onPressed: _isSaving ? null : _saveProfileData,
+                icon: _isSaving 
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Icon(Icons.save),
+                label: Text(_isSaving ? 'Saving...' : 'Save Profile'),
               ),
             ),
             const SizedBox(height: 16),

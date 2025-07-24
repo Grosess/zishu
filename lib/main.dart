@@ -1212,14 +1212,19 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                       backgroundColor: Theme.of(context).brightness == Brightness.dark
                         ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
                         : Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                      child: Text(
-                        _profileService.firstName.isNotEmpty ? _profileService.firstName[0].toUpperCase() : 'U',
-                        style: TextStyle(
-                          fontSize: 24,
-                          color: Theme.of(context).colorScheme.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      backgroundImage: _profileService.profileImageBytes != null
+                          ? MemoryImage(_profileService.profileImageBytes!)
+                          : null,
+                      child: _profileService.profileImageBytes == null
+                          ? Text(
+                              _profileService.firstName.isNotEmpty ? _profileService.firstName[0].toUpperCase() : 'U',
+                              style: TextStyle(
+                                fontSize: 24,
+                                color: Theme.of(context).colorScheme.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            )
+                          : null,
                     ),
                     const SizedBox(width: 16),
                     Expanded(
