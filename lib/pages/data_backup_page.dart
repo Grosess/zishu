@@ -451,6 +451,27 @@ class _DataBackupPageState extends State<DataBackupPage> {
       // Reset all data using the storage service (this clears SharedPreferences)
       await _storageService.clearAllData();
       
+      // Set default theme based on system brightness
+      final prefs = await SharedPreferences.getInstance();
+      final systemBrightness = MediaQuery.of(context).platformBrightness;
+      
+      // Set duotone theme as default
+      await prefs.setString('theme_mode', 'duotone');
+      
+      // Set duotone colors based on system brightness
+      if (systemBrightness == Brightness.light) {
+        // Light mode: white background, blue accent
+        await prefs.setString('duotone_background', 'white');
+        await prefs.setString('duotone_color', 'blue');
+      } else {
+        // Dark mode: black background, blue accent
+        await prefs.setString('duotone_background', 'black');
+        await prefs.setString('duotone_color', 'blue');
+      }
+      
+      // Reset user name and profile picture (they will be cleared automatically by clearAllData)
+      // No need to explicitly reset them as clearAllData removes all SharedPreferences keys
+      
       // Reset learning data and clear cache
       await _learningService.resetLearningData();
       _learningService.clearCache();

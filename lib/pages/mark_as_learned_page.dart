@@ -237,7 +237,7 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
             style: isDuotone 
                 ? FilledButton.styleFrom(
                     backgroundColor: duotoneTheme!.duotoneColor2,
-                    foregroundColor: duotoneTheme!.duotoneColor1,
+                    foregroundColor: duotoneTheme.duotoneColor1,
                   )
                 : null,
             child: const Text('Import'),
@@ -494,7 +494,7 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
             style: isDuotone 
                 ? FilledButton.styleFrom(
                     backgroundColor: duotoneTheme!.duotoneColor2,
-                    foregroundColor: duotoneTheme!.duotoneColor1,
+                    foregroundColor: duotoneTheme.duotoneColor1,
                   )
                 : null,
             child: const Text('Select File'),
@@ -610,7 +610,7 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
                 style: isDuotone 
                     ? FilledButton.styleFrom(
                         backgroundColor: duotoneTheme!.duotoneColor2,
-                        foregroundColor: duotoneTheme!.duotoneColor1,
+                        foregroundColor: duotoneTheme.duotoneColor1,
                       )
                     : null,
                 child: const Text('Import'),
@@ -812,40 +812,6 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
                         ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2
                         : Theme.of(context).colorScheme.primary,
                     child: PopupMenuButton<String>(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.upload, 
-                              size: 24, 
-                              color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1
-                                  : Colors.white,
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              'Import',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                                    ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1
-                                    : Colors.white,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Icon(
-                              Icons.arrow_drop_down, 
-                              size: 24, 
-                              color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1
-                                  : Colors.white,
-                            ),
-                          ],
-                        ),
-                      ),
                       offset: const Offset(0, 45),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -893,6 +859,40 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
                           ),
                         ),
                       ],
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.upload, 
+                              size: 24, 
+                              color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1
+                                  : Colors.white,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              'Import',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                    ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1
+                                    : Colors.white,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Icon(
+                              Icons.arrow_drop_down, 
+                              size: 24, 
+                              color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1
+                                  : Colors.white,
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
