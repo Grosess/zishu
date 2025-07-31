@@ -7,7 +7,6 @@ import '../services/character_set_manager.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
-import 'dart:convert';
 
 class MarkAsLearnedPage extends StatefulWidget {
   const MarkAsLearnedPage({super.key});
