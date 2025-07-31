@@ -99,21 +99,32 @@ class _ProfilePageState extends State<ProfilePage> {
   
   Future<void> _pickImage() async {
     // Production: removed debug print
-    final result = await showDialog<Uint8List?>(
+    final result = await showDialog<dynamic>(
       context: context,
       barrierDismissible: false, // Prevent closing by tapping outside
-      builder: (context) => _ImagePickerDialog(),
+      builder: (context) => _ImagePickerDialog(
+        currentName: _nameController.text,
+      ),
     );
     
     // Production: removed debug print
     
     if (result != null) {
-      setState(() {
-        _profileImageBytes = result;
-      });
-      
-      // Update through profile service
-      await ProfileService().updateProfile(imageBytes: result);
+      if (result == 'use_initials') {
+        // User chose to use initials
+        setState(() {
+          _profileImageBytes = null;
+        });
+        // Update through profile service to remove image
+        await ProfileService().updateProfile(imageBytes: null);
+      } else if (result is Uint8List) {
+        setState(() {
+          _profileImageBytes = result;
+        });
+        
+        // Update through profile service
+        await ProfileService().updateProfile(imageBytes: result);
+      }
     }
   }
 
@@ -256,6 +267,13 @@ class _ProfilePageState extends State<ProfilePage> {
 }
 
 class _ImagePickerDialog extends StatefulWidget {
+  final String currentName;
+  
+  const _ImagePickerDialog({
+    Key? key,
+    required this.currentName,
+  }) : super(key: key);
+  
   @override
   State<_ImagePickerDialog> createState() => _ImagePickerDialogState();
 }
@@ -348,6 +366,16 @@ class _ImagePickerDialogState extends State<_ImagePickerDialog> {
               child: CircularProgressIndicator(strokeWidth: 2),
             ) : const Icon(Icons.folder_open),
             label: Text(_isLoading ? 'Loading...' : 'Choose from Files'),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: widget.currentName.isEmpty ? null : () {
+              Navigator.pop(context, 'use_initials');
+            },
+            icon: const Icon(Icons.text_fields),
+            label: Text(widget.currentName.isEmpty 
+              ? 'Enter name to use initials' 
+              : 'Use Initials (${widget.currentName.isNotEmpty ? widget.currentName[0].toUpperCase() : ""})'),
           ),
           const SizedBox(height: 8),
           Text(

@@ -82,4 +82,13 @@ class ProfileService extends ChangeNotifier {
   void clearCache() {
     _isLoaded = false;
   }
+  
+  void resetProfile() {
+    _userName = '';
+    _firstName = '';
+    _profileImageBytes = null;
+    _isLoaded = false;
+    _hasBeenEdited = false;
+    notifyListeners();
+  }
 }

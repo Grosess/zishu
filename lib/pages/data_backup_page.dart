@@ -5,6 +5,7 @@ import '../services/local_storage_service.dart';
 import '../services/learning_service.dart';
 import '../services/statistics_service.dart';
 import '../services/streak_service.dart';
+import '../services/profile_service.dart';
 import '../main.dart' show DuotoneThemeExtension, restartApp, MainScreen;
 
 class DataBackupPage extends StatefulWidget {
@@ -448,9 +449,13 @@ class _DataBackupPageState extends State<DataBackupPage> {
       // Import necessary services
       final StatisticsService statsService = StatisticsService();
       final StreakService streakService = StreakService();
+      final ProfileService profileService = ProfileService();
       
       // Reset all data using the storage service (this clears SharedPreferences)
       await _storageService.clearAllData();
+      
+      // Reset profile service to clear user data from memory
+      profileService.resetProfile();
       
       // Set default theme based on system brightness
       final prefs = await SharedPreferences.getInstance();
@@ -486,10 +491,15 @@ class _DataBackupPageState extends State<DataBackupPage> {
       setState(() => _isLoading = false);
       
       if (mounted) {
+        // Check if duotone theme is set (it will be after reset)
+        final prefs = await SharedPreferences.getInstance();
+        final themeMode = prefs.getString('theme_mode') ?? 'duotone';
+        final isDuotone = themeMode == 'duotone';
+        
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('All data has been reset'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: const Text('All data has been reset'),
+            backgroundColor: isDuotone ? Colors.blue : Colors.green,
           ),
         );
         
