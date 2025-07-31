@@ -33,6 +33,7 @@ class _SettingsPageState extends State<SettingsPage> {
   StrokeType _strokeType = StrokeType.classic;
   int _dailyLearnGoal = 10;
   bool _hapticFeedbackEnabled = true;
+  bool _handwritingMode = false;
 
   @override
   void initState() {
@@ -90,6 +91,7 @@ class _SettingsPageState extends State<SettingsPage> {
     );
     _dailyLearnGoal = _prefs.getInt('daily_learn_goal') ?? 10;
     _hapticFeedbackEnabled = _prefs.getBool('haptic_feedback_enabled') ?? true;
+    _handwritingMode = _prefs.getBool('handwriting_mode') ?? false;
     
     // Initialize haptic service
     await HapticService().initialize();
@@ -455,6 +457,18 @@ class _SettingsPageState extends State<SettingsPage> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                ),
+                SwitchListTile(
+                  title: const Text('Handwriting Mode'),
+                  subtitle: const Text('Draw freely without stroke guidance, then self-assess'),
+                  value: _handwritingMode,
+                  onChanged: (value) {
+                    HapticService().selectionClick();
+                    setState(() {
+                      _handwritingMode = value;
+                    });
+                    _saveBoolSetting('handwriting_mode', value);
+                  },
                 ),
                 SwitchListTile(
                   title: const Text('Show Grid'),

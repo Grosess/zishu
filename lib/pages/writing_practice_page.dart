@@ -143,6 +143,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   
   // Settings
   bool _showRadicalAnalysis = false;
+  bool _handwritingMode = false;
   
   String get currentWord {
     if (widget.isWord && widget.allCharacters != null) {
@@ -205,6 +206,9 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         // Show radical analysis in learning mode if enabled (default true)
         final savedSetting = prefs.getBool('show_radical_analysis') ?? true;
         _showRadicalAnalysis = widget.mode == PracticeMode.learning && savedSetting;
+        
+        // Load handwriting mode setting
+        _handwritingMode = prefs.getBool('handwriting_mode') ?? false;
         
         // Initialize classic stroke animation if needed
         if (_strokeType == StrokeType.classic) {
@@ -888,7 +892,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                         // Character guide based on learning stage
                         if (_characterStroke != null && (
                           _showFullCharacter || // Manual show all
-                          (widget.mode == PracticeMode.learning && (_learningStage == 0 || _learningStage == 1)) // Stage 0 and 1: show filled character
+                          (!_handwritingMode && widget.mode == PracticeMode.learning && (_learningStage == 0 || _learningStage == 1)) // Stage 0 and 1: show filled character (but not in handwriting mode)
                         ))
                           CustomPaint(
                             size: Size.infinite,
@@ -899,8 +903,20 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                             ),
                           ),
                         
-                        // Completed strokes
-                        if (_characterStroke != null && _completedStrokeIndices.isNotEmpty)
+                        // Completed strokes (normal mode) or all user strokes (handwriting mode)
+                        if (_handwritingMode && _userStrokes.isNotEmpty)
+                          CustomPaint(
+                            size: Size.infinite,
+                            painter: UserStrokesPainter(
+                              strokes: _userStrokes,
+                              canvasSize: constraints.biggest,
+                              strokeColor: _strokeColor ?? (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                                : Theme.of(context).colorScheme.primary),
+                              strokeWidth: _strokeWidth,
+                            ),
+                          )
+                        else if (_characterStroke != null && _completedStrokeIndices.isNotEmpty)
                           AnimatedBuilder(
                             animation: _bounceAnimation ?? const AlwaysStoppedAnimation(1.0),
                             builder: (context, child) {
@@ -928,8 +944,8 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                           ),
                           builder: (context, snapshot) {
                             final showAnimation = snapshot.data ?? true;
-                            // Show animated hints in learning stage 0 or when hint is requested after 2 wrong attempts
-                            if (_characterStroke != null && showAnimation &&
+                            // Show animated hints in learning stage 0 or when hint is requested after 2 wrong attempts (but not in handwriting mode)
+                            if (_characterStroke != null && showAnimation && !_handwritingMode &&
                                 _completedStrokeIndices.length < _characterStroke!.strokes.length &&
                                 ((widget.mode == PracticeMode.learning && _learningStage == 0 && !_showFullCharacter) ||
                                  _showHintPath)) {
@@ -943,7 +959,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                                     : (_hintColor ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.8),
                                 ),
                               );
-                            } else if (_characterStroke != null && !showAnimation && _showHintPath &&
+                            } else if (_characterStroke != null && !showAnimation && !_handwritingMode && _showHintPath &&
                                        _completedStrokeIndices.length < _characterStroke!.strokes.length) {
                               // Show static hint if animation is disabled
                               return Positioned.fill(
@@ -1169,66 +1185,104 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                 // Practice control buttons (erase, show next, show all) - directly under character box
                 Padding(
                   padding: const EdgeInsets.only(left: 16, right: 16, top: 0, bottom: 4),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                // Erase button with scale animation
-                AnimatedScale(
-                  duration: const Duration(milliseconds: 150),
-                  scale: (_completedStrokeIndices.isEmpty && !_showSuccess) ? 0.9 : 1.0,
-                  child: TextButton.icon(
-                    onPressed: (_completedStrokeIndices.isEmpty && !_showSuccess) ? null : () {
+            child: _handwritingMode ? 
+              // Handwriting mode buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  // Erase button
+                  TextButton.icon(
+                    onPressed: _userStrokes.isNotEmpty ? () {
                       HapticService().lightImpact();
                       setState(() {
-                        _completedStrokeIndices.clear();
-                        _wrongAttempts.fillRange(0, _wrongAttempts.length, 0);
                         _userStrokes.clear();
-                        _showHintPath = false;
-                        _showFullCharacter = false;
-                        _showSuccess = false;
-                        _showManualGrading = false;
-                        _autoGradedAsCorrect = false;
-                        _usedHint = false;
-                        _missedStrokes = 0;
-                        _missedStrokeIndices.clear();
                         _currentStroke.clear();
                         _currentStrokeTimestamps.clear();
-                        _autoProceedTimer?.cancel();
-                        _progressTimer?.cancel();
-                        _timerProgress = 1.0;
+                        _showFullCharacter = false;
+                        _showManualGrading = false;
                       });
-                    },
+                    } : null,
                     icon: const Icon(Icons.clear),
                     label: const Text('Erase'),
                   ),
-                ),
-                // Show next step button
-                TextButton.icon(
-                  onPressed: _characterStroke == null || 
-                      _completedStrokeIndices.length == _characterStroke!.strokes.length ? null : () {
-                    HapticService().lightImpact();
-                    setState(() {
-                      _showHintPath = true;
-                      _usedHint = true;
-                    });
-                  },
-                  icon: const Icon(Icons.lightbulb_outline),
-                  label: const Text('Next Step'),
-                ),
-                // Show whole character button
-                TextButton.icon(
-                  onPressed: _characterStroke == null ? null : () {
-                    HapticService().lightImpact();
-                    setState(() {
-                      _showFullCharacter = !_showFullCharacter;
-                      if (_showFullCharacter) _usedHint = true;
-                    });
-                  },
-                  icon: Icon(_showFullCharacter ? Icons.visibility_off : Icons.visibility),
-                  label: Text(_showFullCharacter ? 'Hide' : 'Show All'),
-                ),
-              ],
-            ),
+                  // Show character button
+                  TextButton.icon(
+                    onPressed: _characterStroke == null ? null : () {
+                      HapticService().lightImpact();
+                      setState(() {
+                        _showFullCharacter = !_showFullCharacter;
+                        // If showing character and user has drawn something, show manual grading
+                        if (_showFullCharacter && _userStrokes.isNotEmpty) {
+                          _showManualGrading = true;
+                        }
+                      });
+                    },
+                    icon: Icon(_showFullCharacter ? Icons.visibility_off : Icons.visibility),
+                    label: Text(_showFullCharacter ? 'Hide Character' : 'Show Character'),
+                  ),
+                ],
+              ) :
+              // Standard mode buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  // Erase button with scale animation
+                  AnimatedScale(
+                    duration: const Duration(milliseconds: 150),
+                    scale: (_completedStrokeIndices.isEmpty && !_showSuccess) ? 0.9 : 1.0,
+                    child: TextButton.icon(
+                      onPressed: (_completedStrokeIndices.isEmpty && !_showSuccess) ? null : () {
+                        HapticService().lightImpact();
+                        setState(() {
+                          _completedStrokeIndices.clear();
+                          _wrongAttempts.fillRange(0, _wrongAttempts.length, 0);
+                          _userStrokes.clear();
+                          _showHintPath = false;
+                          _showFullCharacter = false;
+                          _showSuccess = false;
+                          _showManualGrading = false;
+                          _autoGradedAsCorrect = false;
+                          _usedHint = false;
+                          _missedStrokes = 0;
+                          _missedStrokeIndices.clear();
+                          _currentStroke.clear();
+                          _currentStrokeTimestamps.clear();
+                          _autoProceedTimer?.cancel();
+                          _progressTimer?.cancel();
+                          _timerProgress = 1.0;
+                        });
+                      },
+                      icon: const Icon(Icons.clear),
+                      label: const Text('Erase'),
+                    ),
+                  ),
+                  // Show next step button
+                  TextButton.icon(
+                    onPressed: _characterStroke == null || 
+                        _completedStrokeIndices.length == _characterStroke!.strokes.length ? null : () {
+                      HapticService().lightImpact();
+                      setState(() {
+                        _showHintPath = true;
+                        _usedHint = true;
+                      });
+                    },
+                    icon: const Icon(Icons.lightbulb_outline),
+                    label: const Text('Next Step'),
+                  ),
+                  // Show whole character button
+                  TextButton.icon(
+                    onPressed: _characterStroke == null ? null : () {
+                      HapticService().lightImpact();
+                      setState(() {
+                        _showFullCharacter = !_showFullCharacter;
+                        if (_showFullCharacter) _usedHint = true;
+                      });
+                    },
+                    icon: Icon(_showFullCharacter ? Icons.visibility_off : Icons.visibility),
+                    label: Text(_showFullCharacter ? 'Hide' : 'Show All'),
+                  ),
+                ],
+              ),
                 ),
                 
                 // Manual grading section - always present but visibility controlled
@@ -1348,6 +1402,16 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   void _handleStrokeEnd() {
     
     if (_currentStroke.isEmpty || _characterStroke == null) {
+      return;
+    }
+    
+    // In handwriting mode, just store the stroke without validation
+    if (_handwritingMode) {
+      setState(() {
+        _userStrokes.add(List.from(_currentStroke));
+        _currentStroke.clear();
+        _currentStrokeTimestamps.clear();
+      });
       return;
     }
     
@@ -4925,6 +4989,61 @@ class _AnimatedSetCreationState extends State<_AnimatedSetCreation>
         ],
       ),
     );
+  }
+}
+
+// User strokes painter for handwriting mode
+class UserStrokesPainter extends CustomPainter {
+  final List<List<Offset>> strokes;
+  final Size canvasSize;
+  final Color strokeColor;
+  final double strokeWidth;
+
+  UserStrokesPainter({
+    required this.strokes,
+    required this.canvasSize,
+    required this.strokeColor,
+    this.strokeWidth = 8.0,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = strokeColor
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..style = PaintingStyle.stroke;
+
+    // Scale factor
+    final scale = size.width / canvasSize.width;
+
+    for (final stroke in strokes) {
+      if (stroke.isEmpty) continue;
+
+      final path = Path();
+      for (int i = 0; i < stroke.length; i++) {
+        final point = Offset(
+          stroke[i].dx * scale,
+          stroke[i].dy * scale,
+        );
+
+        if (i == 0) {
+          path.moveTo(point.dx, point.dy);
+        } else {
+          path.lineTo(point.dx, point.dy);
+        }
+      }
+
+      canvas.drawPath(path, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(UserStrokesPainter oldDelegate) {
+    return strokes.length != oldDelegate.strokes.length ||
+           strokeColor != oldDelegate.strokeColor ||
+           strokeWidth != oldDelegate.strokeWidth;
   }
 }
 
