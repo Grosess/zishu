@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 import '../services/haptic_service.dart';
+import 'attributions_page.dart';
 
 enum StrokeType {
   invisible,
@@ -746,6 +747,39 @@ class _SettingsPageState extends State<SettingsPage> {
                       );
                     },
                   ),
+              
+              // About section
+              const SizedBox(height: 24),
+              const Padding(
+                padding: EdgeInsets.all(16),
+                child: Text(
+                  'About',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.attribution),
+                title: const Text('Attributions'),
+                subtitle: const Text('Third-party licenses and credits'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AttributionsPage(),
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.info_outline),
+                title: const Text('Version'),
+                subtitle: const Text('1.0.0'),
+              ),
+              const SizedBox(height: 32),
               ],
             ),
     );
