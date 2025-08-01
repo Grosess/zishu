@@ -15,10 +15,21 @@ class PronunciationService {
     
     _flutterTts = FlutterTts();
     
+    // Configure audio session to not interrupt other media
+    // iOS: Use ambient category to mix with other audio
+    await _flutterTts!.setIosAudioCategory(IosTextToSpeechAudioCategory.ambient, [
+      IosTextToSpeechAudioCategoryOptions.allowBluetooth,
+      IosTextToSpeechAudioCategoryOptions.allowBluetoothA2DP,
+      IosTextToSpeechAudioCategoryOptions.mixWithOthers,
+    ]);
+    
+    // Android: Don't request audio focus to avoid interrupting music
+    await _flutterTts!.setSharedInstance(true);
+    
     // Set default TTS settings
     await _flutterTts!.setLanguage('zh-CN');
     await _flutterTts!.setSpeechRate(0.4); // Slower for language learning
-    await _flutterTts!.setVolume(1.0);
+    await _flutterTts!.setVolume(0.8); // Slightly lower volume to blend better with music
     await _flutterTts!.setPitch(1.0);
     
     // Load settings
