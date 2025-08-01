@@ -15,19 +15,39 @@ class PronunciationService {
     
     _flutterTts = FlutterTts();
     
-    // Configure audio session to not interrupt other media
-    // iOS: Use ambient category to mix with other audio
-    await _flutterTts!.setIosAudioCategory(IosTextToSpeechAudioCategory.ambient, [
+    // Configure audio session to play even in silent mode
+    // iOS: Use playback category to play even when silent/DND
+    await _flutterTts!.setIosAudioCategory(IosTextToSpeechAudioCategory.playback, [
       IosTextToSpeechAudioCategoryOptions.allowBluetooth,
       IosTextToSpeechAudioCategoryOptions.allowBluetoothA2DP,
       IosTextToSpeechAudioCategoryOptions.mixWithOthers,
+      IosTextToSpeechAudioCategoryOptions.duckOthers, // Lower other audio temporarily
     ]);
     
     // Android: Don't request audio focus to avoid interrupting music
     await _flutterTts!.setSharedInstance(true);
     
     // Set default TTS settings
-    await _flutterTts!.setLanguage('zh-CN');
+    final languages = await _flutterTts!.getLanguages;
+    print('Available TTS languages: $languages');
+    
+    // Try different Chinese language codes
+    bool languageSet = false;
+    for (String langCode in ['zh-CN', 'zh_CN', 'cmn-Hans-CN', 'cmn-CN', 'zh']) {
+      try {
+        await _flutterTts!.setLanguage(langCode);
+        languageSet = true;
+        print('Successfully set TTS language to: $langCode');
+        break;
+      } catch (e) {
+        print('Failed to set language $langCode: $e');
+      }
+    }
+    
+    if (!languageSet) {
+      print('WARNING: Could not set Chinese language for TTS');
+    }
+    
     await _flutterTts!.setSpeechRate(0.4); // Slower for language learning
     await _flutterTts!.setVolume(0.8); // Slightly lower volume to blend better with music
     await _flutterTts!.setPitch(1.0);
@@ -167,18 +187,41 @@ class PronunciationService {
     if (!_isInitialized) await initialize();
     if (_flutterTts == null) return;
     
-    // If pinyin is provided, apply tone sandhi rules
-    String textToSpeak = text;
-    if (pinyin != null && pinyin.isNotEmpty) {
-      // Apply tone sandhi rules to get proper pronunciation
-      String adjustedPinyin = applyToneSandhi(text, pinyin);
+    try {
+      // Stop any ongoing speech first
+      await _flutterTts!.stop();
       
-      // For TTS, we still speak the Chinese characters, but we've validated the pronunciation
-      // Some TTS engines support SSML or phonetic hints, but flutter_tts doesn't expose this
-      // So we just speak the text and rely on the TTS engine's built-in rules
+      // If pinyin is provided, apply tone sandhi rules
+      String textToSpeak = text;
+      if (pinyin != null && pinyin.isNotEmpty) {
+        // Apply tone sandhi rules to get proper pronunciation
+        String adjustedPinyin = applyToneSandhi(text, pinyin);
+        
+        // For TTS, we still speak the Chinese characters, but we've validated the pronunciation
+        // Some TTS engines support SSML or phonetic hints, but flutter_tts doesn't expose this
+        // So we just speak the text and rely on the TTS engine's built-in rules
+      }
+      
+      // Ensure we're using the correct language (try multiple codes)
+      bool langSet = false;
+      for (String langCode in ['zh-CN', 'zh_CN', 'cmn-Hans-CN', 'cmn-CN', 'zh']) {
+        try {
+          await _flutterTts!.setLanguage(langCode);
+          langSet = true;
+          break;
+        } catch (e) {
+          continue;
+        }
+      }
+      
+      // Start speaking
+      final result = await _flutterTts!.speak(textToSpeak);
+      if (result != 1) {
+        print('TTS speak failed with result: $result');
+      }
+    } catch (e) {
+      print('Error speaking text: $e');
     }
-    
-    await _flutterTts!.speak(textToSpeak);
   }
 
   // Speak automatically if enabled
