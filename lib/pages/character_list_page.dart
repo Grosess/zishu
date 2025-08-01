@@ -9,6 +9,7 @@ import '../services/cedict_service.dart';
 import '../utils/pinyin_utils.dart';
 import '../main.dart' show DuotoneThemeExtension, refreshSetsProgress;
 import '../services/haptic_service.dart';
+import '../services/pronunciation_service.dart';
 
 // Custom page route with smooth transition
 class SlidePageRoute extends PageRouteBuilder {
@@ -1096,25 +1097,49 @@ class _CharacterListPageState extends State<CharacterListPage> {
           children: [
             // Pronunciation
             if (pronunciation != null) ...[
-              Row(
-                children: [
-                  Icon(
-                    Icons.volume_up,
-                    size: 20,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      PinyinUtils.convertToneNumbersToMarks(pronunciation),
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Theme.of(context).colorScheme.primary,
-                        fontWeight: FontWeight.w500,
+              InkWell(
+                onTap: () async {
+                  HapticService().lightImpact();
+                  // Initialize and use pronunciation service
+                  final pronunciationService = PronunciationService();
+                  await pronunciationService.initialize();
+                  await pronunciationService.speak(term, pinyin: pronunciation);
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4.0),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(
+                          Icons.volume_up,
+                          size: 20,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        onPressed: () async {
+                          HapticService().lightImpact();
+                          // Initialize and use pronunciation service
+                          final pronunciationService = PronunciationService();
+                          await pronunciationService.initialize();
+                          await pronunciationService.speak(term, pinyin: pronunciation);
+                        },
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          PinyinUtils.convertToneNumbersToMarks(pronunciation),
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
               if (definition != null) const SizedBox(height: 16),
             ],

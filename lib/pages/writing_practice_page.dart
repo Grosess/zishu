@@ -20,6 +20,7 @@ import 'settings_page.dart';
 import '../services/radical_service.dart';
 import '../widgets/simple_radical_display.dart';
 import '../services/haptic_service.dart';
+import '../services/pronunciation_service.dart';
 
 enum PracticeMode { learning, testing }
 
@@ -59,6 +60,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   final LearningService _learningService = LearningService();
   final CedictService _cedictService = CedictService();
   final RadicalService _radicalService = RadicalService();
+  final PronunciationService _pronunciationService = PronunciationService();
   
   // Character data
   CharacterStroke? _characterStroke;
@@ -432,6 +434,9 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     // Initialize database
     await _database.initialize();
     
+    // Initialize pronunciation service
+    await _pronunciationService.initialize();
+    
     // Update recent practice sets
     final prefs = await SharedPreferences.getInstance();
     final practiceHistory = prefs.getStringList('recent_practice_sets') ?? [];
@@ -546,6 +551,43 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       }
     } else {
       _radicalAnalysis = null;
+    }
+    
+    // Pronounce the character if auto-pronounce is enabled
+    if (_characterStroke != null) {
+      // Get pinyin for the current character or word
+      String textToPronounce = currentCharacter;
+      String? pinyin;
+      
+      if (widget.isWord && currentWord.isNotEmpty) {
+        // For words, pronounce the entire word
+        textToPronounce = currentWord;
+        
+        // Try CEDICT first for words
+        if (_cedictService.isLoaded) {
+          final cedictEntry = _cedictService.lookup(currentWord);
+          if (cedictEntry != null) {
+            pinyin = cedictEntry.pinyin;
+          }
+        }
+        
+        // Fall back to word dictionary
+        if (pinyin == null) {
+          final wordInfo = _dictionary.getWordInfo(currentWord);
+          if (wordInfo != null) {
+            pinyin = wordInfo.pinyin;
+          }
+        }
+      } else {
+        // For single characters
+        final charInfo = _dictionary.getCharacterInfo(currentCharacter);
+        if (charInfo != null) {
+          pinyin = charInfo.pinyin;
+        }
+      }
+      
+      // Pronounce using the pronunciation service
+      await _pronunciationService.speakIfEnabled(textToPronounce, pinyin: pinyin);
     }
     
     setState(() {

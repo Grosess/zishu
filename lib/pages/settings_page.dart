@@ -34,6 +34,7 @@ class _SettingsPageState extends State<SettingsPage> {
   int _dailyLearnGoal = 10;
   bool _hapticFeedbackEnabled = true;
   bool _handwritingMode = false;
+  bool _autoPronounceChinese = true;
 
   @override
   void initState() {
@@ -92,6 +93,7 @@ class _SettingsPageState extends State<SettingsPage> {
     _dailyLearnGoal = _prefs.getInt('daily_learn_goal') ?? 10;
     _hapticFeedbackEnabled = _prefs.getBool('haptic_feedback_enabled') ?? true;
     _handwritingMode = _prefs.getBool('handwriting_mode') ?? false;
+    _autoPronounceChinese = _prefs.getBool('auto_pronounce_chinese') ?? true;
     
     // Initialize haptic service
     await HapticService().initialize();
@@ -551,6 +553,18 @@ class _SettingsPageState extends State<SettingsPage> {
                       // Give a light haptic feedback when enabled
                       HapticService().lightImpact();
                     }
+                  },
+                ),
+                SwitchListTile(
+                  title: const Text('Auto-Pronounce Chinese'),
+                  subtitle: const Text('Automatically speak characters and words'),
+                  value: _autoPronounceChinese,
+                  onChanged: (value) {
+                    HapticService().selectionClick();
+                    setState(() {
+                      _autoPronounceChinese = value;
+                    });
+                    _saveBoolSetting('auto_pronounce_chinese', value);
                   },
                 ),
                 
