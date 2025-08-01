@@ -1880,13 +1880,16 @@ class _WritingPracticePageState extends State<WritingPracticePage>
           // Track the result for the last character
           _wordCharacterResults[_currentWordCharacterIndex] = wasCorrect;
           
+          // For multi-character words, check if ALL characters were correct
+          bool finalWordResult = _wordCharacterResults.values.every((result) => result);
+          
           // Call completion callback to move to next item in endless queue
           if (widget.onComplete != null) {
-            widget.onComplete!(wasCorrect);
+            widget.onComplete!(finalWordResult);
           }
           
           // Update streak progress for endless practice
-          if (wasCorrect) {
+          if (finalWordResult) {
             StreakService().updateProgress(1);
           }
           return;
@@ -1936,14 +1939,20 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         if (widget.mode == PracticeMode.learning) {
           final nextCharacterIndex = (_currentWordCharacterIndex + 1) % _wordCharacters.length;
           
+          // Track the result for this character
+          _wordCharacterResults[_currentWordCharacterIndex] = wasCorrect;
+          
           // Check if we've completed the last character at stage 2
           // For a 2-character word: when we complete char 2 at stage 2, nextCharacterIndex will be 0
           if (_learningStage == 2 && nextCharacterIndex == 0) {
             
+            // For multi-character words, check if ALL characters were correct
+            bool finalWordResult = _wordCharacterResults.values.every((result) => result);
+            
             // Special handling for single-word practice mode
             if (widget.allCharacters == null || widget.allCharacters!.length == 1) {
-              // Mark as learned for single word practice
-              if (wasCorrect) {
+              // Mark as learned for single word practice only if all characters were correct
+              if (finalWordResult) {
                 await _learningService.markWordAsLearned(widget.character);
               }
               
@@ -1961,7 +1970,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
             }
             
             // Mark as learned FIRST before checking if we should continue
-            if (wasCorrect && widget.allCharacters != null) {
+            if (finalWordResult && widget.allCharacters != null) {
               final completedItem = widget.allCharacters![_currentCharacterIndex];
               await _learningService.markWordAsLearned(completedItem);
             }
@@ -2083,18 +2092,32 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         } else if (widget.characterSet == 'Endless Practice') {
           // Track the result for the last character
           _wordCharacterResults[_currentWordCharacterIndex] = wasCorrect;
+          
+          // For multi-character words, check if ALL characters were correct
+          bool finalWordResult = wasCorrect;
+          if (_wordCharacters.length > 1) {
+            finalWordResult = _wordCharacterResults.values.every((result) => result);
+          }
+          
           // For endless practice with multi-character words, call the completion callback
           if (widget.onComplete != null) {
-            widget.onComplete!(wasCorrect);
+            widget.onComplete!(finalWordResult);
           }
           // Update streak progress for endless practice
-          if (wasCorrect) {
+          if (finalWordResult) {
             StreakService().updateProgress(1);
           }
           return;
         } else {
           // Track the result for the last character
           _wordCharacterResults[_currentWordCharacterIndex] = wasCorrect;
+          
+          // For multi-character words, check if ALL characters were correct
+          bool finalWordResult = wasCorrect;
+          if (_wordCharacters.length > 1) {
+            // If any character in the word was incorrect, the whole word is incorrect
+            finalWordResult = _wordCharacterResults.values.every((result) => result);
+          }
           
           // Check if this is individual character practice (only one item)
           final isIndividualPractice = widget.allCharacters != null && widget.allCharacters!.length == 1;
@@ -2103,11 +2126,11 @@ class _WritingPracticePageState extends State<WritingPracticePage>
             // For individual character practice, don't show summary
             // Just call the completion callback if provided
             if (widget.onComplete != null) {
-              widget.onComplete!(wasCorrect);
+              widget.onComplete!(finalWordResult);
             }
             
             // Update streak if successful
-            if (wasCorrect) {
+            if (finalWordResult) {
               StreakService().updateProgress(1);
             }
             
