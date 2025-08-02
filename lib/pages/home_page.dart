@@ -152,8 +152,21 @@ class HomePageState extends State<HomePage> with RouteAware {
       _goalDeadline = DateTime.now().add(const Duration(days: 30));
     }
     
-    // Calculate progress
-    _currentProgress = learnedCharacters.length + learnedWords.length;
+    // Calculate progress - count only unique characters
+    // For character goals, we should count individual characters, not words
+    Set<String> uniqueCharacters = {};
+    
+    // Add all learned single characters
+    uniqueCharacters.addAll(learnedCharacters);
+    
+    // Extract individual characters from learned words
+    for (String word in learnedWords) {
+      for (int i = 0; i < word.length; i++) {
+        uniqueCharacters.add(word[i]);
+      }
+    }
+    
+    _currentProgress = uniqueCharacters.length;
     _progressPercentage = (_currentProgress / _characterGoal).clamp(0.0, 1.0);
     
     // Calculate pace

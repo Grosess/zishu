@@ -286,6 +286,26 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       // Load the setting but always show in learning mode
       final savedSetting = prefs.getBool('show_radical_analysis') ?? true;
       _showRadicalAnalysis = widget.mode == PracticeMode.learning && savedSetting;
+      
+      // Load handwriting mode - but check if it changed to clear progress
+      final newHandwritingMode = prefs.getBool('handwriting_mode') ?? false;
+      if (newHandwritingMode != _handwritingMode) {
+        _handwritingMode = newHandwritingMode;
+        // Clear progress when handwriting mode changes
+        _completedStrokeIndices.clear();
+        _userStrokes.clear();
+        _currentStroke.clear();
+        _currentStrokeTimestamps.clear();
+        _wrongAttempts.fillRange(0, _wrongAttempts.length, 0);
+        _showHintPath = false;
+        _showFullCharacter = false;
+        _showSuccess = false;
+        _showManualGrading = false;
+        _autoGradedAsCorrect = false;
+        _usedHint = false;
+        _missedStrokes = 0;
+        _missedStrokeIndices.clear();
+      }
     });
     
     // Reload radical analysis if needed
@@ -934,7 +954,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                         // Character guide based on learning stage
                         if (_characterStroke != null && (
                           _showFullCharacter || // Manual show all
-                          (!_handwritingMode && widget.mode == PracticeMode.learning && (_learningStage == 0 || _learningStage == 1)) // Stage 0 and 1: show filled character (but not in handwriting mode)
+                          (widget.mode == PracticeMode.learning && (_learningStage == 0 || _learningStage == 1)) // Stage 0 and 1: show filled character (always show in learning mode)
                         ))
                           CustomPaint(
                             size: Size.infinite,
@@ -946,7 +966,8 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                           ),
                         
                         // Completed strokes (normal mode) or all user strokes (handwriting mode)
-                        if (_handwritingMode && _userStrokes.isNotEmpty)
+                        // In learning mode, always show completed strokes normally
+                        if (_handwritingMode && widget.mode != PracticeMode.learning && _userStrokes.isNotEmpty)
                           CustomPaint(
                             size: Size.infinite,
                             painter: UserStrokesPainter(
@@ -958,7 +979,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                               strokeWidth: _strokeWidth,
                             ),
                           )
-                        else if (_characterStroke != null && _completedStrokeIndices.isNotEmpty)
+                        else if (_characterStroke != null && _completedStrokeIndices.isNotEmpty && (!_handwritingMode || widget.mode == PracticeMode.learning))
                           AnimatedBuilder(
                             animation: _bounceAnimation ?? const AlwaysStoppedAnimation(1.0),
                             builder: (context, child) {
@@ -986,8 +1007,10 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                           ),
                           builder: (context, snapshot) {
                             final showAnimation = snapshot.data ?? true;
-                            // Show animated hints in learning stage 0 or when hint is requested after 2 wrong attempts (but not in handwriting mode)
-                            if (_characterStroke != null && showAnimation && !_handwritingMode &&
+                            // Show animated hints in learning stage 0 or when hint is requested after 2 wrong attempts
+                            // Always show in learning mode, only restrict in practice/testing mode
+                            final shouldBlockHints = _handwritingMode && widget.mode != PracticeMode.learning;
+                            if (_characterStroke != null && showAnimation && !shouldBlockHints &&
                                 _completedStrokeIndices.length < _characterStroke!.strokes.length &&
                                 ((widget.mode == PracticeMode.learning && _learningStage == 0 && !_showFullCharacter) ||
                                  _showHintPath)) {
@@ -1001,7 +1024,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                                     : (_hintColor ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.8),
                                 ),
                               );
-                            } else if (_characterStroke != null && !showAnimation && !_handwritingMode && _showHintPath &&
+                            } else if (_characterStroke != null && !showAnimation && !shouldBlockHints && _showHintPath &&
                                        _completedStrokeIndices.length < _characterStroke!.strokes.length) {
                               // Show static hint if animation is disabled
                               return Positioned.fill(
@@ -1227,7 +1250,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                 // Practice control buttons (erase, show next, show all) - directly under character box
                 Padding(
                   padding: const EdgeInsets.only(left: 16, right: 16, top: 0, bottom: 4),
-            child: _handwritingMode ? 
+            child: (_handwritingMode && widget.mode != PracticeMode.learning) ? 
               // Handwriting mode buttons
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -1447,8 +1470,8 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       return;
     }
     
-    // In handwriting mode, just store the stroke without validation
-    if (_handwritingMode) {
+    // In handwriting mode (but not learning mode), just store the stroke without validation
+    if (_handwritingMode && widget.mode != PracticeMode.learning) {
       setState(() {
         _userStrokes.add(List.from(_currentStroke));
         _currentStroke.clear();
