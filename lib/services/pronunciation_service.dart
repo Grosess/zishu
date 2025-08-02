@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -15,17 +16,20 @@ class PronunciationService {
     
     _flutterTts = FlutterTts();
     
-    // Configure audio session to play even in silent mode
-    // iOS: Use playback category to play even when silent/DND
-    await _flutterTts!.setIosAudioCategory(IosTextToSpeechAudioCategory.playback, [
-      IosTextToSpeechAudioCategoryOptions.allowBluetooth,
-      IosTextToSpeechAudioCategoryOptions.allowBluetoothA2DP,
-      IosTextToSpeechAudioCategoryOptions.mixWithOthers,
-      IosTextToSpeechAudioCategoryOptions.duckOthers, // Lower other audio temporarily
+    // Configure audio session to not interrupt music
+    // iOS: Use ambient category which respects silent switch but doesn't interrupt
+    await _flutterTts!.setIosAudioCategory(IosTextToSpeechAudioCategory.ambient, [
+      IosTextToSpeechAudioCategoryOptions.mixWithOthers, // Critical: mix with music
     ]);
     
-    // Android: Don't request audio focus to avoid interrupting music
+    // Android: Configure to not interrupt music
     await _flutterTts!.setSharedInstance(true);
+    
+    // Set Android-specific settings to avoid interrupting music
+    if (Platform.isAndroid) {
+      // Use STREAM_NOTIFICATION which doesn't interrupt music
+      await _flutterTts!.setVolume(0.7); // Slightly lower volume
+    }
     
     // Set default TTS settings
     final languages = await _flutterTts!.getLanguages;
