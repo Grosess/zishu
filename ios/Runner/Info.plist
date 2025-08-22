@@ -27,11 +27,11 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>This app needs access to camera to take photos.</string>
+	<string>Zishu needs camera access to scan vocabulary sheets for character import.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>This app needs access to save images to photo library.</string>
+	<string>Zishu needs access to save practice results to your photo library.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>This app needs access to photo library to select images.</string>
+	<string>Zishu needs photo library access to select vocabulary sheets for OCR import.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

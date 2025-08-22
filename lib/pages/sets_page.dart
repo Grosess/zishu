@@ -7,6 +7,7 @@ import '../services/character_validator.dart';
 import 'character_list_page.dart';
 import 'writing_practice_page.dart';
 import 'groups_page.dart';
+import 'ocr_import_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/learning_service.dart';
 import '../services/folder_service.dart';
@@ -1601,6 +1602,15 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                     _showAddSetDialog();
                   },
                 ),
+                ListTile(
+                  leading: const Icon(Icons.document_scanner),
+                  title: const Text('Import from Photo'),
+                  onTap: () {
+                    HapticService().lightImpact();
+                    Navigator.pop(bottomSheetContext);
+                    _showOCRImport();
+                  },
+                ),
               ],
             ),
           ),
@@ -2278,6 +2288,20 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
         ],
       ),
     );
+  }
+
+  Future<void> _showOCRImport() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const OCRImportPage(),
+      ),
+    );
+    
+    if (result != null && mounted) {
+      await _loadCharacterSets();
+      setState(() {});
+    }
   }
   
   Future<void> _showFolderMenu(SetFolder folder) async {

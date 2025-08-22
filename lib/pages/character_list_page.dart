@@ -1217,6 +1217,12 @@ class _CharacterListPageState extends State<CharacterListPage> {
               },
               icon: const Icon(Icons.school),
               label: const Text('Learn'),
+              style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                    ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                    : null,
+                foregroundColor: Colors.white,
+              ),
             ),
           ] else ...[
             FilledButton.icon(
@@ -1226,6 +1232,12 @@ class _CharacterListPageState extends State<CharacterListPage> {
               },
               icon: const Icon(Icons.edit),
               label: const Text('Practice'),
+              style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                    ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                    : null,
+                foregroundColor: Colors.white,
+              ),
             ),
           ],
         ],
