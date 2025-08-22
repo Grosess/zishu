@@ -2037,7 +2037,8 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                 _selectedFolderId = item.id;
               });
             },
-            onLongPress: () => _showDeleteFolderDialog(item),
+            onLongPress: () => _showFolderMenu(item),
+            onMenuTap: () => _showFolderMenu(item),
           );
         } else if (item is CharacterSet) {
           // Show character set card
@@ -2065,11 +2066,13 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
   Future<void> _showSetMenu(CharacterSet set) async {
     await showModalBottomSheet(
       context: context,
-      builder: (context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Mark all as learned option (available for all sets)
-          ListTile(
+      builder: (context) => Padding(
+        padding: const EdgeInsets.only(bottom: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Mark all as learned option (available for all sets)
+            ListTile(
             leading: const Icon(Icons.check_circle),
             title: const Text('Mark All as Learned'),
             onTap: () {
@@ -2159,7 +2162,8 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
               },
             ),
           ],
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -2279,10 +2283,12 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
   Future<void> _showFolderMenu(SetFolder folder) async {
     await showModalBottomSheet(
       context: context,
-      builder: (context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
+      builder: (context) => Padding(
+        padding: const EdgeInsets.only(bottom: 36),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
             leading: const Icon(Icons.edit),
             title: const Text('Rename Folder'),
             onTap: () {
@@ -2310,7 +2316,8 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
               _showDeleteFolderDialog(folder);
             },
           ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -3480,12 +3487,14 @@ class _FolderCard extends StatelessWidget {
   final int setCount;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
+  final VoidCallback? onMenuTap;
 
   const _FolderCard({
     required this.folder,
     required this.setCount,
     this.onTap,
     this.onLongPress,
+    this.onMenuTap,
   });
 
   @override
@@ -3503,58 +3512,84 @@ class _FolderCard extends StatelessWidget {
         highlightColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
             ? (Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.05)
             : null,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return Container(
-              padding: const EdgeInsets.all(8),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: Center(
-                      child: FittedBox(
-                        fit: BoxFit.contain,
-                        child: Icon(
-                          Icons.folder,
-                          size: 48,
-                          color: Theme.of(context).colorScheme.primary,
+        child: Stack(
+          children: [
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return Container(
+                  padding: const EdgeInsets.all(8),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Center(
+                          child: FittedBox(
+                            fit: BoxFit.contain,
+                            child: Icon(
+                              Icons.folder,
+                              size: 48,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
                         ),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                folder.name,
+                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '$setCount ${setCount == 1 ? 'set' : 'sets'}',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            if (onMenuTap != null)
+              Positioned(
+                top: 4,
+                right: 4,
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      onMenuTap?.call();
+                    },
+                    customBorder: const CircleBorder(),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(
+                        Icons.more_vert,
+                        size: 16,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ),
-                  Expanded(
-                    flex: 2,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            folder.name,
-                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.center,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '$setCount ${setCount == 1 ? 'set' : 'sets'}',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                ),
               ),
-            );
-          },
+          ],
         ),
       ),
     );

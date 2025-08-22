@@ -1419,6 +1419,8 @@ class _CharacterListPageState extends State<CharacterListPage> {
     required VoidCallback onTap,
     required int learnedCount,
     required int totalCount,
+    VoidCallback? onDelete,
+    VoidCallback? onRename,
   }) {
     final progress = totalCount > 0 ? learnedCount / totalCount : 0.0;
     final isDuotone = Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true;
@@ -1558,13 +1560,53 @@ class _CharacterListPageState extends State<CharacterListPage> {
                             ),
                           ),
                         ],
-                        // Chevron
+                        // Three dots menu or chevron
                         const SizedBox(width: 8),
-                        Icon(
-                          Icons.chevron_right,
-                          size: 20,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                        if (onDelete != null || onRename != null)
+                          PopupMenuButton<String>(
+                            icon: Icon(
+                              Icons.more_vert,
+                              size: 20,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                            onSelected: (value) {
+                              if (value == 'rename' && onRename != null) {
+                                onRename();
+                              } else if (value == 'delete' && onDelete != null) {
+                                onDelete();
+                              }
+                            },
+                            itemBuilder: (BuildContext context) => [
+                              if (onRename != null)
+                                const PopupMenuItem<String>(
+                                  value: 'rename',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.edit, size: 20),
+                                      SizedBox(width: 8),
+                                      Text('Rename'),
+                                    ],
+                                  ),
+                                ),
+                              if (onDelete != null)
+                                const PopupMenuItem<String>(
+                                  value: 'delete',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.delete, size: 20),
+                                      SizedBox(width: 8),
+                                      Text('Delete'),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          )
+                        else
+                          Icon(
+                            Icons.chevron_right,
+                            size: 20,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
                       ],
                     ),
                   ),
