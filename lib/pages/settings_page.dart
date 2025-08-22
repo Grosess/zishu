@@ -401,10 +401,10 @@ class _SettingsPageState extends State<SettingsPage> {
                       );
                     },
                   ),
-                  // Invert Colors Button
+                  // Swap Colors Button
                   ListTile(
-                    title: const Text('Invert Colors'),
-                    subtitle: Text('Swap background and foreground colors'),
+                    title: const Text('Swap Colors'),
+                    subtitle: Text('Swap background and accent colors'),
                     leading: Icon(Icons.swap_vert, color: Theme.of(context).colorScheme.primary),
                     trailing: FilledButton.icon(
                       onPressed: () async {
@@ -412,19 +412,9 @@ class _SettingsPageState extends State<SettingsPage> {
                         final currentBg = _duotoneBackground;
                         final currentAccent = _duotoneColor;
                         
-                        // Determine new colors based on swap
-                        String newBackground;
-                        String newAccent;
-                        
-                        // If background is a neutral (black/white), swap with accent
-                        if (currentBg == 'white' || currentBg == 'black') {
-                          newBackground = currentAccent; // accent becomes background
-                          newAccent = currentBg; // background (white/black) becomes accent
-                        } else {
-                          // If background is already a color, swap back
-                          newBackground = currentAccent;
-                          newAccent = currentBg;
-                        }
+                        // Simply swap the colors
+                        String newBackground = currentAccent;
+                        String newAccent = currentBg;
                         
                         setState(() {
                           _duotoneBackground = newBackground;
@@ -442,7 +432,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         }
                       },
                       icon: const Icon(Icons.swap_horiz, size: 18),
-                      label: const Text('Invert'),
+                      label: const Text('Swap'),
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       ),
@@ -1006,14 +996,7 @@ class _SettingsPageState extends State<SettingsPage> {
       _prefs.setString('duotone_background', _duotoneBackground);
       _prefs.setString('duotone_color', _duotoneColor);
     }
-    // Check if both are neutral (invalid)
-    else if (isBackgroundNeutral && isAccentNeutral) {
-      // Keep white/black background, change accent to green
-      _duotoneColor = 'green';
-      // Save corrected value
-      _prefs.setString('duotone_color', _duotoneColor);
-    } 
-    // Check if both are colors (invalid - must have one neutral)
+    // Check if neither is neutral (invalid - must have one neutral)
     else if (!isBackgroundNeutral && !isAccentNeutral) {
       // Keep the background, make accent white or black based on background brightness
       if (_duotoneBackground == 'lightpink' || _duotoneBackground == 'gold') {
@@ -1024,7 +1007,7 @@ class _SettingsPageState extends State<SettingsPage> {
       // Save corrected value
       _prefs.setString('duotone_color', _duotoneColor);
     }
-    // Otherwise the combination is valid
+    // Otherwise the combination is valid (one is neutral, they're different)
   }
   
   List<Widget> _getBackgroundColorOptions() {
@@ -1034,10 +1017,14 @@ class _SettingsPageState extends State<SettingsPage> {
     final isAccentNeutral = _duotoneColor == 'white' || _duotoneColor == 'black';
     
     if (isAccentNeutral) {
-      // If accent is neutral, any color can be background
+      // If accent is neutral, any color can be background (except the same color)
+      if (_duotoneColor != 'white') {
+        options.add(_buildBackgroundOption('White', 'white'));
+      }
+      if (_duotoneColor != 'black') {
+        options.add(_buildBackgroundOption('Black', 'black'));
+      }
       options.addAll([
-        _buildBackgroundOption('White', 'white'),
-        _buildBackgroundOption('Black', 'black'),
         _buildBackgroundOption('Blue', 'blue'),
         _buildBackgroundOption('Green', 'green'),
         _buildBackgroundOption('Blue Green', 'bluegreen'),
@@ -1065,21 +1052,23 @@ class _SettingsPageState extends State<SettingsPage> {
     final isBackgroundNeutral = _duotoneBackground == 'white' || _duotoneBackground == 'black';
     
     if (isBackgroundNeutral) {
-      // If background is neutral, any color can be accent
-      final allColors = [
-        ['Blue', 'blue'],
-        ['Green', 'green'],
-        ['Blue Green', 'bluegreen'],
-        ['Red', 'red'],
-        ['Light Pink', 'lightpink'],
-        ['Hot Pink', 'hotpink'],
-        ['Gold', 'gold'],
-        ['Purple', 'purple'],
-      ];
-      
-      for (final color in allColors) {
-        options.add(_buildDuotoneColorOption(color[0], color[1]));
+      // If background is neutral, any color can be accent (except the same color)
+      if (_duotoneBackground != 'white') {
+        options.add(_buildDuotoneColorOption('White', 'white'));
       }
+      if (_duotoneBackground != 'black') {
+        options.add(_buildDuotoneColorOption('Black', 'black'));
+      }
+      options.addAll([
+        _buildDuotoneColorOption('Blue', 'blue'),
+        _buildDuotoneColorOption('Green', 'green'),
+        _buildDuotoneColorOption('Blue Green', 'bluegreen'),
+        _buildDuotoneColorOption('Red', 'red'),
+        _buildDuotoneColorOption('Light Pink', 'lightpink'),
+        _buildDuotoneColorOption('Hot Pink', 'hotpink'),
+        _buildDuotoneColorOption('Gold', 'gold'),
+        _buildDuotoneColorOption('Purple', 'purple'),
+      ]);
     } else {
       // If background is a color, only neutral accents are valid
       options.addAll([
