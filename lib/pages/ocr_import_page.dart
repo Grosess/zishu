@@ -25,6 +25,7 @@ class _OCRImportPageState extends State<OCRImportPage> {
   // Photo collection state
   List<XFile> _selectedImages = [];
   bool _isCollectingPhotos = true; // New state for photo collection vs scanning
+  int _termsPerGroup = 8; // Default terms per group for testing
   
   @override
   void dispose() {
@@ -154,11 +155,14 @@ class _OCRImportPageState extends State<OCRImportPage> {
     try {
       final characters = _scannedItems!.map((item) => item.character).toList();
       
+      // Check if we have multi-character terms (word set) or single characters
+      final hasMultiCharTerms = characters.any((char) => char.length > 1);
+      
       final characterSet = await _setManager.createCustomSet(
         name: _setName,
         characters: characters,
         description: 'Imported via OCR from vocabulary sheet',
-        isWordSet: false,
+        isWordSet: hasMultiCharTerms,
       );
       
       HapticService().mediumImpact();
@@ -379,6 +383,58 @@ class _OCRImportPageState extends State<OCRImportPage> {
                     },
                   ),
                 ),
+                // Terms per group setting
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: Row(
+                    children: [
+                      Text(
+                        'Terms per group (for testing):',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: isDuotone && duotoneExtension?.duotoneColor1 != null
+                              ? duotoneExtension!.duotoneColor1!
+                              : Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Container(
+                        width: 60,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: isDuotone && duotoneExtension?.duotoneColor1 != null
+                                ? duotoneExtension!.duotoneColor1!.withAlpha(128)
+                                : Theme.of(context).colorScheme.onSurface.withAlpha(128),
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: TextField(
+                          controller: TextEditingController(text: _termsPerGroup.toString()),
+                          textAlign: TextAlign.center,
+                          keyboardType: TextInputType.number,
+                          style: TextStyle(
+                            color: isDuotone && duotoneExtension?.duotoneColor1 != null
+                                ? duotoneExtension!.duotoneColor1!
+                                : Theme.of(context).colorScheme.onSurface,
+                            fontSize: 14,
+                          ),
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                          ),
+                          onChanged: (value) {
+                            final int? newValue = int.tryParse(value);
+                            if (newValue != null && newValue > 0) {
+                              setState(() {
+                                _termsPerGroup = newValue;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 // Process button
                 Padding(
                   padding: const EdgeInsets.all(16),
@@ -393,7 +449,9 @@ class _OCRImportPageState extends State<OCRImportPage> {
                         backgroundColor: isDuotone && duotoneExtension?.duotoneColor2 != null
                             ? duotoneExtension!.duotoneColor2!
                             : Theme.of(context).colorScheme.primary,
-                        foregroundColor: Colors.white,
+                        foregroundColor: isDuotone && duotoneExtension?.duotoneColor2 != null
+                            ? duotoneExtension!.duotoneColor1!
+                            : Colors.white,
                         textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                     ),
@@ -569,7 +627,9 @@ class _OCRImportPageState extends State<OCRImportPage> {
                           backgroundColor: isDuotone && duotoneExtension?.duotoneColor2 != null
                               ? duotoneExtension!.duotoneColor2!
                               : Theme.of(context).colorScheme.primary,
-                          foregroundColor: Colors.white,
+                          foregroundColor: isDuotone && duotoneExtension?.duotoneColor2 != null
+                              ? duotoneExtension!.duotoneColor1!
+                              : Colors.white,
                         ),
                       ),
                     ),

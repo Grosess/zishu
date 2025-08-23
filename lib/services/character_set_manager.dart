@@ -2,6 +2,7 @@ import 'makemeahanzi_processor.dart';
 import 'character_stroke_service.dart';
 import 'character_database.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
 class CharacterSet {
@@ -196,7 +197,8 @@ class CharacterSetManager {
     
     _userSets[id] = set;
     
-    // TODO: Save to local storage
+    // Save to local storage
+    await _saveCustomSetsToStorage();
     
     return set;
   }
@@ -249,5 +251,50 @@ class CharacterSetManager {
     }
     
     return availability;
+  }
+  
+  // Save custom sets to SharedPreferences
+  Future<void> _saveCustomSetsToStorage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final customSetsJson = _userSets.values.map((set) => set.toJson()).toList();
+      await prefs.setString('custom_character_sets', jsonEncode(customSetsJson));
+      print('CharacterSetManager: Saved ${_userSets.length} custom sets to storage');
+    } catch (e) {
+      print('CharacterSetManager: Error saving custom sets: $e');
+    }
+  }
+  
+  // Load custom sets from SharedPreferences
+  Future<void> _loadCustomSetsFromStorage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final customSetsString = prefs.getString('custom_character_sets');
+      
+      if (customSetsString != null) {
+        final List<dynamic> customSetsJson = jsonDecode(customSetsString);
+        _userSets.clear();
+        
+        for (final setJson in customSetsJson) {
+          final set = CharacterSet.fromJson(setJson);
+          _userSets[set.id] = set;
+        }
+        
+        print('CharacterSetManager: Loaded ${_userSets.length} custom sets from storage');
+      }
+    } catch (e) {
+      print('CharacterSetManager: Error loading custom sets: $e');
+    }
+  }
+  
+  // Get all custom sets
+  List<CharacterSet> getCustomSets() {
+    return _userSets.values.toList();
+  }
+  
+  // Initialize the manager and load custom sets
+  Future<void> initialize() async {
+    await _loadCustomSetsFromStorage();
+    await loadPredefinedSets();
   }
 }

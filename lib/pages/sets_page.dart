@@ -773,6 +773,12 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
   }
   
   Future<void> _loadCustomSets(List<CharacterSet> customSets) async {
+    // Use CharacterSetManager to get custom sets
+    final manager = CharacterSetManager();
+    final managerCustomSets = manager.getCustomSets();
+    customSets.addAll(managerCustomSets);
+    
+    // Also check legacy storage for backward compatibility
     final prefs = await SharedPreferences.getInstance();
     final savedCustomSets = prefs.getStringList('custom_sets') ?? [];
     
@@ -999,6 +1005,12 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                         _showMarkAllAsLearnedDialog(set);
                       },
                       borderRadius: BorderRadius.circular(20),
+                      splashColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                          ? (Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.2)
+                          : null,
+                      highlightColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                          ? (Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.1)
+                          : null,
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         child: const Icon(
@@ -1120,6 +1132,12 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                               ).then((_) => _loadSetProgress());
                             },
                             borderRadius: BorderRadius.circular(8),
+                            splashColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                ? (Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.2)
+                                : null,
+                            highlightColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                ? (Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.1)
+                                : null,
                             child: Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
@@ -3183,6 +3201,12 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                   _showTextImportDialog();
                 },
                 borderRadius: BorderRadius.circular(12),
+                splashColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                    ? (Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.1)
+                    : null,
+                highlightColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                    ? (Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.05)
+                    : null,
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Row(
@@ -3234,6 +3258,12 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                     ),
                   );
                 },
+                splashColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                    ? (Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.1)
+                    : null,
+                highlightColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                    ? (Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.05)
+                    : null,
                 borderRadius: BorderRadius.circular(12),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
@@ -3602,6 +3632,12 @@ class _FolderCard extends StatelessWidget {
                       onMenuTap?.call();
                     },
                     customBorder: const CircleBorder(),
+                    splashColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                        ? (Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.2)
+                        : null,
+                    highlightColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                        ? (Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.1)
+                        : null,
                     child: Padding(
                       padding: const EdgeInsets.all(4),
                       child: Icon(
