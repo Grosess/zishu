@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'hanzi_database_service.dart';
 
 class OCRService {
   static const MethodChannel _channel = MethodChannel('com.zishu.ocr');
@@ -11,6 +12,7 @@ class OCRService {
   OCRService._internal();
   
   final ImagePicker _picker = ImagePicker();
+  final HanziDatabaseService _databaseService = HanziDatabaseService();
   
   Future<List<VocabItem>> scanVocabSheet({ImageSource source = ImageSource.camera, bool allowMultiple = true}) async {
     try {
@@ -67,6 +69,11 @@ class OCRService {
             
             String cleanedDefinition = _cleanDefinition(definition);
             
+            // If definition is missing or invalid, try database fallback
+            if (cleanedDefinition.isEmpty || cleanedDefinition == 'No definition found' || cleanedDefinition == 'definition needed') {
+              cleanedDefinition = await _getDatabaseDefinition(character);
+            }
+            
             if (cleanedDefinition.isNotEmpty && cleanedDefinition != 'No definition found') {
               allItems.add(VocabItem(
                 character: character,
@@ -120,7 +127,12 @@ class OCRService {
         
         String cleanedDefinition = _cleanDefinition(definition);
         
-        if (cleanedDefinition.isNotEmpty) {
+        // If definition is missing or invalid, try database fallback
+        if (cleanedDefinition.isEmpty || cleanedDefinition == 'No definition found' || cleanedDefinition == 'definition needed') {
+          cleanedDefinition = await _getDatabaseDefinition(character);
+        }
+        
+        if (cleanedDefinition.isNotEmpty && cleanedDefinition != 'No definition found') {
           vocabItems.add(VocabItem(
             character: character,
             definition: cleanedDefinition,
@@ -150,6 +162,40 @@ class OCRService {
     }
     
     return cleaned;
+  }
+  
+  Future<String> _getDatabaseDefinition(String character) async {
+    try {
+      // Try each character individually for multi-character terms
+      String bestDefinition = '';
+      for (int i = 0; i < character.length; i++) {
+        final singleChar = character[i];
+        final hanziChar = await _databaseService.getCharacter(singleChar);
+        
+        if (hanziChar != null && hanziChar.meanings.isNotEmpty) {
+          // Use the first meaning as the definition
+          final definition = hanziChar.meanings.first;
+          if (definition.isNotEmpty && !definition.toLowerCase().contains('variant') && 
+              !definition.toLowerCase().contains('same as')) {
+            if (bestDefinition.isEmpty) {
+              bestDefinition = definition;
+            } else {
+              // For multi-character terms, combine definitions
+              bestDefinition += '; $definition';
+            }
+          }
+        }
+      }
+      
+      if (bestDefinition.isNotEmpty) {
+        return bestDefinition;
+      }
+      
+      return 'No definition found';
+    } catch (e) {
+      print('Error getting database definition for $character: $e');
+      return 'No definition found';
+    }
   }
   
   Future<Map<String, dynamic>> createCharacterSetFromOCR({
