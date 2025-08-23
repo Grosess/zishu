@@ -155,6 +155,12 @@ class _OCRImportPageState extends State<OCRImportPage> {
     try {
       final characters = _scannedItems!.map((item) => item.character).toList();
       
+      // Create a map of character to definition for OCR-imported sets
+      final Map<String, String> definitions = {};
+      for (final item in _scannedItems!) {
+        definitions[item.character] = item.definition;
+      }
+      
       // Check if we have multi-character terms (word set) or single characters
       final hasMultiCharTerms = characters.any((char) => char.length > 1);
       
@@ -164,6 +170,7 @@ class _OCRImportPageState extends State<OCRImportPage> {
         description: 'Imported via OCR from vocabulary sheet',
         isWordSet: hasMultiCharTerms,
         source: 'ocr_import',
+        definitions: definitions,
       );
       
       HapticService().mediumImpact();

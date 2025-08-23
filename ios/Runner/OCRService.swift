@@ -378,9 +378,15 @@ class OCRService: NSObject {
                            chineseText != "中文" && chineseText != "中" && chineseText != "然需" && 
                            chineseText != "英" && chineseText != "文" && chineseText != "拼音" {
                             
-                            // Very loose duplicate checking - only skip exact matches
+                            // STRICT duplicate checking - skip if we already have this term OR it's part of an A/B format
                             let alreadyHave = chineseTerms.contains { existing in
-                                existing.text == chineseText
+                                // Check exact match
+                                existing.text == chineseText ||
+                                // Check if this is part of an A/B format we already have
+                                existing.text.contains("/") && (
+                                    existing.text.contains(chineseText) ||
+                                    existing.text.components(separatedBy: "/").contains { $0.trimmingCharacters(in: .whitespacesAndNewlines) == chineseText }
+                                )
                             }
                             
                             if !alreadyHave {
@@ -391,48 +397,13 @@ class OCRService: NSObject {
                     }
                 }
                 
-                // Also check for A/B format terms that might have been split
-                if text.contains("/") && containsChineseCharacters(text) {
-                    let parts = text.components(separatedBy: "/")
-                    for part in parts {
-                        let cleanPart = part.trimmingCharacters(in: .whitespacesAndNewlines)
-                        if cleanPart.count >= 2 && containsChineseCharacters(cleanPart) {
-                            let alreadyHave = chineseTerms.contains { $0.text == cleanPart }
-                            if !alreadyHave {
-                                chineseTerms.append((cleanPart, 0.6, item.box, index, nil))
-                                print("OCR DEBUG - A/B SPLIT CAPTURE: Found '\(cleanPart)' from '\(text)'")
-                            }
-                        }
-                    }
-                }
+                // Skip A/B format splitting - we already have the full A/B terms
+                // This prevents creating duplicate entries that mess up definition matching
             }
         }
         
-        // EXTRA: Look for any standalone Chinese characters that might be part numbers
-        for (index, item) in allTextItems.enumerated() {
-            let itemY = item.box.origin.y
-            let text = item.text
-            
-            // Check items with Chinese characters but also numbers (like "过" from "guo")
-            if itemY >= 0.060 && itemY <= 0.160 && text.count <= 6 {
-                // Look for single Chinese characters that might be vocabulary items
-                if containsChineseCharacters(text) && text.count <= 3 {
-                    let chineseOnly = text.filter { char in
-                        let scalar = char.unicodeScalars.first!
-                        return (scalar.value >= 0x4e00 && scalar.value <= 0x9fff) || 
-                               (scalar.value >= 0x3400 && scalar.value <= 0x4dbf)
-                    }
-                    
-                    if chineseOnly.count >= 1 && chineseOnly != "中" && chineseOnly != "文" && chineseOnly != "拼" && chineseOnly != "音" {
-                        let alreadyHave = chineseTerms.contains { $0.text == String(chineseOnly) || $0.text.contains(chineseOnly) }
-                        if !alreadyHave {
-                            chineseTerms.append((String(chineseOnly), 0.5, item.box, index, nil))
-                            print("OCR DEBUG - SINGLE CHAR CAPTURE: Found '\(chineseOnly)' from '\(text)' at Y:\(String(format: "%.3f", itemY))")
-                        }
-                    }
-                }
-            }
-        }
+        // Skip looking for standalone single characters - they're creating duplicates
+        // We already have the complete terms from the main passes
         
         print("OCR DEBUG - Total Chinese terms after aggressive final pass: \(chineseTerms.count) terms")
         

@@ -15,6 +15,7 @@ class CharacterSet {
   final String? icon;
   final String? keywords;
   final String? source;
+  final Map<String, String>? definitions; // Store OCR-imported definitions
   
   CharacterSet({
     required this.id,
@@ -26,6 +27,7 @@ class CharacterSet {
     this.icon,
     this.keywords,
     this.source,
+    this.definitions,
   });
   
   Map<String, dynamic> toJson() => {
@@ -38,6 +40,7 @@ class CharacterSet {
     'icon': icon,
     'keywords': keywords,
     'source': source,
+    'definitions': definitions,
   };
   
   factory CharacterSet.fromJson(Map<String, dynamic> json) {
@@ -56,6 +59,12 @@ class CharacterSet {
       characters = [];
     }
     
+    // Handle definitions - could be null or a Map
+    Map<String, String>? definitions;
+    if (json['definitions'] != null && json['definitions'] is Map) {
+      definitions = Map<String, String>.from(json['definitions']);
+    }
+    
     return CharacterSet(
       id: json['id'],
       name: json['name'],
@@ -66,6 +75,7 @@ class CharacterSet {
       icon: json['icon'],
       keywords: json['keywords'],
       source: json['source'],
+      definitions: definitions,
     );
   }
 }
@@ -187,6 +197,7 @@ class CharacterSetManager {
     String? description,
     bool isWordSet = false,
     String? source,
+    Map<String, String>? definitions,
   }) async {
     // Filter out phrases longer than 8 characters
     final filteredCharacters = characters.where((item) => item.length <= 8).toList();
@@ -199,6 +210,7 @@ class CharacterSetManager {
       description: description,
       isWordSet: isWordSet,
       source: source,
+      definitions: definitions,
     );
     
     _userSets[id] = set;

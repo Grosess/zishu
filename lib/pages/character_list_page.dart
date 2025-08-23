@@ -48,6 +48,7 @@ class CharacterListPage extends StatefulWidget {
   final bool isCustomSet;
   final String? setId;
   final String? source;
+  final Map<String, String>? definitions;
 
   const CharacterListPage({
     super.key,
@@ -57,6 +58,7 @@ class CharacterListPage extends StatefulWidget {
     this.isCustomSet = false,
     this.setId,
     this.source,
+    this.definitions,
   });
 
   @override
@@ -1043,16 +1045,21 @@ class _CharacterListPageState extends State<CharacterListPage> {
     String? definition;
     String displayTerm = term;
     
-    // First check if there's an existing definition in the original item
-    final existingDef = _extractExistingDefinition(originalItem);
-    if (existingDef != null) {
-      // Production: removed debug print
-      definition = existingDef;
+    // For OCR-imported sets, use the imported definitions first
+    if (widget.definitions != null && widget.definitions!.containsKey(term)) {
+      definition = widget.definitions![term];
+    } else {
+      // First check if there's an existing definition in the original item
+      final existingDef = _extractExistingDefinition(originalItem);
+      if (existingDef != null) {
+        // Production: removed debug print
+        definition = existingDef;
+      }
     }
     
     // Try to get pronunciation and definition from dictionary or CEDICT
     // First try character dictionary (for both single and multi-character)
-    if (term.length == 1) {
+    if (term.length == 1 && definition == null) {
       // Single character - try character dictionary first
       final charInfo = _dictionary.getCharacterInfo(term);
       if (charInfo != null) {
@@ -1060,7 +1067,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
         pronunciation = PinyinUtils.convertToneNumbersToMarks(charInfo.pinyin);
         definition = charInfo.definition;
       }
-    } else {
+    } else if (definition == null) {
       // Multi-character - try word dictionary first
       final wordInfo = _dictionary.getWordInfo(term);
       if (wordInfo != null) {
@@ -1376,10 +1383,15 @@ class _CharacterListPageState extends State<CharacterListPage> {
     String? definition;
     String? pinyin;
     
+    // For OCR-imported sets, use the imported definitions first
+    if (widget.definitions != null && widget.definitions!.containsKey(character)) {
+      definition = widget.definitions![character];
+    }
+    
     if (_cedictService.isLoaded) {
       final entry = _cedictService.lookup(character);
       if (entry != null) {
-        definition = entry.definition;
+        definition ??= entry.definition;
         pinyin = PinyinUtils.convertToneNumbersToMarks(entry.pinyin);
       } else {
         // Production: removed debug print
@@ -1392,7 +1404,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
       // Production: removed debug print
     }
     
-    if (definition == null || pinyin == null) {
+    if ((definition == null || pinyin == null) && widget.definitions == null) {
       final charInfo = _dictionary.getCharacterInfo(character);
       if (charInfo != null) {
         definition ??= charInfo.definition;
