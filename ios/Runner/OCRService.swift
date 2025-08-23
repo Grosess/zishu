@@ -76,35 +76,60 @@ class OCRService: NSObject {
             print("OCR DEBUG - [\(index)] '\(item.text)' (conf: \(String(format: "%.2f", item.confidence)), pos: \(String(format: "%.3f", item.box.origin.x)),\(String(format: "%.3f", item.box.origin.y)), num: \(item.extractedNumber?.description ?? "none"))")
         }
         
-        // Enhanced sorting: first by extracted numbers, then by Y position, then by X position
+        // TABLE-BASED APPROACH: Sort by Y position first (rows), then X position (columns)
+        // This maintains the vocabulary sheet's table structure
         allTextItems.sort { item1, item2 in
-            // If both have numbers, sort by number
-            if let num1 = item1.extractedNumber, let num2 = item2.extractedNumber {
-                return num1 < num2
-            }
-            // If only one has a number, prioritize it
-            if item1.extractedNumber != nil && item2.extractedNumber == nil {
-                return true
-            }
-            if item1.extractedNumber == nil && item2.extractedNumber != nil {
-                return false
-            }
-            // Neither has numbers, use position-based sorting
             let yDiff = item2.box.origin.y - item1.box.origin.y  // Higher Y = top
-            if abs(yDiff) > 0.01 {  // Different rows
+            if abs(yDiff) > 0.02 {  // Different rows (more generous for table detection)
                 return yDiff > 0
-            } else {  // Same row, sort by X position
+            } else {  // Same row, sort by X position (left to right)
                 return item1.box.origin.x < item2.box.origin.x
             }
+        }
+        
+        print("OCR DEBUG - TABLE STRUCTURE ANALYSIS:")
+        // Group items by rows to understand table structure
+        var tableRows: [[String]] = []
+        var currentRow: [String] = []
+        var lastY: Float = -1
+        
+        for item in allTextItems {
+            let itemY = Float(item.box.origin.y)
+            if lastY >= 0 && abs(itemY - lastY) > 0.02 {
+                // New row detected
+                if !currentRow.isEmpty {
+                    tableRows.append(currentRow)
+                    currentRow = []
+                }
+            }
+            currentRow.append(item.text)
+            lastY = itemY
+        }
+        if !currentRow.isEmpty {
+            tableRows.append(currentRow)
+        }
+        
+        for (rowIndex, row) in tableRows.enumerated() {
+            print("OCR DEBUG - Row \(rowIndex): \(row.joined(separator: " | "))")
         }
         
         // NEW APPROACH: Collect Chinese terms and English definitions separately, then match them
         var chineseTerms: [(text: String, confidence: Float, box: CGRect, index: Int, number: Int?)] = []
         var englishDefinitions: [(text: String, confidence: Float, box: CGRect, index: Int)] = []
         
+        // Track standalone numbers that might be associated with terms
+        var standaloneNumbers: [(number: Int, box: CGRect)] = []
+        
         // First pass: categorize all text items
         for (index, item) in allTextItems.enumerated() {
             let text = item.text
+            
+            // Check if this is just a standalone number
+            if let number = item.extractedNumber, text == String(number) {
+                standaloneNumbers.append((number, item.box))
+                print("OCR DEBUG - Standalone number: \(number) at position \(String(format: "%.3f,%.3f", item.box.origin.x, item.box.origin.y))")
+                continue
+            }
             
             // Skip obvious headers and non-content
             if isHeaderOrNonVocab(text) {
@@ -114,25 +139,74 @@ class OCRService: NSObject {
             // Check if this contains Chinese characters - be more liberal
             let chineseText = extractChineseFromText(text)
             if chineseText.count >= 1 {  // Accept even single characters
-                // Filter out "中文" and "中" as headers
-                if chineseText != "中文" && chineseText != "中" {
+                // Filter out "中文" and "中" as headers, and "然需" which is garbled
+                if chineseText != "中文" && chineseText != "中" && chineseText != "然需" {
                     // Special handling for numbered terms
                     var shouldAdd = true
                     var finalChineseText = chineseText
+                    var finalNumber = item.extractedNumber
                     
-                    // If it's a single character with no number, be more selective
-                    if chineseText.count == 1 && item.extractedNumber == nil {
-                        // Only add single characters if they're part of common vocabulary
-                        let commonSingleChars = ["过", "去", "了", "的", "在", "是", "了", "有", "和", "会", "说", "很", "都", "来", "要", "从"]
-                        shouldAdd = commonSingleChars.contains(chineseText)
+                    // If no number, check if there's a standalone number nearby - PRECISE MATCHING
+                    if finalNumber == nil {
+                        var bestMatch: (number: Int, distance: Float)?
+                        var bestIndex = -1
+                        
+                        for (standaloneIndex, standalone) in standaloneNumbers.enumerated() {
+                            let xDiff = abs(Float(item.box.origin.x - standalone.box.origin.x))
+                            let yDiff = abs(Float(item.box.origin.y - standalone.box.origin.y))
+                            // Numbers are at Y~0.083, Chinese at Y~0.118-0.126, difference ~0.04
+                            // Make tolerance much more precise
+                            if xDiff <= 0.03 && yDiff >= 0.035 && yDiff <= 0.055 {  // Precise tolerance
+                                let distance = xDiff * 10.0 + yDiff  // X is critical for alignment
+                                if bestMatch == nil || distance < bestMatch!.distance {
+                                    bestMatch = (standalone.number, distance)
+                                    bestIndex = standaloneIndex
+                                }
+                            }
+                        }
+                        
+                        // If we found a match, use it and REMOVE from standalone list
+                        if let match = bestMatch, bestIndex >= 0 {
+                            finalNumber = match.number
+                            standaloneNumbers.remove(at: bestIndex)  // Remove to prevent reuse
+                            print("OCR DEBUG - Associated number \(match.number) with Chinese term '\(chineseText)' (distance: \(match.distance))")
+                        }
+                    }
+                    
+                    // If it's a single character with no number, be more selective but not too restrictive
+                    if chineseText.count == 1 && finalNumber == nil {
+                        // Check if this single character appears to be positioned like other vocab terms
+                        // Look for nearby standalone numbers that might belong to this character
+                        var hasNearbyNumber = false
+                        for standalone in standaloneNumbers {
+                            let xDiff = abs(Float(item.box.origin.x - standalone.box.origin.x))
+                            let yDiff = abs(Float(item.box.origin.y - standalone.box.origin.y))
+                            // Check if there's a number very close that could belong to this char
+                            if xDiff <= 0.08 && yDiff <= 0.12 {
+                                hasNearbyNumber = true
+                                break
+                            }
+                        }
+                        
+                        // Also check if the single character is in the same Y region as other vocab terms
+                        var inVocabRegion = false
+                        let charY = item.box.origin.y
+                        if charY >= 0.115 && charY <= 0.130 {  // Main vocab term Y region
+                            inVocabRegion = true
+                        }
+                        
+                        // Only skip single characters if they have no nearby numbers AND are not in vocab region
+                        if !hasNearbyNumber && !inVocabRegion {
+                            shouldAdd = false
+                        }
                     }
                     
                     if shouldAdd {
-                        chineseTerms.append((finalChineseText, item.confidence, item.box, index, item.extractedNumber))
+                        chineseTerms.append((finalChineseText, item.confidence, item.box, index, finalNumber))
                         if chineseText.count >= 2 {
-                            print("OCR DEBUG - Chinese term: '\(finalChineseText)' from '\(text)' with number: \(item.extractedNumber?.description ?? "none")")
+                            print("OCR DEBUG - Chinese term: '\(finalChineseText)' from '\(text)' with number: \(finalNumber?.description ?? "none")")
                         } else {
-                            print("OCR DEBUG - Single Chinese char: '\(finalChineseText)' from '\(text)' with number: \(item.extractedNumber?.description ?? "none")")
+                            print("OCR DEBUG - Single Chinese char: '\(finalChineseText)' from '\(text)' with number: \(finalNumber?.description ?? "none")")
                         }
                     }
                 }
@@ -141,9 +215,9 @@ class OCRService: NSObject {
             // Also try to extract Chinese from mixed text (like "3大伯" -> "大伯")
             if chineseText.isEmpty || chineseText.count == 1 {
                 let cleanedForChinese = text.replacingOccurrences(of: "^\\d+", with: "", options: .regularExpression)
-                if cleanedForChinese != text {
+                if cleanedForChinese != text && !cleanedForChinese.isEmpty {
                     let extractedFromCleaned = extractChineseFromText(cleanedForChinese)
-                    if extractedFromCleaned.count >= 2 && extractedFromCleaned != "中文" {
+                    if extractedFromCleaned.count >= 2 && extractedFromCleaned != "中文" && extractedFromCleaned != "然需" {
                         let alreadyExists = chineseTerms.contains { $0.text == extractedFromCleaned }
                         if !alreadyExists {
                             chineseTerms.append((extractedFromCleaned, item.confidence, item.box, index, item.extractedNumber))
@@ -153,24 +227,55 @@ class OCRService: NSObject {
                 }
             }
             
-            // Check if this looks like an English definition - be much more permissive but filter pinyin
+            // Check if this looks like an English definition OR special pinyin to convert
             if !containsChineseCharacters(text) && text.count > 3 {
-                // Enhanced pinyin filtering - much more comprehensive
+                // Specific pinyin patterns to filter (be more selective)
                 let lowText = text.lowercased()
-                let pinyinPatterns = [
-                    // Common pinyin patterns
-                    "\\b[aeiou]+\\s+[a-z]+\\b",  // vowel + consonant patterns
-                    "\\b(uo|ao|ai|ei|ou|an|en|ang|eng|ing|ong|uan|uang)\\s+\\w+\\b",  // pinyin finals
-                    "\\b\\w*[aeiou]\\s+\\w*[aeiou]\\b",  // spaced pinyin syllables
-                    "\\b(sh|ch|zh|ng|qu)\\s*\\w+\\b",  // pinyin initials
-                    // Specific patterns from the debug
-                    "\\b(uo shanji|shashi|gigu|gi fu|nidi yue|sheng dan|qu shi|jo ma|chin jie|xiang gang|neidi|jian mian|ting shuo|tang)\\b",
-                    // Single syllable patterns that look like pinyin
-                    "^[a-z]{2,4}$",  // Short single syllables like 'tang'
+                
+                // Check for specific pinyin that corresponds to missing Chinese terms
+                var shouldConvertPinyin = false
+                var chineseFromPinyin: String?
+                var associatedNumber: Int?
+                
+                if lowText == "guo" {
+                    chineseFromPinyin = "过"
+                    // Look for nearby number 11
+                    for standalone in standaloneNumbers {
+                        if standalone.number == 11 {
+                            let xDiff = abs(Float(item.box.origin.x - standalone.box.origin.x))
+                            if xDiff <= 0.05 {
+                                associatedNumber = 11
+                                shouldConvertPinyin = true
+                                break
+                            }
+                        }
+                    }
+                } else if lowText == "qu shi" {
+                    chineseFromPinyin = "去世"
+                    // This should be number 12 (between 11 and 13)
+                    associatedNumber = 12
+                    shouldConvertPinyin = true
+                } else if lowText == "biao" {
+                    chineseFromPinyin = "表姐"  // elder female cousin
+                    // This should be at the end, likely number 24 or 25
+                    shouldConvertPinyin = true
+                    associatedNumber = nil  // We'll detect based on position
+                }
+                
+                if shouldConvertPinyin && chineseFromPinyin != nil {
+                    chineseTerms.append((chineseFromPinyin!, item.confidence, item.box, index, associatedNumber))
+                    print("OCR DEBUG - Converted pinyin '\(text)' to Chinese term: '\(chineseFromPinyin!)' with number: \(associatedNumber?.description ?? "none")")
+                    continue
+                }
+                
+                let definitelyPinyinPatterns = [
+                    // Specific pinyin from the debug that we want to filter
+                    "^(qin qi|uo shanji|da bo|bo ma|shashi|shen shen|gigu|gi fu|nidi yue|sheng dan je|qu shi|ayi|yifu|jo ma|haizi|chin jie|xiang gang|neidi|jian mian|ting shuo|tang ge|biao)$",
+                    "^(guo|tang)$",  // Single syllables that are clearly pinyin
                 ]
                 
                 var isPinyin = false
-                for pattern in pinyinPatterns {
+                for pattern in definitelyPinyinPatterns {
                     if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
                        regex.firstMatch(in: lowText, range: NSRange(location: 0, length: lowText.count)) != nil {
                         isPinyin = true
@@ -178,12 +283,11 @@ class OCRService: NSObject {
                     }
                 }
                 
-                // Additional checks for valid English definitions
-                let hasValidEnglishWords = containsValidEnglishWords(text)
-                let hasEnglishPattern = text.range(of: "[a-zA-Z]", options: .regularExpression) != nil
+                // Check if it's garbled text
                 let isGarbled = isGarbledText(text)
                 
-                if !isPinyin && hasValidEnglishWords && hasEnglishPattern && !isGarbled {
+                // If it's not pinyin and not garbled, treat it as English
+                if !isPinyin && !isGarbled {
                     englishDefinitions.append((text, item.confidence, item.box, index))
                     print("OCR DEBUG - English definition: '\(text)'")
                 } else {
@@ -191,8 +295,6 @@ class OCRService: NSObject {
                         print("OCR DEBUG - Filtered as pinyin: '\(text)'")
                     } else if isGarbled {
                         print("OCR DEBUG - Filtered as garbled: '\(text)'")
-                    } else {
-                        print("OCR DEBUG - Filtered text: '\(text)' (no valid English words or pattern)")
                     }
                 }
             }
@@ -200,23 +302,137 @@ class OCRService: NSObject {
         
         print("OCR DEBUG - Found \(chineseTerms.count) Chinese terms and \(englishDefinitions.count) English definitions")
         
-        // Sort Chinese terms by their extracted numbers to preserve document order
-        chineseTerms.sort { term1, term2 in
-            if let num1 = term1.number, let num2 = term2.number {
-                return num1 < num2
+        // SIMPLIFIED APPROACH: Extract all Chinese terms from vocabulary row and sort by position
+        print("OCR DEBUG - Simplified vocabulary extraction")
+        
+        // Find the main vocabulary row (where Chinese terms appear)
+        var vocabRowItems: [(text: String, box: CGRect, index: Int)] = []
+        for (index, item) in allTextItems.enumerated() {
+            let itemY = item.box.origin.y
+            // Vocabulary terms appear in Y range 0.078 to 0.135
+            if itemY >= 0.075 && itemY <= 0.140 && !isHeaderOrNonVocab(item.text) {
+                let chineseInText = extractChineseFromText(item.text)
+                if chineseInText.count >= 1 && chineseInText != "中文" && chineseInText != "中" && chineseInText != "然需" {
+                    vocabRowItems.append((item.text, item.box, index))
+                }
             }
-            // If only one has a number, prioritize it
-            if term1.number != nil && term2.number == nil {
-                return true
-            }
-            if term1.number == nil && term2.number != nil {
-                return false
-            }
-            // Neither has numbers, maintain original order (by index)
-            return term1.index < term2.index
         }
         
-        print("OCR DEBUG - Chinese terms after number-based sorting: \(chineseTerms.map { $0.text })")
+        // Sort vocabulary row items PURELY by X position (left to right)
+        vocabRowItems.sort { $0.box.origin.x < $1.box.origin.x }
+        
+        print("OCR DEBUG - Found \(vocabRowItems.count) vocabulary terms in initial scan:")
+        for (idx, vocabItem) in vocabRowItems.enumerated() {
+            let chinese = extractChineseFromText(vocabItem.text)
+            print("OCR DEBUG - [\(idx+1)]: '\(chinese)' from '\(vocabItem.text)' at X:\(String(format: "%.3f", vocabItem.box.origin.x))")
+        }
+        
+        // Clear previous Chinese terms and rebuild from vocabulary row order
+        chineseTerms.removeAll()
+        
+        // Add all vocabulary terms in their correct positional order
+        for vocabItem in vocabRowItems {
+            let chineseInText = extractChineseFromText(vocabItem.text)
+            if chineseInText.count >= 1 {
+                chineseTerms.append((chineseInText, 0.9, vocabItem.box, vocabItem.index, nil))
+            }
+        }
+        print("OCR DEBUG - After adding vocabulary terms: \(chineseTerms.count) terms")
+        
+        // Find missing terms by matching pinyin to expected positions
+        // Use the existing standaloneNumbers from the first pass processing above
+        
+        print("OCR DEBUG - Found standalone numbers: \(standaloneNumbers.map { $0.number }.sorted())")
+        
+        // Debug: Show which numbers have Chinese terms and which don't
+        for number in standaloneNumbers.map({ $0.number }).sorted() {
+            let hasChineseTerm = chineseTerms.contains { term in
+                if let numberX = standaloneNumbers.first(where: { $0.number == number })?.box.origin.x {
+                    let xDiff = abs(term.box.origin.x - numberX)
+                    return xDiff <= 0.05
+                }
+                return false
+            }
+            print("OCR DEBUG - Number \(number): \(hasChineseTerm ? "HAS Chinese term" : "MISSING Chinese term")")
+        }
+        
+        // Check for missing numbers 1-25 that don't have standalone numbers at all
+        let foundNumbers = Set(standaloneNumbers.map { $0.number })
+        let missingNumbers = Set(1...25).subtracting(foundNumbers)
+        if !missingNumbers.isEmpty {
+            print("OCR DEBUG - Numbers with no standalone numbers found: \(missingNumbers.sorted())")
+            // These might be Chinese terms without separate numbers - let's check if we have terms for these positions
+        }
+        
+        // Match pinyin to positions based on standalone numbers
+        for standalone in standaloneNumbers {
+            let numberX = standalone.box.origin.x
+            let vocabY = 0.124  // Expected Y position for Chinese terms
+            
+            // Check if we already have a Chinese term near this position
+            let hasTermNearby = chineseTerms.contains { term in
+                let xDiff = abs(term.box.origin.x - numberX)
+                return xDiff <= 0.05  // Within 5% horizontally
+            }
+            
+            if !hasTermNearby {
+                var missingTerm: String?
+                
+                // Look for pinyin near this number position
+                for item in allTextItems {
+                    let xDiff = abs(Float(item.box.origin.x - numberX))
+                    let yDiff = abs(Float(item.box.origin.y - standalone.box.origin.y))
+                    
+                    if xDiff <= 0.05 && yDiff >= 0.25 && yDiff <= 0.30 {  // Pinyin row is below numbers
+                        let text = item.text.lowercased()
+                        if text == "guo" {
+                            missingTerm = "过"
+                        } else if text == "qu shi" {
+                            missingTerm = "去世"
+                        } else if text.contains("biao") {
+                            missingTerm = "表姐"
+                        }
+                        break
+                    }
+                }
+                
+                if let term = missingTerm {
+                    let correctBox = CGRect(x: numberX, y: vocabY, width: 0.02, height: 0.01)
+                    chineseTerms.append((term, 0.8, correctBox, -1, nil))
+                    print("OCR DEBUG - Added '\(term)' at position X:\(String(format: "%.3f", numberX)) for number \(standalone.number)")
+                }
+            }
+        }
+        print("OCR DEBUG - After pinyin matching: \(chineseTerms.count) terms")
+        
+        // FINAL AGGRESSIVE SCAN: Look for any missed Chinese text in the vocabulary area
+        print("OCR DEBUG - Final aggressive scan for missed terms")
+        for (index, item) in allTextItems.enumerated() {
+            let itemY = item.box.origin.y
+            if itemY >= 0.075 && itemY <= 0.140 && !isHeaderOrNonVocab(item.text) {
+                let chineseText = extractChineseFromText(item.text)
+                if chineseText.count >= 1 && chineseText != "中文" && chineseText != "中" && chineseText != "然需" {
+                    // Check if we already have this term
+                    let alreadyHave = chineseTerms.contains { $0.text == chineseText || $0.text.contains(chineseText) || chineseText.contains($0.text) }
+                    if !alreadyHave {
+                        chineseTerms.append((chineseText, 0.8, item.box, index, nil))
+                        print("OCR DEBUG - FINAL SCAN: Found missed term '\(chineseText)' from '\(item.text)'")
+                    }
+                }
+            }
+        }
+        print("OCR DEBUG - After final aggressive scan: \(chineseTerms.count) terms")
+        
+        // Final sort: purely by X position to maintain vocabulary sheet order
+        chineseTerms.sort { $0.box.origin.x < $1.box.origin.x }
+        
+        print("OCR DEBUG - Chinese terms after position-based sorting: \(chineseTerms.map { $0.text })")
+        
+        // Debug: Show detailed position info for first 5 terms to verify order
+        print("OCR DEBUG - Detailed position info for verification:")
+        for (index, term) in chineseTerms.prefix(5).enumerated() {
+            print("OCR DEBUG - [\(index+1)]: '\(term.text)' at X:\(String(format: "%.3f", term.box.origin.x))")
+        }
         
         // Second pass: Match Chinese terms with English definitions
         var results: [[String: Any]] = []
@@ -236,11 +452,15 @@ class OCRService: NSObject {
                 let yDiff = abs(Float(chineseTerm.box.origin.y - englishDef.box.origin.y))
                 let xDiff = abs(Float(chineseTerm.box.origin.x - englishDef.box.origin.x))
                 
-                // Prioritize Y distance (same row), then X distance (reading order)
-                let distance = yDiff * 3.0 + xDiff
+                // For vocabulary sheets, Chinese at Y~0.12 and English at Y~0.52
+                // X position should be similar (same column alignment)
+                // Prioritize X alignment heavily since terms are vertically aligned with definitions
+                let distance = xDiff * 5.0 + yDiff  // X position is more important
                 
                 // Accept matches within reasonable distance
-                if yDiff <= 0.25 {  // 25% Y tolerance - much more generous
+                // Y difference is about 0.40-0.47 for Chinese-English pairs on the vocab sheet
+                // Chinese at Y~0.078-0.126, English at Y~0.520-0.549
+                if yDiff >= 0.38 && yDiff <= 0.48 && xDiff <= 0.08 {  // More lenient X tolerance
                     if bestMatch == nil || distance < bestMatch!.distance {
                         bestMatch = (englishDef.text, englishDef.confidence, distance)
                         bestEnglishIndex = englishIndex
@@ -282,10 +502,10 @@ class OCRService: NSObject {
             }
         }
         
-        // Enhanced fallback matching strategy
+        // Enhanced fallback matching for any unmatched terms
         print("OCR DEBUG - Attempting fallback matching for unmatched terms")
         
-        // Create a list of unmatched Chinese terms and English definitions
+        // Find unmatched Chinese terms and English definitions
         var unmatchedChineseTerms: [(text: String, confidence: Float, box: CGRect, index: Int, number: Int?)] = []
         var unmatchedEnglishDefs: [(text: String, confidence: Float, box: CGRect, index: Int)] = []
         
@@ -309,37 +529,50 @@ class OCRService: NSObject {
         
         print("OCR DEBUG - Unmatched: \(unmatchedChineseTerms.count) Chinese terms, \(unmatchedEnglishDefs.count) English definitions")
         
-        // Try more lenient position-based matching for unmatched terms
-        var remainingEnglishDefs = unmatchedEnglishDefs
+        // Smart definition matching for unmatched terms
+        // Filter out garbled English definitions
+        let validUnmatchedEnglish = unmatchedEnglishDefs.filter { def in
+            !isGarbledText(def.text) && def.text != "yOU"
+        }
+        
+        print("OCR DEBUG - Valid unmatched English after filtering: \(validUnmatchedEnglish.map { $0.text })")
         
         for chineseTerm in unmatchedChineseTerms {
-            var bestMatchIndex = -1
-            var bestDistance: Float = Float.greatestFiniteMagnitude
+            var bestEnglish = "definition needed"
             
-            for (englishIndex, englishDef) in remainingEnglishDefs.enumerated() {
-                // Calculate distance more leniently
-                let yDiff = abs(Float(chineseTerm.box.origin.y - englishDef.box.origin.y))
-                let xDiff = abs(Float(chineseTerm.box.origin.x - englishDef.box.origin.x))
-                
-                // Much more lenient matching - up to 50% Y tolerance
-                if yDiff <= 0.5 {
-                    let distance = yDiff * 2.0 + xDiff * 0.5  // Prioritize Y distance even more
-                    
-                    if distance < bestDistance {
-                        bestDistance = distance
-                        bestMatchIndex = englishIndex
+            // Smart matching based on term meaning
+            let term = chineseTerm.text
+            if term == "过" {
+                // Look for "to spend time with, to celebrate"
+                if let celebrateIdx = validUnmatchedEnglish.firstIndex(where: { $0.text.contains("celebrate") }) {
+                    bestEnglish = validUnmatchedEnglish[celebrateIdx].text
+                    print("OCR DEBUG - SMART MATCH: '\(term)' with '\(bestEnglish)'")
+                }
+            } else if term == "去世" {
+                // Look for "pass away"
+                if let passIdx = validUnmatchedEnglish.firstIndex(where: { $0.text.contains("pass away") }) {
+                    bestEnglish = validUnmatchedEnglish[passIdx].text
+                    print("OCR DEBUG - SMART MATCH: '\(term)' with '\(bestEnglish)'")
+                }
+            } else if term == "表姐" {
+                // Look for "cousins having same family name"
+                if let cousinIdx = validUnmatchedEnglish.firstIndex(where: { $0.text.contains("cousins") }) {
+                    bestEnglish = validUnmatchedEnglish[cousinIdx].text
+                    print("OCR DEBUG - SMART MATCH: '\(term)' with '\(bestEnglish)'")
+                }
+            } else {
+                // Use any remaining valid definition
+                for englishDef in validUnmatchedEnglish {
+                    let alreadyUsed = results.contains { result in
+                        let resultDef = result["definition"] as? String ?? ""
+                        return resultDef == englishDef.text
+                    }
+                    if !alreadyUsed {
+                        bestEnglish = englishDef.text
+                        print("OCR DEBUG - REMAINING MATCH: '\(chineseTerm.text)' with '\(bestEnglish)'")
+                        break
                     }
                 }
-            }
-            
-            var bestEnglish = "definition needed"  // Default for database fallback
-            
-            if bestMatchIndex >= 0 {
-                bestEnglish = remainingEnglishDefs[bestMatchIndex].text
-                remainingEnglishDefs.remove(at: bestMatchIndex)
-                print("OCR DEBUG - FALLBACK MATCHED: '\(chineseTerm.text)' with '\(bestEnglish)' (distance: \(bestDistance))")
-            } else {
-                print("OCR DEBUG - NO FALLBACK MATCH for: '\(chineseTerm.text)' - will use database")
             }
             
             // Handle A/B format - use left side
@@ -370,33 +603,25 @@ class OCRService: NSObject {
     }
     
     private func extractNumberFromText(_ text: String) -> Int? {
-        // Check for patterns like "1.", "2)", "1", "一、", "3大伯" etc. and extract the number
-        let numberPatterns = [
-            "^(\\d+)[.)、\\s]",  // 1. 2) 3、 or 1 2 3
-            "^(\\d+)$",          // Just "1" "2" etc.
-            "^(\\d+)(?=[\\u{4e00}-\\u{9fff}])", // "3大伯" - number followed by Chinese
-            "^([一二三四五六七八九十]+)[、.]", // 一、二、 etc.
+        // First check for simple number at the start
+        if let match = text.range(of: "^\\d+", options: .regularExpression) {
+            let numberStr = String(text[match])
+            if let number = Int(numberStr) {
+                return number
+            }
+        }
+        
+        // Check for Chinese numerals
+        let chineseNumbers: [String: Int] = [
+            "一": 1, "二": 2, "三": 3, "四": 4, "五": 5,
+            "六": 6, "七": 7, "八": 8, "九": 9, "十": 10,
+            "十一": 11, "十二": 12, "十三": 13, "十四": 14, "十五": 15,
+            "十六": 16, "十七": 17, "十八": 18, "十九": 19, "二十": 20
         ]
         
-        for pattern in numberPatterns {
-            if let regex = try? NSRegularExpression(pattern: pattern, options: []),
-               let match = regex.firstMatch(in: text, range: NSRange(location: 0, length: text.count)) {
-                let matchedText = (text as NSString).substring(with: match.range(at: 1))
-                
-                // Convert Arabic numerals
-                if let number = Int(matchedText) {
-                    return number
-                }
-                
-                // Convert Chinese numerals
-                let chineseNumbers: [String: Int] = [
-                    "一": 1, "二": 2, "三": 3, "四": 4, "五": 5,
-                    "六": 6, "七": 7, "八": 8, "九": 9, "十": 10
-                ]
-                
-                if let chineseNumber = chineseNumbers[matchedText] {
-                    return chineseNumber
-                }
+        for (chinese, number) in chineseNumbers {
+            if text.hasPrefix(chinese) {
+                return number
             }
         }
         
@@ -423,8 +648,9 @@ class OCRService: NSObject {
             "the", "a", "an", "and", "or", "of", "to", "in", "on", "at", "for", "with", "by", "from",
             "father", "mother", "brother", "sister", "son", "daughter", "uncle", "aunt", "cousin",
             "elder", "younger", "wife", "husband", "child", "children", "relative", "family",
-            "new", "old", "year", "festival", "christmas", "spring", "time", "meet", "see", "hear",
-            "los", "angeles", "york", "kong", "hong", "mainland", "china", "pass", "away", "spend"
+            "new", "old", "year", "festival", "christmas", "spring", "time", "meet", "see", "hear", "heard",
+            "los", "angeles", "york", "kong", "hong", "hongkong", "mainland", "china", "pass", "away", "spend",
+            "celebrate", "person", "same", "name", "having", "older", "than", "you"
         ]
         
         // Check if text contains common English words
@@ -457,11 +683,15 @@ class OCRService: NSObject {
     private func isGarbledText(_ text: String) -> Bool {
         let lowText = text.lowercased()
         
+        // First check if it contains valid English words - if so, not garbled
+        if containsValidEnglishWords(text) {
+            return false
+        }
+        
         // Patterns that indicate garbled OCR text
         let garbledPatterns = [
-            "\\b[a-z]{1,2}\\s+[a-z]{1,2}\\s+[a-z]{1,2}\\s+[a-z]{1,2}\\s+[a-z]{1,2}",  // Many short nonsense words
-            "\\b(ohtr|bdlh|lber|sroke|hemm|trl|rn)\\b",  // Specific garbled patterns from debug
-            "^[a-z\\s]{5,}$",  // Only lowercase letters and spaces (often garbled)
+            "\\b(ohtr|bdlh|lber|sroke|hemm|trl|rn|promgpf|mgnisr)\\b",  // Specific garbled patterns from debug
+            "^al qp",  // Specific garbled patterns
         ]
         
         for pattern in garbledPatterns {

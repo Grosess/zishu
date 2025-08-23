@@ -163,6 +163,7 @@ class _OCRImportPageState extends State<OCRImportPage> {
         characters: characters,
         description: 'Imported via OCR from vocabulary sheet',
         isWordSet: hasMultiCharTerms,
+        source: 'ocr_import',
       );
       
       HapticService().mediumImpact();

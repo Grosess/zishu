@@ -14,6 +14,7 @@ class CharacterSet {
   final int? color;
   final String? icon;
   final String? keywords;
+  final String? source;
   
   CharacterSet({
     required this.id,
@@ -24,6 +25,7 @@ class CharacterSet {
     this.color,
     this.icon,
     this.keywords,
+    this.source,
   });
   
   Map<String, dynamic> toJson() => {
@@ -35,6 +37,7 @@ class CharacterSet {
     'color': color,
     'icon': icon,
     'keywords': keywords,
+    'source': source,
   };
   
   factory CharacterSet.fromJson(Map<String, dynamic> json) {
@@ -62,6 +65,7 @@ class CharacterSet {
       color: json['color'] != null ? int.tryParse(json['color'].toString()) : null,
       icon: json['icon'],
       keywords: json['keywords'],
+      source: json['source'],
     );
   }
 }
@@ -182,6 +186,7 @@ class CharacterSetManager {
     required List<String> characters,
     String? description,
     bool isWordSet = false,
+    String? source,
   }) async {
     // Filter out phrases longer than 8 characters
     final filteredCharacters = characters.where((item) => item.length <= 8).toList();
@@ -193,6 +198,7 @@ class CharacterSetManager {
       characters: filteredCharacters,
       description: description,
       isWordSet: isWordSet,
+      source: source,
     );
     
     _userSets[id] = set;

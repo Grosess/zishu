@@ -900,6 +900,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                   isWordSet: set.isWordSet,
                   isCustomSet: _customSets.contains(set),
                   setId: set.id,
+                  source: set.source,
                 ),
               ),
             );
@@ -919,6 +920,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                 isWordSet: set.isWordSet,
                 isCustomSet: _customSets.contains(set),
                 setId: set.id,
+                source: set.source,
               ),
             ),
           );
@@ -1328,6 +1330,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                                 isWordSet: set.isWordSet,
                                 isCustomSet: _customSets.contains(set),
                                 setId: set.id,
+                                source: set.source,
                               ),
                             ),
                           ).then((_) => _loadSetProgress());

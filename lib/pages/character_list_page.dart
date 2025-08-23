@@ -47,6 +47,7 @@ class CharacterListPage extends StatefulWidget {
   final bool isWordSet;
   final bool isCustomSet;
   final String? setId;
+  final String? source;
 
   const CharacterListPage({
     super.key,
@@ -55,6 +56,7 @@ class CharacterListPage extends StatefulWidget {
     this.isWordSet = false,
     this.isCustomSet = false,
     this.setId,
+    this.source,
   });
 
   @override
@@ -89,6 +91,12 @@ class _CharacterListPageState extends State<CharacterListPage> {
   }
   
   void _shuffleCharacters() {
+    // For OCR-imported sets, maintain original order (vocabulary sheet order)
+    if (widget.source == 'ocr_import') {
+      _mixedCharacters = List.from(widget.characters);
+      return;
+    }
+    
     // Create a deterministic mixed order (not random)
     // This distributes characters evenly to avoid repetitive sequences
     if (_mixedCharacters.isEmpty) {
@@ -195,8 +203,12 @@ class _CharacterListPageState extends State<CharacterListPage> {
         _learnedCharacters = learned;
         _isSetFullyLearned = isFullyLearned;
         
-        // Now sort characters with learned ones first
-        _mixedCharacters = _createMixedOrderWithLearnedFirst(widget.characters, learned);
+        // For OCR-imported sets, maintain original order. For others, put learned ones first
+        if (widget.source == 'ocr_import') {
+          _mixedCharacters = List.from(widget.characters);
+        } else {
+          _mixedCharacters = _createMixedOrderWithLearnedFirst(widget.characters, learned);
+        }
       });
     }
   }
@@ -292,6 +304,12 @@ class _CharacterListPageState extends State<CharacterListPage> {
             InkWell(
               onTap: _showSetMenu,
               borderRadius: BorderRadius.circular(20),
+              splashColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withValues(alpha: 0.3)
+                  : null,
+              highlightColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withValues(alpha: 0.2)
+                  : null,
               child: Container(
                 padding: const EdgeInsets.all(8),
                 child: const Icon(
@@ -335,6 +353,12 @@ class _CharacterListPageState extends State<CharacterListPage> {
                         });
                       },
                       borderRadius: BorderRadius.circular(24),
+                      splashColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                          ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withValues(alpha: 0.3)
+                          : null,
+                      highlightColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                          ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withValues(alpha: 0.2)
+                          : null,
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                         decoration: BoxDecoration(
@@ -435,6 +459,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
                               characters: supergroupChars,
                               isWordSet: widget.isWordSet,
                               isCustomSet: false,
+                              source: widget.source,
                             ),
                           ),
                         );
@@ -501,6 +526,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
                                       characters: groupChars,
                                       isWordSet: widget.isWordSet,
                                       isCustomSet: false,
+                                      source: widget.source,
                                     ),
                                   ),
                                 );
@@ -599,6 +625,12 @@ class _CharacterListPageState extends State<CharacterListPage> {
                             _showCharacterInfo(term, item, isWord: true, isLearned: isLearned);
                           },
                           borderRadius: BorderRadius.circular(12),
+                          splashColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                              ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withValues(alpha: 0.3)
+                              : null,
+                          highlightColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                              ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withValues(alpha: 0.2)
+                              : null,
                           child: Padding(
                             padding: const EdgeInsets.all(12.0),
                             child: _buildWordDisplay(term, existingDef, isLearned),
@@ -643,6 +675,12 @@ class _CharacterListPageState extends State<CharacterListPage> {
                             _showCharacterInfo(term, item, isWord: false, isLearned: isLearned);
                           },
                           borderRadius: BorderRadius.circular(12),
+                          splashColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                              ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withValues(alpha: 0.3)
+                              : null,
+                          highlightColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                              ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withValues(alpha: 0.2)
+                              : null,
                           child: Padding(
                             padding: const EdgeInsets.all(12.0),
                             child: _buildCharacterDisplay(term, isLearned),
@@ -1106,6 +1144,12 @@ class _CharacterListPageState extends State<CharacterListPage> {
                   await pronunciationService.speak(term, pinyin: pronunciation);
                 },
                 borderRadius: BorderRadius.circular(8),
+                splashColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                    ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withValues(alpha: 0.3)
+                    : null,
+                highlightColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                    ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withValues(alpha: 0.2)
+                    : null,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4.0),
                   child: Row(
@@ -1169,13 +1213,13 @@ class _CharacterListPageState extends State<CharacterListPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                      ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withOpacity(0.1)
-                      : Colors.blue.withOpacity(0.1),
+                      ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.1)
+                      : Colors.blue.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                        ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withOpacity(0.3)
-                        : Colors.blue.withOpacity(0.3),
+                        ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!.withValues(alpha: 0.3)
+                        : Colors.blue.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Row(
@@ -1445,6 +1489,12 @@ class _CharacterListPageState extends State<CharacterListPage> {
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(16),
+          splashColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+              ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withValues(alpha: 0.3)
+              : null,
+          highlightColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+              ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withValues(alpha: 0.2)
+              : null,
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
@@ -1722,8 +1772,8 @@ class _CharacterListPageState extends State<CharacterListPage> {
                       fontSize: 11,
                       color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                           ? (isLearned 
-                              ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withOpacity(0.7) 
-                              : Theme.of(context).colorScheme.primary.withOpacity(0.7))
+                              ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withValues(alpha: 0.7) 
+                              : Theme.of(context).colorScheme.primary.withValues(alpha: 0.7))
                           : Colors.white70,
                     ),
                     textAlign: TextAlign.center,
@@ -1735,8 +1785,8 @@ class _CharacterListPageState extends State<CharacterListPage> {
                       fontSize: 10,
                       color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                           ? (isLearned 
-                              ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withOpacity(0.6) 
-                              : Theme.of(context).colorScheme.primary.withOpacity(0.6))
+                              ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withValues(alpha: 0.6) 
+                              : Theme.of(context).colorScheme.primary.withValues(alpha: 0.6))
                           : Colors.white60,
                     ),
                     textAlign: TextAlign.center,
