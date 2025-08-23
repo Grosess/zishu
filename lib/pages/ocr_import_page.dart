@@ -446,58 +446,78 @@ class _OCRImportPageState extends State<OCRImportPage> {
                       Row(
                         children: [
                           Container(
-                            width: 80,
-                            height: 40,
+                            height: 48,
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: isDuotone && duotoneExtension?.duotoneColor2 != null
+                                  ? duotoneExtension!.duotoneColor2!.withAlpha(77)
+                                  : Theme.of(context).colorScheme.primary.withAlpha(77),
                               border: Border.all(
                                 color: isDuotone && duotoneExtension?.duotoneColor1 != null
                                     ? duotoneExtension!.duotoneColor1!
                                     : Theme.of(context).colorScheme.primary,
                                 width: 2,
                               ),
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            child: TextField(
-                              controller: TextEditingController(text: _termsPerGroup.toString()),
-                              textAlign: TextAlign.center,
-                              keyboardType: TextInputType.number,
-                              style: TextStyle(
-                                color: isDuotone && duotoneExtension?.duotoneColor1 != null
-                                    ? duotoneExtension!.duotoneColor1!
-                                    : Theme.of(context).colorScheme.primary,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              decoration: const InputDecoration(
-                                border: InputBorder.none,
-                                contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-                                hintText: '10',
-                              ),
-                              onChanged: (value) {
-                                if (value.isEmpty) {
-                                  // If empty, set to default 10
-                                  setState(() {
-                                    _termsPerGroup = 10;
-                                  });
-                                } else {
-                                  final int? newValue = int.tryParse(value);
-                                  if (newValue != null && newValue > 0) {
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<int>(
+                                value: _termsPerGroup,
+                                icon: Icon(
+                                  Icons.keyboard_arrow_down,
+                                  color: isDuotone && duotoneExtension?.duotoneColor1 != null
+                                      ? duotoneExtension!.duotoneColor1!
+                                      : Theme.of(context).colorScheme.primary,
+                                ),
+                                dropdownColor: isDuotone && duotoneExtension?.duotoneColor2 != null
+                                    ? duotoneExtension!.duotoneColor2!
+                                    : Theme.of(context).colorScheme.surface,
+                                borderRadius: BorderRadius.circular(12),
+                                menuMaxHeight: 200, // Make it scrollable
+                                style: TextStyle(
+                                  color: isDuotone && duotoneExtension?.duotoneColor1 != null
+                                      ? duotoneExtension!.duotoneColor1!
+                                      : Theme.of(context).colorScheme.primary,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                items: List.generate(25, (index) {
+                                  final value = index + 1;
+                                  return DropdownMenuItem<int>(
+                                    value: value,
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                                      child: Text(
+                                        '$value',
+                                        style: TextStyle(
+                                          color: isDuotone && duotoneExtension?.duotoneColor1 != null
+                                              ? duotoneExtension!.duotoneColor1!
+                                              : Theme.of(context).colorScheme.primary,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }),
+                                onChanged: (value) {
+                                  if (value != null) {
                                     setState(() {
-                                      _termsPerGroup = newValue;
+                                      _termsPerGroup = value;
                                     });
                                   }
-                                }
-                              },
+                                },
+                              ),
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Text(
-                            'terms per group',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: isDuotone && duotoneExtension?.duotoneColor1 != null
-                                  ? duotoneExtension!.duotoneColor1!
-                                  : Theme.of(context).colorScheme.onSurface,
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Text(
+                              'terms per group',
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: isDuotone && duotoneExtension?.duotoneColor1 != null
+                                    ? duotoneExtension!.duotoneColor1!
+                                    : Theme.of(context).colorScheme.onSurface,
+                              ),
                             ),
                           ),
                         ],

@@ -404,24 +404,24 @@ class OCRService: NSObject {
         
         print("OCR DEBUG - Total Chinese terms after aggressive final pass: \(chineseTerms.count) terms")
         
-        // READING ORDER SORTING: Sort Chinese terms by reading order (left-to-right, top-to-bottom)
-        // This matches how vocabulary sheets are read naturally
+        // COLUMN-BASED READING ORDER SORTING: Sort Chinese terms by column first, then by position within column
+        // This matches vocabulary sheets that are organized in columns (like the user's sheet)
         chineseTerms.sort { term1, term2 in
             let y1 = term1.box.origin.y
             let y2 = term2.box.origin.y
             let x1 = term1.box.origin.x
             let x2 = term2.box.origin.x
             
-            // Define row tolerance - items within this Y range are considered same row
-            let rowTolerance: CGFloat = 0.015
+            // Define column tolerance - items within this X range are considered same column
+            let columnTolerance: CGFloat = 0.08
             
-            // If they're in different rows (Y difference > tolerance), sort by Y (top to bottom)
-            if abs(CGFloat(y1) - CGFloat(y2)) > rowTolerance {
-                return y1 > y2  // Higher Y = higher on page = earlier in order
+            // If they're in different columns (X difference > tolerance), sort by X (left to right)
+            if abs(CGFloat(x1) - CGFloat(x2)) > columnTolerance {
+                return x1 < x2  // Left to right column order
             }
             
-            // If they're in the same row, sort by X (left to right)
-            return x1 < x2
+            // If they're in the same column, sort by Y (higher Y values first)
+            return y1 > y2
         }
         
         print("OCR DEBUG - Chinese terms after READING ORDER sorting: \(chineseTerms.map { $0.text })")
