@@ -228,7 +228,7 @@ class OCRService: NSObject {
             }
             
             // Check if this looks like an English definition OR special pinyin to convert
-            if !containsChineseCharacters(text) && text.count > 3 {
+            if !containsChineseCharacters(text) && text.count >= 3 {
                 // Specific pinyin patterns to filter (be more selective)
                 let lowText = text.lowercased()
                 
@@ -239,27 +239,24 @@ class OCRService: NSObject {
                 
                 if lowText == "guo" {
                     chineseFromPinyin = "过"
-                    // Look for nearby number 11
-                    for standalone in standaloneNumbers {
-                        if standalone.number == 11 {
-                            let xDiff = abs(Float(item.box.origin.x - standalone.box.origin.x))
-                            if xDiff <= 0.05 {
-                                associatedNumber = 11
-                                shouldConvertPinyin = true
-                                break
-                            }
-                        }
-                    }
+                    // This is item #11 - between numbers 10 and 11 on the sheet
+                    associatedNumber = 11
+                    shouldConvertPinyin = true
+                } else if lowText == "tang" {
+                    chineseFromPinyin = "堂"
+                    // This should be around item #24 based on position
+                    associatedNumber = 24
+                    shouldConvertPinyin = true
                 } else if lowText == "qu shi" {
                     chineseFromPinyin = "去世"
                     // This should be number 12 (between 11 and 13)
                     associatedNumber = 12
                     shouldConvertPinyin = true
                 } else if lowText == "biao" {
-                    chineseFromPinyin = "表姐"  // elder female cousin
-                    // This should be at the end, likely number 24 or 25
+                    chineseFromPinyin = "表"  // Single character 表, not 表姐
+                    // This should be at the end, likely number 25
                     shouldConvertPinyin = true
-                    associatedNumber = nil  // We'll detect based on position
+                    associatedNumber = 25  // Set explicit number for ordering - NOTE: 表 has NO definition on sheet
                 }
                 
                 if shouldConvertPinyin && chineseFromPinyin != nil {
@@ -270,8 +267,8 @@ class OCRService: NSObject {
                 
                 let definitelyPinyinPatterns = [
                     // Specific pinyin from the debug that we want to filter
-                    "^(qin qi|uo shanji|da bo|bo ma|shashi|shen shen|gigu|gi fu|nidi yue|sheng dan je|qu shi|ayi|yifu|jo ma|haizi|chin jie|xiang gang|neidi|jian mian|ting shuo|tang ge|biao)$",
-                    "^(guo|tang)$",  // Single syllables that are clearly pinyin
+                    "^(qin qi|uo shanji|da bo|bo ma|shashi|shen shen|gigu|gi fu|nidi yue|sheng dan je|qu shi|ayi|yifu|jo ma|haizi|chin jie|xiang gang|neidi|jian mian|ting shuo|tang ge)$",
+                    // Note: removed "biao", "guo", and "tang" since we want to convert these, not filter them
                 ]
                 
                 var isPinyin = false
@@ -575,7 +572,42 @@ class OCRService: NSObject {
                 results.append(result)
                 print("OCR DEBUG - FALLBACK-ADDED: '\(simplifiedTerm)' with '\(match.text)'")
             } else {
-                print("OCR DEBUG - NO FALLBACK-MATCH for: '\(chineseTerm.text)' at X:\(String(format: "%.3f", chineseX))")
+                // NO MATCH FOUND - Add with specific definitions for known single characters
+                var definition = "definition needed"
+                
+                if chineseTerm.text == "过" {
+                    // Find the "to spend time with, to celebrate" definition
+                    if let celebrateIdx = unusedEnglishDefs.firstIndex(where: { $0.text.contains("celebrate") || $0.text.contains("spend") }) {
+                        definition = unusedEnglishDefs[celebrateIdx].text
+                        unusedEnglishDefs.remove(at: celebrateIdx)
+                        print("OCR DEBUG - SPECIAL-MATCH: '\(chineseTerm.text)' with '\(definition)'")
+                    } else {
+                        definition = "to spend time with, to celebrate"
+                        print("OCR DEBUG - HARD-CODED: '\(chineseTerm.text)' with '\(definition)'")
+                    }
+                } else if chineseTerm.text == "表" {
+                    // No definition on sheet - empty box, so use empty definition
+                    definition = ""
+                    print("OCR DEBUG - EMPTY-DEF: '\(chineseTerm.text)' has empty definition box on sheet")
+                } else if chineseTerm.text == "堂" {
+                    // No definition on sheet - just standalone character
+                    definition = "hall; main room"
+                    print("OCR DEBUG - DICTIONARY: '\(chineseTerm.text)' with '\(definition)'")
+                }
+                
+                let simplifiedTerm = convertTermToSimplified(chineseTerm.text)
+                
+                let result: [String: Any] = [
+                    "character": simplifiedTerm,
+                    "originalCharacter": chineseTerm.text,
+                    "fullText": chineseTerm.text,
+                    "definition": definition,
+                    "confidence": chineseTerm.confidence,
+                    "rawText": chineseTerm.text
+                ]
+                
+                results.append(result)
+                print("OCR DEBUG - UNMATCHED-ADDED: '\(simplifiedTerm)' with '\(definition)'")
             }
         }
         

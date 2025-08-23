@@ -462,6 +462,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
                               isWordSet: widget.isWordSet,
                               isCustomSet: false,
                               source: widget.source,
+                              definitions: widget.definitions,
                             ),
                           ),
                         );
@@ -529,6 +530,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
                                       isWordSet: widget.isWordSet,
                                       isCustomSet: false,
                                       source: widget.source,
+                                      definitions: widget.definitions,
                                     ),
                                   ),
                                 );
@@ -1045,11 +1047,11 @@ class _CharacterListPageState extends State<CharacterListPage> {
     String? definition;
     String displayTerm = term;
     
-    // For OCR-imported sets, use the imported definitions first
+    // For OCR-imported sets, ALWAYS use the imported definitions first and don't override
     if (widget.definitions != null && widget.definitions!.containsKey(term)) {
       definition = widget.definitions![term];
     } else {
-      // First check if there's an existing definition in the original item
+      // Only check existing definitions if no OCR definition available
       final existingDef = _extractExistingDefinition(originalItem);
       if (existingDef != null) {
         // Production: removed debug print
@@ -1272,7 +1274,9 @@ class _CharacterListPageState extends State<CharacterListPage> {
                 backgroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                     ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
                     : null,
-                foregroundColor: Colors.white,
+                foregroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                    ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!
+                    : Colors.white,
               ),
             ),
           ] else ...[
@@ -1287,7 +1291,9 @@ class _CharacterListPageState extends State<CharacterListPage> {
                 backgroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                     ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
                     : null,
-                foregroundColor: Colors.white,
+                foregroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                    ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!
+                    : Colors.white,
               ),
             ),
           ],
@@ -1730,7 +1736,10 @@ class _CharacterListPageState extends State<CharacterListPage> {
     String? definition;
     String? pinyin;
     
-    if (existingDef != null) {
+    // For OCR-imported sets, use the imported definitions first
+    if (widget.definitions != null && widget.definitions!.containsKey(term)) {
+      definition = widget.definitions![term];
+    } else if (existingDef != null) {
       // Use existing definition from character_sets.json
       definition = existingDef;
     } else if (_cedictService.isLoaded) {
