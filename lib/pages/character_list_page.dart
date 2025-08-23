@@ -747,6 +747,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
                               allCharacters: unlearnedChars,
                               isWord: widget.isWordSet,
                               mode: PracticeMode.learning,
+                              definitions: widget.definitions,
                               onComplete: (success) async {
                                 // This callback is called when user completes a character in Endless Practice mode
                                 // For regular learning mode, characters are marked as learned inside WritingPracticePage
@@ -841,6 +842,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
                               allCharacters: shuffledTerms,
                               isWord: widget.isWordSet,
                               mode: PracticeMode.testing,
+                              definitions: widget.definitions,
                             ),
                           ),
                         ).then((_) async {
@@ -1315,6 +1317,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
           allCharacters: [term], // Pass only the selected character
           isWord: isWord,
           mode: isLearned ? PracticeMode.testing : PracticeMode.learning,
+          definitions: widget.definitions,
           onComplete: (success) async {
             if (!isLearned && success) {
               await _learningService.markCharacterAsLearned(term);

@@ -32,6 +32,7 @@ class WritingPracticePage extends StatefulWidget {
   final PracticeMode mode;
   final Function(bool)? onComplete;
   final int? endlessPracticeCount;
+  final Map<String, String>? definitions;
 
   const WritingPracticePage({
     super.key,
@@ -42,6 +43,7 @@ class WritingPracticePage extends StatefulWidget {
     this.mode = PracticeMode.learning,
     this.onComplete,
     this.endlessPracticeCount,
+    this.definitions,
   });
 
   @override
@@ -2709,6 +2711,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
           allCharacters: _incorrectItems,
           isWord: widget.isWord,
           mode: widget.mode,
+          definitions: widget.definitions,
         ),
       ),
     );
@@ -2728,6 +2731,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
           allCharacters: allItems,
           isWord: widget.isWord,
           mode: widget.mode,
+          definitions: widget.definitions,
         ),
       ),
     );
@@ -2880,7 +2884,12 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     String? pinyin;
     String? definition;
     
-    if (_cedictService.isLoaded) {
+    // For OCR-imported sets, check definitions first
+    if (widget.definitions != null && widget.definitions!.containsKey(currentWord)) {
+      definition = widget.definitions![currentWord];
+    }
+    
+    if (definition == null && _cedictService.isLoaded) {
       final cedictEntry = _cedictService.lookup(currentWord);
       if (cedictEntry != null) {
         pinyin = PinyinUtils.convertToneNumbersToMarks(cedictEntry.pinyin);
@@ -3241,9 +3250,16 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     final isIndividualPractice = widget.allCharacters != null && widget.allCharacters!.length == 1;
     final isContinuousPractice = widget.mode == PracticeMode.testing && isIndividualPractice;
     
+    // Check OCR-imported definitions first
+    final currentTerm = widget.isWord ? currentWord : currentCharacter;
+    if (widget.definitions != null && widget.definitions!.containsKey(currentTerm)) {
+      definition = widget.definitions![currentTerm];
+      // If definition is empty (like for "表"), leave it as empty and fall back to dictionary later
+    }
+
     // For multi-character words, show the full word definition
     if (widget.isWord && _wordCharacters.length > 1) {
-      if (_cedictService.isLoaded) {
+      if (definition == null && _cedictService.isLoaded) {
         final cedictEntry = _cedictService.lookup(currentWord);
         if (cedictEntry != null) {
           pinyin = PinyinUtils.convertToneNumbersToMarks(cedictEntry.pinyin);
@@ -3267,7 +3283,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     } else {
       // For single characters, show character definition
       // Looking up character
-      if (_cedictService.isLoaded) {
+      if (definition == null && _cedictService.isLoaded) {
         // CEDICT service is loaded
         final cedictEntry = _cedictService.lookup(currentCharacter);
         if (cedictEntry != null) {
@@ -3282,15 +3298,18 @@ class _WritingPracticePageState extends State<WritingPracticePage>
           }
         }
       } else {
-        // CEDICT service not loaded
+        // CEDICT service not loaded or OCR definition exists
       }
       
-      if (pinyin == null || definition == null) {
-        // Falling back to CharacterDictionary
+      if (pinyin == null || (definition == null || definition.isEmpty)) {
+        // Falling back to CharacterDictionary (also fall back for empty OCR definitions)
         charInfo = _dictionary.getCharacterInfo(currentCharacter);
         if (charInfo != null) {
           pinyin ??= charInfo.pinyin != null ? PinyinUtils.convertToneNumbersToMarks(charInfo.pinyin) : null;
-          definition ??= charInfo.definition != null ? _formatDefinition(charInfo.definition, currentCharacter) : null;
+          // Only use dictionary definition if no OCR definition exists or if OCR definition is empty
+          if (definition == null || definition.isEmpty) {
+            definition = charInfo.definition != null ? _formatDefinition(charInfo.definition, currentCharacter) : null;
+          }
           // Found in CharacterDictionary
         } else {
           // Not found in CharacterDictionary either

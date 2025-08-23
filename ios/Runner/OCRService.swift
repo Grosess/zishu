@@ -515,7 +515,7 @@ class OCRService: NSObject {
         // Find unused English definitions
         var unusedEnglishDefs: [(text: String, confidence: Float, box: CGRect, index: Int)] = []
         for (englishIndex, englishDef) in englishDefinitions.enumerated() {
-            if !usedEnglishIndices.contains(englishIndex) && !isGarbledText(englishDef.text) && englishDef.text != "yOU" {
+            if !usedEnglishIndices.contains(englishIndex) && !isGarbledText(englishDef.text) {
                 unusedEnglishDefs.append(englishDef)
             }
         }
@@ -699,6 +699,21 @@ class OCRService: NSObject {
         // First check if it contains valid English words - if so, not garbled
         if containsValidEnglishWords(text) {
             return false
+        }
+        
+        // Check for obvious OCR garbage patterns (short mixed-case nonsense)
+        if text.count <= 4 {
+            // Check for mixed case in short text (like "yOU", "qP", etc.)
+            let hasLower = text.range(of: "[a-z]", options: .regularExpression) != nil
+            let hasUpper = text.range(of: "[A-Z]", options: .regularExpression) != nil
+            if hasLower && hasUpper {
+                return true
+            }
+            
+            // Check for single letters or very short meaningless combinations
+            if text.count <= 2 || lowText == "you" || lowText == "qp" {
+                return true
+            }
         }
         
         // Patterns that indicate garbled OCR text
