@@ -49,6 +49,7 @@ class CharacterListPage extends StatefulWidget {
   final String? setId;
   final String? source;
   final Map<String, String>? definitions;
+  final int? groupSize;
 
   const CharacterListPage({
     super.key,
@@ -59,6 +60,7 @@ class CharacterListPage extends StatefulWidget {
     this.setId,
     this.source,
     this.definitions,
+    this.groupSize,
   });
 
   @override
@@ -96,6 +98,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
     // For OCR-imported sets, maintain original order (vocabulary sheet order)
     if (widget.source == 'ocr_import') {
       _mixedCharacters = List.from(widget.characters);
+      
       return;
     }
     
@@ -238,8 +241,11 @@ class _CharacterListPageState extends State<CharacterListPage> {
     return [...mixedLearned, ...mixedUnlearned];
   }
   
+  // Get effective group size (set's groupSize for OCR sets, otherwise settings)
+  int get _effectiveGroupSize => widget.groupSize ?? _groupSize;
+  
   // Calculate number of groups
-  int get _groupCount => (_mixedCharacters.length / _groupSize).ceil();
+  int get _groupCount => (_mixedCharacters.length / _effectiveGroupSize).ceil();
   
   // Calculate super group size based on total characters
   int get _dynamicSuperGroupSize {
@@ -270,8 +276,8 @@ class _CharacterListPageState extends State<CharacterListPage> {
   
   // Get characters for a specific group
   List<String> _getGroupCharacters(int groupIndex) {
-    final start = groupIndex * _groupSize;
-    final end = (start + _groupSize).clamp(0, _mixedCharacters.length);
+    final start = groupIndex * _effectiveGroupSize;
+    final end = (start + _effectiveGroupSize).clamp(0, _mixedCharacters.length);
     return _mixedCharacters.sublist(start, end);
   }
   
@@ -333,7 +339,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
       body: CustomScrollView(
         slivers: [
           // Header with toggle button
-          if (_mixedCharacters.length > _groupSize)
+          if (_mixedCharacters.length > _effectiveGroupSize)
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),

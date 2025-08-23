@@ -3255,6 +3255,27 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     if (widget.definitions != null && widget.definitions!.containsKey(currentTerm)) {
       definition = widget.definitions![currentTerm];
       // If definition is empty (like for "表"), leave it as empty and fall back to dictionary later
+      
+      // For OCR sets, we still want to get pinyin from dictionaries even if we have OCR definition
+      // This ensures scanned sets show pronunciation in practice
+      if (_cedictService.isLoaded) {
+        final cedictEntry = _cedictService.lookup(currentTerm);
+        if (cedictEntry != null) {
+          pinyin = PinyinUtils.convertToneNumbersToMarks(cedictEntry.pinyin);
+        }
+      }
+      
+      // If no CEDICT pinyin, try character dictionary
+      if (pinyin == null) {
+        if (widget.isWord && _wordCharacters.length > 1) {
+          pinyin = _buildPinyinFromCharacters(currentWord);
+        } else {
+          final charInfo = _dictionary.getCharacterInfo(currentCharacter);
+          if (charInfo != null && charInfo.pinyin != null) {
+            pinyin = PinyinUtils.convertToneNumbersToMarks(charInfo.pinyin);
+          }
+        }
+      }
     }
 
     // For multi-character words, show the full word definition

@@ -90,7 +90,7 @@ class OCRService {
       }
     }
     
-    allItems.sort((a, b) => b.confidence.compareTo(a.confidence));
+    // DO NOT SORT: Preserve the reading order from Swift OCR service
     return allItems;
   }
   
@@ -143,7 +143,7 @@ class OCRService {
       }
     }
     
-    vocabItems.sort((a, b) => b.confidence.compareTo(a.confidence));
+    // DO NOT SORT: Preserve the reading order from Swift OCR service
     return vocabItems;
   }
   

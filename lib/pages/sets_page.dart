@@ -902,6 +902,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                   setId: set.id,
                   source: set.source,
                   definitions: set.definitions,
+                  groupSize: set.groupSize,
                 ),
               ),
             );
@@ -923,6 +924,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                 setId: set.id,
                 source: set.source,
                 definitions: set.definitions,
+                groupSize: set.groupSize,
               ),
             ),
           );
@@ -1334,6 +1336,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                                 setId: set.id,
                                 source: set.source,
                                 definitions: set.definitions,
+                                groupSize: set.groupSize,
                               ),
                             ),
                           ).then((_) => _loadSetProgress());

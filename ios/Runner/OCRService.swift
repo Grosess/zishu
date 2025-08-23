@@ -404,16 +404,38 @@ class OCRService: NSObject {
         
         print("OCR DEBUG - Total Chinese terms after aggressive final pass: \(chineseTerms.count) terms")
         
-        // Y-COORDINATE BASED ORDERING: Sort Chinese terms by Y position (top to bottom order)
-        // This maintains the actual vocabulary sheet order as the user requested
-        chineseTerms.sort { $0.box.origin.y > $1.box.origin.y }  // Higher Y = higher on page = earlier in order
+        // READING ORDER SORTING: Sort Chinese terms by reading order (left-to-right, top-to-bottom)
+        // This matches how vocabulary sheets are read naturally
+        chineseTerms.sort { term1, term2 in
+            let y1 = term1.box.origin.y
+            let y2 = term2.box.origin.y
+            let x1 = term1.box.origin.x
+            let x2 = term2.box.origin.x
+            
+            // Define row tolerance - items within this Y range are considered same row
+            let rowTolerance: CGFloat = 0.015
+            
+            // If they're in different rows (Y difference > tolerance), sort by Y (top to bottom)
+            if abs(CGFloat(y1) - CGFloat(y2)) > rowTolerance {
+                return y1 > y2  // Higher Y = higher on page = earlier in order
+            }
+            
+            // If they're in the same row, sort by X (left to right)
+            return x1 < x2
+        }
         
-        print("OCR DEBUG - Chinese terms after Y-coordinate sorting: \(chineseTerms.map { $0.text })")
+        print("OCR DEBUG - Chinese terms after READING ORDER sorting: \(chineseTerms.map { $0.text })")
         
-        // Debug: Show detailed Y position info to verify correct order
-        print("OCR DEBUG - Detailed Y-position info for verification:")
+        // Debug: Show detailed position info to verify reading order
+        print("OCR DEBUG - Detailed reading order verification:")
         for (index, term) in chineseTerms.prefix(5).enumerated() {
-            print("OCR DEBUG - [\(index+1)]: '\(term.text)' at Y:\(String(format: "%.3f", term.box.origin.y)) X:\(String(format: "%.3f", term.box.origin.x))")
+            print("OCR DEBUG - [\(index+1)]: '\(term.text)' at Row Y:\(String(format: "%.3f", term.box.origin.y)) Col X:\(String(format: "%.3f", term.box.origin.x))")
+        }
+        
+        // Keep this debug for order verification
+        print("OCR Final Order Debug:")
+        for (index, term) in chineseTerms.enumerated() {
+            print("\(index + 1): \(term.text)")
         }
         
         // COMPLETE REVAMP: X-COORDINATE BASED MATCHING WITH PROPER Y-RANGE
@@ -612,7 +634,25 @@ class OCRService: NSObject {
         }
         
         print("OCR DEBUG - Final results count: \(results.count)")
-        return results
+        
+        // CRITICAL FIX: Ensure results maintain the same order as sorted chineseTerms
+        // The matching process may have disrupted the order, so we need to reorder results
+        var orderedResults: [[String: Any]] = []
+        
+        for chineseTerm in chineseTerms {
+            // Find the corresponding result for this Chinese term
+            if let matchingResult = results.first(where: { result in
+                let originalChar = result["originalCharacter"] as? String ?? ""
+                let rawText = result["rawText"] as? String ?? ""
+                return originalChar == chineseTerm.text || rawText == chineseTerm.text
+            }) {
+                orderedResults.append(matchingResult)
+            }
+        }
+        
+        
+        print("OCR DEBUG - Reordered results count: \(orderedResults.count)")
+        return orderedResults
     }
     
     private func extractNumberFromText(_ text: String) -> Int? {
@@ -711,7 +751,7 @@ class OCRService: NSObject {
             }
             
             // Check for single letters or very short meaningless combinations
-            if text.count <= 2 || lowText == "you" || lowText == "qp" {
+            if text.count <= 2 || lowText == "you" || lowText == "qp" || text == "yOU" || lowText == "you" {
                 return true
             }
         }

@@ -25,7 +25,7 @@ class _OCRImportPageState extends State<OCRImportPage> {
   // Photo collection state
   List<XFile> _selectedImages = [];
   bool _isCollectingPhotos = true; // New state for photo collection vs scanning
-  int _termsPerGroup = 8; // Default terms per group for testing
+  int _termsPerGroup = 10; // Default terms per group
   
   @override
   void dispose() {
@@ -101,6 +101,7 @@ class _OCRImportPageState extends State<OCRImportPage> {
     try {
       final items = await _ocrService.processSelectedImages(_selectedImages);
       
+      
       if (items.isEmpty) {
         _showError('No vocabulary items found in the images');
         setState(() {
@@ -171,6 +172,7 @@ class _OCRImportPageState extends State<OCRImportPage> {
         isWordSet: hasMultiCharTerms,
         source: 'ocr_import',
         definitions: definitions,
+        groupSize: _termsPerGroup,
       );
       
       HapticService().mediumImpact();
@@ -391,54 +393,114 @@ class _OCRImportPageState extends State<OCRImportPage> {
                     },
                   ),
                 ),
-                // Terms per group setting
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                  child: Row(
+                // Terms per group setting - Clear and prominent
+                Container(
+                  margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: isDuotone && duotoneExtension?.duotoneColor1 != null
+                        ? duotoneExtension!.duotoneColor1!.withAlpha(26)
+                        : Theme.of(context).colorScheme.primary.withAlpha(26),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isDuotone && duotoneExtension?.duotoneColor1 != null
+                          ? duotoneExtension!.duotoneColor1!.withAlpha(77)
+                          : Theme.of(context).colorScheme.primary.withAlpha(77),
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Terms per group (for testing):',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: isDuotone && duotoneExtension?.duotoneColor1 != null
-                              ? duotoneExtension!.duotoneColor1!
-                              : Theme.of(context).colorScheme.onSurface,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Container(
-                        width: 60,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: isDuotone && duotoneExtension?.duotoneColor1 != null
-                                ? duotoneExtension!.duotoneColor1!.withAlpha(128)
-                                : Theme.of(context).colorScheme.onSurface.withAlpha(128),
-                          ),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: TextField(
-                          controller: TextEditingController(text: _termsPerGroup.toString()),
-                          textAlign: TextAlign.center,
-                          keyboardType: TextInputType.number,
-                          style: TextStyle(
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.group_work,
+                            size: 20,
                             color: isDuotone && duotoneExtension?.duotoneColor1 != null
                                 ? duotoneExtension!.duotoneColor1!
-                                : Theme.of(context).colorScheme.onSurface,
-                            fontSize: 14,
+                                : Theme.of(context).colorScheme.primary,
                           ),
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Terms per Group',
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              color: isDuotone && duotoneExtension?.duotoneColor1 != null
+                                  ? duotoneExtension!.duotoneColor1!
+                                  : Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                          onChanged: (value) {
-                            final int? newValue = int.tryParse(value);
-                            if (newValue != null && newValue > 0) {
-                              setState(() {
-                                _termsPerGroup = newValue;
-                              });
-                            }
-                          },
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Set how many vocabulary terms to group together for practice',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: isDuotone && duotoneExtension?.duotoneColor1 != null
+                              ? duotoneExtension!.duotoneColor1!.withAlpha(179)
+                              : Theme.of(context).colorScheme.onSurface.withAlpha(179),
                         ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Container(
+                            width: 80,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              border: Border.all(
+                                color: isDuotone && duotoneExtension?.duotoneColor1 != null
+                                    ? duotoneExtension!.duotoneColor1!
+                                    : Theme.of(context).colorScheme.primary,
+                                width: 2,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: TextField(
+                              controller: TextEditingController(text: _termsPerGroup.toString()),
+                              textAlign: TextAlign.center,
+                              keyboardType: TextInputType.number,
+                              style: TextStyle(
+                                color: isDuotone && duotoneExtension?.duotoneColor1 != null
+                                    ? duotoneExtension!.duotoneColor1!
+                                    : Theme.of(context).colorScheme.primary,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              decoration: const InputDecoration(
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                                hintText: '10',
+                              ),
+                              onChanged: (value) {
+                                if (value.isEmpty) {
+                                  // If empty, set to default 10
+                                  setState(() {
+                                    _termsPerGroup = 10;
+                                  });
+                                } else {
+                                  final int? newValue = int.tryParse(value);
+                                  if (newValue != null && newValue > 0) {
+                                    setState(() {
+                                      _termsPerGroup = newValue;
+                                    });
+                                  }
+                                }
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'terms per group',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: isDuotone && duotoneExtension?.duotoneColor1 != null
+                                  ? duotoneExtension!.duotoneColor1!
+                                  : Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
