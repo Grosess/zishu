@@ -423,7 +423,7 @@ class _OCRImportPageState extends State<OCRImportPage> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Terms per Group',
+                            'Practice Group Size',
                             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                               color: isDuotone && duotoneExtension?.duotoneColor1 != null
                                   ? duotoneExtension!.duotoneColor1!
@@ -435,7 +435,7 @@ class _OCRImportPageState extends State<OCRImportPage> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Set how many vocabulary terms to group together for practice',
+                        'How many vocabulary terms will be practiced together in each study session',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: isDuotone && duotoneExtension?.duotoneColor1 != null
                               ? duotoneExtension!.duotoneColor1!.withAlpha(179)
@@ -511,13 +511,28 @@ class _OCRImportPageState extends State<OCRImportPage> {
                           ),
                           const SizedBox(width: 16),
                           Expanded(
-                            child: Text(
-                              'terms per group',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: isDuotone && duotoneExtension?.duotoneColor1 != null
-                                    ? duotoneExtension!.duotoneColor1!
-                                    : Theme.of(context).colorScheme.onSurface,
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'vocabulary terms per practice session',
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: isDuotone && duotoneExtension?.duotoneColor1 != null
+                                        ? duotoneExtension!.duotoneColor1!
+                                        : Theme.of(context).colorScheme.onSurface,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                Text(
+                                  'Example: 10 = practice 10 words at a time',
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: isDuotone && duotoneExtension?.duotoneColor1 != null
+                                        ? duotoneExtension!.duotoneColor1!.withAlpha(128)
+                                        : Theme.of(context).colorScheme.onSurface.withAlpha(128),
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
@@ -584,106 +599,224 @@ class _OCRImportPageState extends State<OCRImportPage> {
                   },
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  'Found ${_scannedItems!.length} vocabulary items',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: isDuotone && duotoneExtension?.duotoneColor1 != null
-                        ? duotoneExtension!.duotoneColor1!.withAlpha(179)
-                        : Theme.of(context).colorScheme.onSurface.withAlpha(179),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
+              // Spreadsheet-style table view
               Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: _scannedItems!.length,
-                  itemBuilder: (context, index) {
-                    final item = _scannedItems![index];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: ListTile(
-                        leading: Container(
-                          width: 48,
-                          height: 48,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: isDuotone && duotoneExtension?.duotoneColor1 != null
-                                ? duotoneExtension!.duotoneColor1!.withAlpha(26)
-                                : Theme.of(context).colorScheme.primary.withAlpha(26),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            item.character,
-                            style: const TextStyle(fontSize: 24),
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: isDuotone && duotoneExtension?.duotoneColor1 != null
+                          ? duotoneExtension!.duotoneColor1!.withAlpha(77)
+                          : Theme.of(context).colorScheme.outline.withAlpha(77),
+                      width: 1,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    children: [
+                      // Header row
+                      Container(
+                        decoration: BoxDecoration(
+                          color: isDuotone && duotoneExtension?.duotoneColor1 != null
+                              ? duotoneExtension!.duotoneColor1!.withAlpha(26)
+                              : Theme.of(context).colorScheme.primary.withAlpha(26),
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(7),
+                            topRight: Radius.circular(7),
                           ),
                         ),
-                        title: Text(
-                          item.definition,
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        child: Row(
                           children: [
-                            if (item.originalCharacter != item.character) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                'Traditional: ${item.originalCharacter}',
-                                style: TextStyle(
-                                  color: isDuotone && duotoneExtension?.duotoneColor1 != null
-                                      ? duotoneExtension!.duotoneColor1!.withAlpha(128)
-                                      : Theme.of(context).colorScheme.onSurface.withAlpha(128),
-                                  fontSize: 12,
+                            Expanded(
+                              flex: 2,
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    right: BorderSide(
+                                      color: isDuotone && duotoneExtension?.duotoneColor1 != null
+                                          ? duotoneExtension!.duotoneColor1!.withAlpha(51)
+                                          : Theme.of(context).colorScheme.outline.withAlpha(51),
+                                      width: 1,
+                                    ),
+                                  ),
+                                ),
+                                child: Text(
+                                  'Chinese',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: isDuotone && duotoneExtension?.duotoneColor1 != null
+                                        ? duotoneExtension!.duotoneColor1!
+                                        : Theme.of(context).colorScheme.primary,
+                                  ),
                                 ),
                               ),
-                            ],
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    right: BorderSide(
+                                      color: isDuotone && duotoneExtension?.duotoneColor1 != null
+                                          ? duotoneExtension!.duotoneColor1!.withAlpha(51)
+                                          : Theme.of(context).colorScheme.outline.withAlpha(51),
+                                      width: 1,
+                                    ),
+                                  ),
+                                ),
+                                child: Text(
+                                  'Pinyin',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: isDuotone && duotoneExtension?.duotoneColor1 != null
+                                        ? duotoneExtension!.duotoneColor1!
+                                        : Theme.of(context).colorScheme.primary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 4,
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                child: Text(
+                                  'English',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: isDuotone && duotoneExtension?.duotoneColor1 != null
+                                        ? duotoneExtension!.duotoneColor1!
+                                        : Theme.of(context).colorScheme.primary,
+                                  ),
+                                ),
+                              ),
+                            ),
                           ],
                         ),
-                        trailing: item.confidence > 0
-                            ? Column(
-                                mainAxisSize: MainAxisSize.min,
+                      ),
+                      // Data rows
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: _scannedItems!.length,
+                          itemBuilder: (context, index) {
+                            final item = _scannedItems![index];
+                            final pinyin = (item.rawData?['pinyin'] ?? '') as String;
+                            final isEvenRow = index % 2 == 0;
+                            
+                            return Container(
+                              decoration: BoxDecoration(
+                                color: isEvenRow 
+                                    ? Colors.transparent
+                                    : (isDuotone && duotoneExtension?.duotoneColor1 != null
+                                        ? duotoneExtension!.duotoneColor1!.withAlpha(13)
+                                        : Theme.of(context).colorScheme.surfaceContainerHighest.withAlpha(26)),
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: isDuotone && duotoneExtension?.duotoneColor1 != null
+                                        ? duotoneExtension!.duotoneColor1!.withAlpha(26)
+                                        : Theme.of(context).colorScheme.outline.withAlpha(26),
+                                    width: 1,
+                                  ),
+                                ),
+                              ),
+                              child: Row(
                                 children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: isDuotone && duotoneExtension?.duotoneColor1 != null
-                                          ? duotoneExtension!.duotoneColor1!.withAlpha(26)
-                                          : _getConfidenceColor(item.confidence).withAlpha(26),
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: isDuotone ? Border.all(
-                                        color: duotoneExtension?.duotoneColor1?.withAlpha(51) ?? Colors.transparent,
-                                        width: 1,
-                                      ) : null,
-                                    ),
-                                    child: Text(
-                                      '${(item.confidence * 100).toStringAsFixed(0)}%',
-                                      style: TextStyle(
-                                        color: isDuotone && duotoneExtension?.duotoneColor1 != null
-                                            ? duotoneExtension!.duotoneColor1!
-                                            : _getConfidenceColor(item.confidence),
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
+                                  Expanded(
+                                    flex: 2,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        border: Border(
+                                          right: BorderSide(
+                                            color: isDuotone && duotoneExtension?.duotoneColor1 != null
+                                                ? duotoneExtension!.duotoneColor1!.withAlpha(26)
+                                                : Theme.of(context).colorScheme.outline.withAlpha(26),
+                                            width: 1,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        item.character,
+                                        style: const TextStyle(fontSize: 18),
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    _getConfidenceLabel(item.confidence),
-                                    style: TextStyle(
-                                      color: isDuotone && duotoneExtension?.duotoneColor1 != null
-                                          ? duotoneExtension!.duotoneColor1!.withAlpha(128)
-                                          : Theme.of(context).colorScheme.onSurface.withAlpha(128),
-                                      fontSize: 10,
+                                  Expanded(
+                                    flex: 2,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        border: Border(
+                                          right: BorderSide(
+                                            color: isDuotone && duotoneExtension?.duotoneColor1 != null
+                                                ? duotoneExtension!.duotoneColor1!.withAlpha(26)
+                                                : Theme.of(context).colorScheme.outline.withAlpha(26),
+                                            width: 1,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        pinyin.isEmpty || pinyin == 'null' ? '-' : pinyin,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: isDuotone && duotoneExtension?.duotoneColor1 != null
+                                              ? duotoneExtension!.duotoneColor1!.withAlpha(204)
+                                              : Theme.of(context).colorScheme.onSurface.withAlpha(204),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    flex: 4,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(12),
+                                      child: Text(
+                                        (item.definition.isEmpty || item.definition == 'No definition' || item.definition == 'null') ? '-' : item.definition,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: isDuotone && duotoneExtension?.duotoneColor1 != null
+                                              ? duotoneExtension!.duotoneColor1!.withAlpha(230)
+                                              : Theme.of(context).colorScheme.onSurface,
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ],
-                              )
-                            : null,
+                              ),
+                            );
+                          },
+                        ),
                       ),
-                    );
-                  },
+                      // Summary row
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: isDuotone && duotoneExtension?.duotoneColor1 != null
+                              ? duotoneExtension!.duotoneColor1!.withAlpha(13)
+                              : Theme.of(context).colorScheme.surfaceContainerHighest.withAlpha(51),
+                          borderRadius: const BorderRadius.only(
+                            bottomLeft: Radius.circular(7),
+                            bottomRight: Radius.circular(7),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Text(
+                              'Total: ${_scannedItems!.length} items',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: isDuotone && duotoneExtension?.duotoneColor1 != null
+                                    ? duotoneExtension!.duotoneColor1!.withAlpha(179)
+                                    : Theme.of(context).colorScheme.onSurface.withAlpha(179),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               Padding(
@@ -731,22 +864,6 @@ class _OCRImportPageState extends State<OCRImportPage> {
         ),
       ),
     );
-  }
-  
-  String _getConfidenceLabel(double confidence) {
-    if (confidence >= 0.95) return 'Excellent';
-    if (confidence >= 0.85) return 'Very Good';
-    if (confidence >= 0.70) return 'Good';
-    if (confidence >= 0.50) return 'Fair';
-    return 'Review';
-  }
-
-  Color _getConfidenceColor(double confidence) {
-    if (confidence >= 0.95) return Colors.green;
-    if (confidence >= 0.85) return Colors.lightGreen;
-    if (confidence >= 0.70) return Colors.orange;
-    if (confidence >= 0.50) return Colors.deepOrange;
-    return Colors.red;
   }
   
   void _resetToPhotoCollection() {

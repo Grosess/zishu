@@ -80,6 +80,10 @@ class OCRService {
                 definition: cleanedDefinition,
                 originalCharacter: result['originalCharacter'] ?? character,
                 confidence: (result['confidence'] ?? 0.0).toDouble(),
+                rawData: {
+                  'pinyin': result['pinyin'] ?? '',
+                  'rawText': result['rawText'] ?? '',
+                },
               ));
             }
           }
@@ -138,6 +142,10 @@ class OCRService {
             definition: cleanedDefinition,
             originalCharacter: result['originalCharacter'] ?? character,
             confidence: (result['confidence'] ?? 0.0).toDouble(),
+            rawData: {
+              'pinyin': result['pinyin'] ?? '',
+              'rawText': result['rawText'] ?? '',
+            },
           ));
         }
       }
@@ -226,12 +234,14 @@ class VocabItem {
   final String definition;
   final String originalCharacter;
   final double confidence;
+  final Map<String, dynamic>? rawData;
   
   VocabItem({
     required this.character,
     required this.definition,
     required this.originalCharacter,
     this.confidence = 0.0,
+    this.rawData,
   });
   
   Map<String, dynamic> toJson() => {
@@ -239,5 +249,6 @@ class VocabItem {
     'definition': definition,
     'originalCharacter': originalCharacter,
     'confidence': confidence,
+    if (rawData != null) 'rawData': rawData,
   };
 }

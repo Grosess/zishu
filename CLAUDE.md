@@ -108,6 +108,7 @@ Key packages:
 
 NEVER alter the database
 NEVER manually add definitions
+NEVER create specific solutions for general problems. ie, problem with 1 term, put an if statement instead of addressing the logic issue
 
 DO NOT EDIT THE CHARACTER WRITING/DEFINITION UNLESS EXPLICITLY ASKED TO
 
