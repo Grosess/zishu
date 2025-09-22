@@ -1,0 +1,110 @@
+{
+  "appTitle": "字书",
+  "@appTitle": {
+    "description": "The title of the application"
+  },
+  "practice": "练习",
+  "@practice": {
+    "description": "Practice button text"
+  },
+  "sets": "字集",
+  "@sets": {
+    "description": "Sets tab text"
+  },
+  "statistics": "统计",
+  "@statistics": {
+    "description": "Statistics tab text"
+  },
+  "settings": "设置",
+  "@settings": {
+    "description": "Settings tab text"
+  },
+  "importFromPhoto": "从照片导入",
+  "@importFromPhoto": {
+    "description": "Import from photo button text"
+  },
+  "scanVocabulary": "扫描词汇",
+  "@scanVocabulary": {
+    "description": "Scan vocabulary text"
+  },
+  "selectPhotos": "选择照片",
+  "@selectPhotos": {
+    "description": "Select photos button text"
+  },
+  "fromCamera": "相机拍摄",
+  "@fromCamera": {
+    "description": "From camera button text"
+  },
+  "fromGallery": "从相册选择",
+  "@fromGallery": {
+    "description": "From gallery button text"
+  },
+  "practiceGroupSize": "练习组大小",
+  "@practiceGroupSize": {
+    "description": "Practice group size label"
+  },
+  "practiceGroupDescription": "每次学习中一起练习的词汇数量",
+  "@practiceGroupDescription": {
+    "description": "Practice group size description"
+  },
+  "practiceGroupExample": "例如：10 = 一次练习10个单词",
+  "@practiceGroupExample": {
+    "description": "Practice group size example"
+  },
+  "chinese": "中文",
+  "@chinese": {
+    "description": "Chinese column header"
+  },
+  "pinyin": "拼音",
+  "@pinyin": {
+    "description": "Pinyin column header"
+  },
+  "english": "英文",
+  "@english": {
+    "description": "English column header"
+  },
+  "saveSet": "保存字集",
+  "@saveSet": {
+    "description": "Save set button text"
+  },
+  "characterSetName": "字集名称",
+  "@characterSetName": {
+    "description": "Character set name input label"
+  },
+  "language": "语言",
+  "@language": {
+    "description": "Language setting label"
+  },
+  "selectLanguage": "选择语言",
+  "@selectLanguage": {
+    "description": "Language selection dialog title"
+  },
+  "englishLanguage": "English",
+  "@englishLanguage": {
+    "description": "English language option"
+  },
+  "chineseLanguage": "中文",
+  "@chineseLanguage": {
+    "description": "Chinese language option"
+  },
+  "welcomeTitle": "欢迎使用字书",
+  "@welcomeTitle": {
+    "description": "Welcome dialog title"
+  },
+  "welcomeMessage": "请选择您的首选语言：",
+  "@welcomeMessage": {
+    "description": "Welcome dialog message"
+  },
+  "processing": "处理中...",
+  "@processing": {
+    "description": "Processing text"
+  },
+  "ocrProcessing": "正在处理图片 OCR...",
+  "@ocrProcessing": {
+    "description": "OCR processing text"
+  },
+  "downloadingModel": "正在下载语言模型... 可能需要一些时间。",
+  "@downloadingModel": {
+    "description": "Model download message"
+  }
+}

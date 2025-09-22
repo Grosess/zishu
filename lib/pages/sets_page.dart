@@ -7,7 +7,7 @@ import '../services/character_validator.dart';
 import 'character_list_page.dart';
 import 'writing_practice_page.dart';
 import 'groups_page.dart';
-import 'ocr_import_page.dart';
+import 'set_edit_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/learning_service.dart';
 import '../services/folder_service.dart';
@@ -773,48 +773,65 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
   }
   
   Future<void> _loadCustomSets(List<CharacterSet> customSets) async {
-    // Use CharacterSetManager to get custom sets
+    // Clear the list first to avoid duplicates
+    customSets.clear();
+    
+    // Use CharacterSetManager to get custom sets (primary source)
     final manager = CharacterSetManager();
+    await manager.initialize(); // Ensure manager is initialized
     final managerCustomSets = manager.getCustomSets();
-    customSets.addAll(managerCustomSets);
     
-    // Also check legacy storage for backward compatibility
-    final prefs = await SharedPreferences.getInstance();
-    final savedCustomSets = prefs.getStringList('custom_sets') ?? [];
+    // Create a map to track unique sets by ID
+    final uniqueSets = <String, CharacterSet>{};
     
-    for (final setJson in savedCustomSets) {
-      try {
-        final setData = jsonDecode(setJson);
-        
-        // Handle characters - could be String or List
-        List<String> characters;
-        if (setData['characters'] is String) {
-          final isWordSet = setData['isWordSet'] ?? false;
-          if (isWordSet) {
-            characters = setData['characters'].split(',').map((s) => s.trim()).toList();
+    // Add manager sets first (these are the most up-to-date)
+    for (final set in managerCustomSets) {
+      uniqueSets[set.id] = set;
+    }
+    
+    // Check legacy storage for backward compatibility (only if no manager sets found)
+    if (uniqueSets.isEmpty) {
+      final prefs = await SharedPreferences.getInstance();
+      final savedCustomSets = prefs.getStringList('custom_sets') ?? [];
+      
+      for (final setJson in savedCustomSets) {
+        try {
+          final setData = jsonDecode(setJson);
+          
+          // Handle characters - could be String or List
+          List<String> characters;
+          if (setData['characters'] is String) {
+            final isWordSet = setData['isWordSet'] ?? false;
+            if (isWordSet) {
+              characters = setData['characters'].split(',').map((s) => s.trim()).toList();
+            } else {
+              characters = setData['characters'].split('').toList();
+            }
+          } else if (setData['characters'] is List) {
+            characters = List<String>.from(setData['characters'] ?? []);
           } else {
-            characters = setData['characters'].split('').toList();
+            characters = [];
           }
-        } else if (setData['characters'] is List) {
-          characters = List<String>.from(setData['characters'] ?? []);
-        } else {
-          characters = [];
+          
+          if (characters.isNotEmpty) {
+            final set = CharacterSet(
+              id: setData['id'] ?? 'custom_${DateTime.now().millisecondsSinceEpoch}',
+              name: setData['name'] ?? 'Custom Set',
+              characters: characters,
+              description: setData['description'] ?? 'Created from incorrect answers',
+              isWordSet: setData['isWordSet'] ?? false,
+              color: setData['color'] != null ? int.tryParse(setData['color'].toString()) : null,
+            );
+            uniqueSets[set.id] = set;
+          }
+        } catch (e) {
+          // Production: removed debug print
         }
-        
-        if (characters.isNotEmpty) {
-          customSets.add(CharacterSet(
-            id: setData['id'] ?? 'custom_${DateTime.now().millisecondsSinceEpoch}',
-            name: setData['name'] ?? 'Custom Set',
-            characters: characters,
-            description: setData['description'] ?? 'Created from incorrect answers',
-            isWordSet: setData['isWordSet'] ?? false,
-            color: setData['color'] != null ? int.tryParse(setData['color'].toString()) : null,
-          ));
-        }
-      } catch (e) {
-        // Production: removed debug print
       }
     }
+    
+    // Add unique sets to the list
+    customSets.addAll(uniqueSets.values);
   }
   
   Future<void> refreshCustomSets() async {
@@ -1629,15 +1646,6 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                     _showAddSetDialog();
                   },
                 ),
-                ListTile(
-                  leading: const Icon(Icons.document_scanner),
-                  title: const Text('Import from Photo'),
-                  onTap: () {
-                    HapticService().lightImpact();
-                    Navigator.pop(bottomSheetContext);
-                    _showOCRImport();
-                  },
-                ),
               ],
             ),
           ),
@@ -2142,6 +2150,14 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                   : null,
             ),
             ListTile(
+              leading: const Icon(Icons.edit_note),
+              title: const Text('Edit Set'),
+              onTap: () {
+                Navigator.pop(context);
+                _showEditSetDialog(set);
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.edit),
               title: const Text('Rename'),
               onTap: () {
@@ -2317,19 +2333,30 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
     );
   }
 
-  Future<void> _showOCRImport() async {
+  Future<void> _showEditSetDialog(CharacterSet set) async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const OCRImportPage(),
+        builder: (context) => SetEditPage(
+          set: set,
+          onSetUpdated: () async {
+            // Refresh the sets after editing
+            await _loadCharacterSets();
+            await _loadSetProgress();
+            setState(() {});
+          },
+        ),
       ),
     );
     
-    if (result != null && mounted) {
+    if (result == true && mounted) {
+      // Additional refresh if needed
       await _loadCharacterSets();
+      await _loadSetProgress();
       setState(() {});
     }
   }
+
   
   Future<void> _showFolderMenu(SetFolder folder) async {
     await showModalBottomSheet(

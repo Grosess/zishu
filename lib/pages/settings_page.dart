@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 import '../services/haptic_service.dart';
+import '../services/language_service.dart';
+import '../generated/l10n.dart';
+import '../widgets/language_selection_dialog.dart';
 import 'attributions_page.dart';
 
 enum StrokeType {
@@ -36,6 +39,7 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _hapticFeedbackEnabled = true;
   bool _handwritingMode = false;
   bool _autoPronounceChinese = true;
+  final LanguageService _languageService = LanguageService();
 
   @override
   void initState() {
@@ -195,7 +199,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: Text(S.of(context).settings),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -234,6 +238,21 @@ class _SettingsPageState extends State<SettingsPage> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                ),
+                // Language Selection
+                ListTile(
+                  title: Text(S.of(context).language),
+                  subtitle: Text(_languageService.getLanguageName(_languageService.locale)),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => LanguageSelectionDialog(
+                        languageService: _languageService,
+                        isWelcome: false,
+                      ),
+                    );
+                  },
                 ),
                 ListTile(
                   title: const Text('Theme'),

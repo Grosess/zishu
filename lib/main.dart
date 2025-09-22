@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'dart:async';
 import 'services/local_storage_service.dart';
 import 'services/character_cache_manager.dart';
 import 'services/profile_service.dart';
+import 'services/language_service.dart';
 import 'pages/data_backup_page.dart';
 import 'pages/sets_page.dart' as sets;
 import 'pages/settings_page.dart';
@@ -12,6 +14,7 @@ import 'pages/home_page.dart';
 import 'pages/profile_page.dart';
 import 'pages/practice_history_page.dart';
 import 'pages/mark_as_learned_page.dart';
+import 'widgets/language_selection_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'services/image_cache_service.dart';
 import 'services/statistics_service.dart';
@@ -20,6 +23,7 @@ import 'services/learning_service.dart';
 import 'services/haptic_service.dart';
 import 'widgets/streak_display.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'generated/l10n.dart';
 
 // Theme extension for duotone themes
 class DuotoneThemeExtension extends ThemeExtension<DuotoneThemeExtension> {
@@ -109,6 +113,9 @@ Future<void> _initializeApp() async {
   
   // Initialize haptic service
   await HapticService().initialize();
+  
+  // Initialize language service
+  await LanguageService().loadLanguagePreference();
 }
 
 void main() async {
@@ -223,6 +230,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   late bool _isDuotoneTheme;
   late String _duotoneBackground;
   late String _duotoneColor;
+  final LanguageService _languageService = LanguageService();
   
   @override
   void initState() {
@@ -235,6 +243,9 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     // Still load settings to ensure we have the latest values
     _loadThemeSettings();
     _preloadAssets();
+    
+    // Add language service listener
+    _languageService.addListener(_onLanguageChanged);
   }
   
   void _initializeTheme() {
@@ -269,7 +280,14 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _languageService.removeListener(_onLanguageChanged);
     super.dispose();
+  }
+  
+  void _onLanguageChanged() {
+    setState(() {
+      // Language changed, rebuild UI
+    });
   }
   
   @override
@@ -441,7 +459,36 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         backgroundColor = (color == 'lightpink' || color == 'hotpink') ? const Color(0xFFFAFAFA) : Colors.white;
         break;
       case 'black':
-        backgroundColor = Colors.black;
+        // Create a subtle tint of the accent color instead of pure black
+        switch (color) {
+          case 'green':
+            backgroundColor = const Color(0xFF0A0F0A); // Very dark green tint
+            break;
+          case 'bluegreen':
+          case 'teal':
+            backgroundColor = const Color(0xFF0A0F0F); // Very dark teal tint
+            break;
+          case 'red':
+            backgroundColor = const Color(0xFF0F0A0A); // Very dark red tint
+            break;
+          case 'blue':
+            backgroundColor = const Color(0xFF0A0A0F); // Very dark blue tint
+            break;
+          case 'lightpink':
+          case 'hotpink':
+            backgroundColor = const Color(0xFF0F0A0D); // Very dark pink tint
+            break;
+          case 'gold':
+            backgroundColor = const Color(0xFF0F0D0A); // Very dark gold tint
+            break;
+          case 'purple':
+            backgroundColor = const Color(0xFF0D0A0F); // Very dark purple tint
+            break;
+          case 'white':
+          default:
+            backgroundColor = const Color(0xFF0D0D0D); // Very dark gray instead of pure black
+            break;
+        }
         break;
       case 'green':
         backgroundColor = const Color(0xFF2E7D32);
@@ -774,6 +821,9 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     return MaterialApp(
       title: 'Zishu - Hanzi Practice',
       theme: _buildLightTheme(),
+      localizationsDelegates: S.localizationsDelegates,
+      supportedLocales: S.supportedLocales,
+      locale: _languageService.locale,
       darkTheme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: _accentColor,
@@ -921,6 +971,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   int _selectedIndex = 1;  // Start on Sets tab
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ProfileService _profileService = ProfileService();
+  final LanguageService _languageService = LanguageService();
   
 
   late final List<Widget> _pages;
@@ -943,6 +994,11 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     
     // Listen to profile changes
     _profileService.addListener(_onProfileChanged);
+    
+    // Check for first launch after the frame is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkFirstLaunch();
+    });
   }
   
   @override
@@ -997,6 +1053,22 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     setState(() {
       // Profile data updated
     });
+  }
+  
+  Future<void> _checkFirstLaunch() async {
+    if (_languageService.isFirstLaunch) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (mounted) {
+        await showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => LanguageSelectionDialog(
+            languageService: _languageService,
+            isWelcome: true,
+          ),
+        );
+      }
+    }
   }
   
   void refreshStreakDisplay() {
@@ -1144,7 +1216,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
           ),
         ),
         title: Text(
-          'Zishu',
+          S.of(context).appTitle,
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w800,
@@ -1297,7 +1369,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                   ListTile(
                     leading: Icon(Icons.settings, color: Theme.of(context).colorScheme.primary),
                     title: Text(
-                      'Settings',
+                      S.of(context).settings,
                       style: TextStyle(
                         color: Theme.of(context).brightness == Brightness.dark
                             ? Colors.white
@@ -1507,21 +1579,21 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                   _selectedIndex == 0 ? Icons.home : Icons.home_outlined,
                   size: 28,
                 ),
-                label: 'Home',
+                label: S.of(context).home,
               ),
               NavigationDestination(
                 icon: Icon(
                   _selectedIndex == 1 ? Icons.folder : Icons.folder_outlined,
                   size: 28,
                 ),
-                label: 'Sets',
+                label: S.of(context).sets,
               ),
               NavigationDestination(
                 icon: Icon(
                   _selectedIndex == 2 ? Icons.bar_chart : Icons.bar_chart_outlined,
                   size: 28,
                 ),
-                label: 'Progress',
+                label: S.of(context).progress,
               ),
             ],
           ),

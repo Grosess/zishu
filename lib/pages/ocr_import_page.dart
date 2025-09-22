@@ -5,6 +5,7 @@ import '../services/ocr_service.dart';
 import '../services/character_set_manager.dart';
 import '../services/haptic_service.dart';
 import '../main.dart' show DuotoneThemeExtension;
+import '../generated/l10n.dart';
 
 class OCRImportPage extends StatefulWidget {
   const OCRImportPage({super.key});
@@ -26,6 +27,7 @@ class _OCRImportPageState extends State<OCRImportPage> {
   List<XFile> _selectedImages = [];
   bool _isCollectingPhotos = true; // New state for photo collection vs scanning
   int _termsPerGroup = 10; // Default terms per group
+  bool _isPickingImage = false; // Prevent multiple simultaneous picker calls
   
   @override
   void dispose() {
@@ -34,39 +36,89 @@ class _OCRImportPageState extends State<OCRImportPage> {
   }
   
   Future<void> _addPhotoFromCamera() async {
+    if (_isPickingImage) return;
+    
+    setState(() {
+      _isPickingImage = true;
+    });
+    
     try {
+      // Ensure UI is ready
+      await Future.delayed(const Duration(milliseconds: 50));
+      
       final ImagePicker picker = ImagePicker();
       final XFile? image = await picker.pickImage(
         source: ImageSource.camera,
         preferredCameraDevice: CameraDevice.rear,
         imageQuality: 85,
+      ).timeout(
+        const Duration(seconds: 60),
+        onTimeout: () {
+          if (mounted) {
+            _showError('Camera timeout - please try again');
+          }
+          return null;
+        },
       );
       
-      if (image != null) {
+      if (image != null && mounted) {
         setState(() {
           _selectedImages.add(image);
         });
       }
     } catch (e) {
-      _showError('Failed to capture image: ${e.toString()}');
+      if (mounted) {
+        _showError('Failed to capture image: ${e.toString()}');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPickingImage = false;
+        });
+      }
     }
   }
   
   Future<void> _addPhotosFromGallery() async {
+    if (_isPickingImage) return;
+    
+    setState(() {
+      _isPickingImage = true;
+    });
+    
     try {
+      // Ensure UI is ready
+      await Future.delayed(const Duration(milliseconds: 50));
+      
       final ImagePicker picker = ImagePicker();
       final List<XFile> images = await picker.pickMultipleMedia(
         limit: 10,
         imageQuality: 85,
+      ).timeout(
+        const Duration(seconds: 60),
+        onTimeout: () {
+          if (mounted) {
+            _showError('Gallery timeout - please try again');
+          }
+          return [];
+        },
       );
       
-      if (images.isNotEmpty) {
+      if (images.isNotEmpty && mounted) {
         setState(() {
           _selectedImages.addAll(images);
         });
       }
     } catch (e) {
-      _showError('Failed to select images: ${e.toString()}');
+      if (mounted) {
+        _showError('Failed to select images: ${e.toString()}');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPickingImage = false;
+        });
+      }
     }
   }
   
@@ -98,9 +150,37 @@ class _OCRImportPageState extends State<OCRImportPage> {
       _isCollectingPhotos = false;
     });
     
+    // Show loading dialog for model download
+    if (mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(S.of(context).ocrProcessing),
+              const SizedBox(height: 8),
+              Text(
+                S.of(context).downloadingModel,
+                style: const TextStyle(fontSize: 12),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    
     try {
       final items = await _ocrService.processSelectedImages(_selectedImages);
       
+      // Close loading dialog
+      if (mounted && Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
       
       if (items.isEmpty) {
         _showError('No vocabulary items found in the images');
@@ -113,6 +193,10 @@ class _OCRImportPageState extends State<OCRImportPage> {
         });
       }
     } catch (e) {
+      // Close loading dialog on error
+      if (mounted && Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
       _showError('Failed to process images: ${e.toString()}');
       setState(() {
         _isCollectingPhotos = true;
@@ -196,13 +280,13 @@ class _OCRImportPageState extends State<OCRImportPage> {
     
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isCollectingPhotos ? 'Add Photos' : 'Import from Photo'),
+        title: Text(_isCollectingPhotos ? S.of(context).addPhotos : S.of(context).importFromPhoto),
         backgroundColor: Theme.of(context).colorScheme.surface,
         actions: _isCollectingPhotos && _selectedImages.isNotEmpty ? [
           TextButton(
             onPressed: _clearAllImages,
             child: Text(
-              'Clear All',
+              S.of(context).removeAll,
               style: TextStyle(
                 color: isDuotone && duotoneExtension?.duotoneColor2 != null
                     ? duotoneExtension!.duotoneColor2!
@@ -249,9 +333,9 @@ class _OCRImportPageState extends State<OCRImportPage> {
                         Column(
                           children: [
                             ElevatedButton.icon(
-                              onPressed: _addPhotoFromCamera,
+                              onPressed: _isPickingImage ? null : () async => await _addPhotoFromCamera(),
                               icon: const Icon(Icons.camera_alt),
-                              label: const Text('Take Photo'),
+                              label: Text(S.of(context).takePhoto),
                               style: ElevatedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                                 minimumSize: const Size(200, 50),
@@ -259,9 +343,9 @@ class _OCRImportPageState extends State<OCRImportPage> {
                             ),
                             const SizedBox(height: 16),
                             ElevatedButton.icon(
-                              onPressed: _addPhotosFromGallery,
+                              onPressed: _isPickingImage ? null : () async => await _addPhotosFromGallery(),
                               icon: const Icon(Icons.photo_library),
-                              label: const Text('Select from Gallery'),
+                              label: Text(S.of(context).selectFromGallery),
                               style: ElevatedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                                 minimumSize: const Size(200, 50),
@@ -313,18 +397,24 @@ class _OCRImportPageState extends State<OCRImportPage> {
                                   children: [
                                     ListTile(
                                       leading: const Icon(Icons.camera_alt),
-                                      title: const Text('Take Photo'),
-                                      onTap: () {
+                                      title: Text(S.of(context).takePhoto),
+                                      enabled: !_isPickingImage,
+                                      onTap: _isPickingImage ? null : () async {
                                         Navigator.pop(context);
-                                        _addPhotoFromCamera();
+                                        // Add a small delay to ensure modal is closed
+                                        await Future.delayed(const Duration(milliseconds: 100));
+                                        await _addPhotoFromCamera();
                                       },
                                     ),
                                     ListTile(
                                       leading: const Icon(Icons.photo_library),
-                                      title: const Text('Select from Gallery'),
-                                      onTap: () {
+                                      title: Text(S.of(context).selectFromGallery),
+                                      enabled: !_isPickingImage,
+                                      onTap: _isPickingImage ? null : () async {
                                         Navigator.pop(context);
-                                        _addPhotosFromGallery();
+                                        // Add a small delay to ensure modal is closed
+                                        await Future.delayed(const Duration(milliseconds: 100));
+                                        await _addPhotosFromGallery();
                                       },
                                     ),
                                   ],
@@ -545,10 +635,8 @@ class _OCRImportPageState extends State<OCRImportPage> {
                   padding: const EdgeInsets.all(16),
                   child: SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton.icon(
+                    child: ElevatedButton(
                       onPressed: _processImages,
-                      icon: const Icon(Icons.document_scanner),
-                      label: const Text('Scan Vocabulary'),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         backgroundColor: isDuotone && duotoneExtension?.duotoneColor2 != null
@@ -559,23 +647,47 @@ class _OCRImportPageState extends State<OCRImportPage> {
                             : Colors.white,
                         textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.document_scanner),
+                          const SizedBox(width: 8),
+                          Text(S.of(context).scanVocabulary),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.orange,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              S.of(context).beta,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ],
             ] else if (_isProcessing) ...[
-              const Expanded(
+              Expanded(
                 child: Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       CircularProgressIndicator(),
                       SizedBox(height: 24),
-                      Text('Processing images...'),
+                      Text(S.of(context).processingImages),
                       SizedBox(height: 8),
-                      Text('Extracting Chinese characters and definitions'),
+                      Text(S.of(context).extractingCharacters),
                       SizedBox(height: 8),
-                      Text('This may take a moment for multiple images'),
+                      Text(S.of(context).mayTakeMoment),
                     ],
                   ),
                 ),

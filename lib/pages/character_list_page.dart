@@ -10,6 +10,8 @@ import '../utils/pinyin_utils.dart';
 import '../main.dart' show DuotoneThemeExtension, refreshSetsProgress;
 import '../services/haptic_service.dart';
 import '../services/pronunciation_service.dart';
+import '../services/character_set_manager.dart';
+import 'set_edit_page.dart';
 
 // Custom page route with smooth transition
 class SlidePageRoute extends PageRouteBuilder {
@@ -305,36 +307,15 @@ class _CharacterListPageState extends State<CharacterListPage> {
   Widget build(BuildContext context) {
     final scaffold = Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            Text(_currentSetName),
-            const SizedBox(width: 8),
-            InkWell(
-              onTap: _showSetMenu,
-              borderRadius: BorderRadius.circular(20),
-              splashColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withValues(alpha: 0.3)
-                  : null,
-              highlightColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1!.withValues(alpha: 0.2)
-                  : null,
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                child: const Icon(
-                  Icons.more_vert,
-                  size: 20,
-                ),
-              ),
+        title: Text(_currentSetName),
+        actions: [
+          if (widget.isCustomSet)
+            IconButton(
+              icon: const Icon(Icons.edit, size: 20),
+              onPressed: _showEditSet,
+              tooltip: 'Edit Set',
             ),
-            const Spacer(),
-            if (widget.isCustomSet)
-              IconButton(
-                icon: const Icon(Icons.edit, size: 20),
-                onPressed: _showRenameDialog,
-                tooltip: 'Rename',
-              ),
-          ],
-        ),
+        ],
       ),
       body: CustomScrollView(
         slivers: [
@@ -886,8 +867,38 @@ class _CharacterListPageState extends State<CharacterListPage> {
     return scaffold;
   }
   
+  void _showEditSet() {
+    if (widget.isCustomSet) {
+      final setManager = CharacterSetManager();
+      final set = setManager.getSet(widget.setId ?? '');
+      if (set != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SetEditPage(
+              set: set,
+              onSetUpdated: () {
+                // Refresh the page
+                if (mounted) {
+                  setState(() {});
+                }
+              },
+            ),
+          ),
+        ).then((result) {
+          if (result == true && mounted) {
+            // Pop back to sets page if set was deleted
+            Navigator.pop(context);
+          }
+        });
+      }
+    }
+  }
+  
   Future<void> _showRenameDialog() async {
     final controller = TextEditingController(text: _currentSetName);
+    final duotone = Theme.of(context).extension<DuotoneThemeExtension>();
+    final isDuotone = duotone?.isDuotoneTheme == true;
     
     await showDialog(
       context: context,
@@ -910,9 +921,16 @@ class _CharacterListPageState extends State<CharacterListPage> {
             onPressed: () async {
               if (controller.text.isNotEmpty && controller.text != _currentSetName) {
                 await _updateSetName(controller.text);
-                Navigator.pop(context);
+                if (mounted) {
+                  Navigator.pop(context);
+                }
               }
             },
+            style: FilledButton.styleFrom(
+              backgroundColor: isDuotone
+                  ? duotone!.duotoneColor2
+                  : null,
+            ),
             child: const Text('Save'),
           ),
         ],
@@ -920,26 +938,67 @@ class _CharacterListPageState extends State<CharacterListPage> {
     );
   }
   
-  Future<void> _showSetMenu() async {
-    await showModalBottomSheet(
+  Future<void> _showDeleteSetDialog() async {
+    final duotone = Theme.of(context).extension<DuotoneThemeExtension>();
+    final isDuotone = duotone?.isDuotoneTheme == true;
+    
+    final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            leading: const Icon(Icons.check_circle),
-            title: const Text('Mark All as Learned'),
-            onTap: () {
-              Navigator.pop(context);
-              _showMarkAllAsLearnedDialog();
-            },
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Set'),
+        content: Text('Delete "$_currentSetName"? This cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: isDuotone
+                  ? duotone!.duotoneColor2
+                  : Colors.red,
+            ),
+            child: const Text('Delete'),
           ),
         ],
       ),
     );
+    
+    if (confirmed == true && mounted) {
+      // Delete the set
+      final setManager = CharacterSetManager();
+      final set = setManager.getSet(widget.setId ?? '');
+      if (set != null) {
+        // Delete from storage
+        final prefs = await SharedPreferences.getInstance();
+        final customSetsString = prefs.getString('custom_character_sets');
+        
+        if (customSetsString != null) {
+          final List<dynamic> customSetsJson = jsonDecode(customSetsString);
+          customSetsJson.removeWhere((setJson) => setJson['id'] == widget.setId);
+          await prefs.setString('custom_character_sets', jsonEncode(customSetsJson));
+        }
+        
+        // Pop back to sets page
+        if (mounted) {
+          Navigator.pop(context);
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Deleted "$_currentSetName"'),
+              backgroundColor: isDuotone ? duotone!.duotoneColor2 : null,
+            ),
+          );
+        }
+      }
+    }
   }
   
   Future<void> _showMarkAllAsLearnedDialog() async {
+    final duotone = Theme.of(context).extension<DuotoneThemeExtension>();
+    final isDuotone = duotone?.isDuotoneTheme == true;
+    
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -955,7 +1014,9 @@ class _CharacterListPageState extends State<CharacterListPage> {
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.primary,
+              backgroundColor: isDuotone
+                  ? duotone!.duotoneColor2
+                  : Theme.of(context).colorScheme.primary,
             ),
             child: const Text('Mark All as Learned'),
           ),
@@ -963,7 +1024,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
       ),
     );
     
-    if (confirmed == true) {
+    if (confirmed == true && mounted) {
       // Show progress dialog
       showDialog(
         context: context,
@@ -988,9 +1049,9 @@ class _CharacterListPageState extends State<CharacterListPage> {
         await _loadLearnedStatus();
         
         // Close progress dialog
-        Navigator.pop(context);
-        
         if (mounted) {
+          Navigator.pop(context);
+          
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Marked all items in "$_currentSetName" as learned'),
@@ -999,7 +1060,9 @@ class _CharacterListPageState extends State<CharacterListPage> {
         }
       } catch (e) {
         // Close progress dialog on error
-        Navigator.pop(context);
+        if (mounted) {
+          Navigator.pop(context);
+        }
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

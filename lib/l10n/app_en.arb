@@ -1,0 +1,110 @@
+{
+  "appTitle": "Zishu",
+  "@appTitle": {
+    "description": "The title of the application"
+  },
+  "practice": "Practice",
+  "@practice": {
+    "description": "Practice button text"
+  },
+  "sets": "Sets",
+  "@sets": {
+    "description": "Sets tab text"
+  },
+  "statistics": "Statistics",
+  "@statistics": {
+    "description": "Statistics tab text"
+  },
+  "settings": "Settings",
+  "@settings": {
+    "description": "Settings tab text"
+  },
+  "importFromPhoto": "Import from Photo",
+  "@importFromPhoto": {
+    "description": "Import from photo button text"
+  },
+  "scanVocabulary": "Scan Vocabulary",
+  "@scanVocabulary": {
+    "description": "Scan vocabulary text"
+  },
+  "selectPhotos": "Select Photos",
+  "@selectPhotos": {
+    "description": "Select photos button text"
+  },
+  "fromCamera": "From Camera",
+  "@fromCamera": {
+    "description": "From camera button text"
+  },
+  "fromGallery": "From Gallery",
+  "@fromGallery": {
+    "description": "From gallery button text"
+  },
+  "practiceGroupSize": "Practice Group Size",
+  "@practiceGroupSize": {
+    "description": "Practice group size label"
+  },
+  "practiceGroupDescription": "How many vocabulary terms will be practiced together in each study session",
+  "@practiceGroupDescription": {
+    "description": "Practice group size description"
+  },
+  "practiceGroupExample": "Example: 10 = practice 10 words at a time",
+  "@practiceGroupExample": {
+    "description": "Practice group size example"
+  },
+  "chinese": "Chinese",
+  "@chinese": {
+    "description": "Chinese column header"
+  },
+  "pinyin": "Pinyin",
+  "@pinyin": {
+    "description": "Pinyin column header"
+  },
+  "english": "English",
+  "@english": {
+    "description": "English column header"
+  },
+  "saveSet": "Save Set",
+  "@saveSet": {
+    "description": "Save set button text"
+  },
+  "characterSetName": "Character Set Name",
+  "@characterSetName": {
+    "description": "Character set name input label"
+  },
+  "language": "Language",
+  "@language": {
+    "description": "Language setting label"
+  },
+  "selectLanguage": "Select Language",
+  "@selectLanguage": {
+    "description": "Language selection dialog title"
+  },
+  "englishLanguage": "English",
+  "@englishLanguage": {
+    "description": "English language option"
+  },
+  "chineseLanguage": "中文",
+  "@chineseLanguage": {
+    "description": "Chinese language option"
+  },
+  "welcomeTitle": "Welcome to Zishu",
+  "@welcomeTitle": {
+    "description": "Welcome dialog title"
+  },
+  "welcomeMessage": "Please select your preferred language:",
+  "@welcomeMessage": {
+    "description": "Welcome dialog message"
+  },
+  "processing": "Processing...",
+  "@processing": {
+    "description": "Processing text"
+  },
+  "ocrProcessing": "Processing image with OCR...",
+  "@ocrProcessing": {
+    "description": "OCR processing text"
+  },
+  "downloadingModel": "Downloading language model... This may take a moment.",
+  "@downloadingModel": {
+    "description": "Model download message"
+  }
+}

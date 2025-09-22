@@ -227,6 +227,31 @@ class CharacterSetManager {
     return set;
   }
   
+  // Update an existing custom set
+  Future<CharacterSet> updateCustomSet(CharacterSet updatedSet) async {
+    // Filter out phrases longer than 8 characters
+    final filteredCharacters = updatedSet.characters.where((item) => item.length <= 8).toList();
+    
+    final set = CharacterSet(
+      id: updatedSet.id,
+      name: updatedSet.name,
+      characters: filteredCharacters,
+      description: updatedSet.description,
+      isWordSet: updatedSet.isWordSet,
+      color: updatedSet.color,
+      source: updatedSet.source,
+      definitions: updatedSet.definitions,
+      groupSize: updatedSet.groupSize,
+    );
+    
+    _userSets[updatedSet.id] = set;
+    
+    // Save to local storage
+    await _saveCustomSetsToStorage();
+    
+    return set;
+  }
+  
   // Load a character set from a string (e.g., "一二三四五" or "我,你,出生,的")
   Future<CharacterSet> createSetFromString(String input, String name) async {
     // Replace Chinese comma with English comma for consistent parsing
