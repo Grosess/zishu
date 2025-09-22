@@ -423,7 +423,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       case 'lightpink':
         return const Color(0xFFFFC1CC); // Light pink
       case 'hotpink':
-        return const Color(0xFFFF1493); // True hot pink (DeepPink)
+        return const Color(0xFFE91E63); // Material Pink 500
       case 'black':
         return Colors.black;
       case 'white':
@@ -476,7 +476,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
             break;
           case 'lightpink':
           case 'hotpink':
-            backgroundColor = const Color(0xFF0F0A0D); // Very dark pink tint
+            backgroundColor = const Color(0xFF0D0809); // Very dark with subtle pink tint
             break;
           case 'gold':
             backgroundColor = const Color(0xFF0F0D0A); // Very dark gold tint
@@ -506,7 +506,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         backgroundColor = const Color(0xFFFFC1CC); // Light pink
         break;
       case 'hotpink':
-        backgroundColor = const Color(0xFFFF1493); // True hot pink (DeepPink)
+        backgroundColor = const Color(0xFFE91E63); // Material Pink 500
         break;
       case 'gold':
         backgroundColor = const Color(0xFFFF8F00);
@@ -555,10 +555,10 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
           : const Color(0xFFFFB3C1); // Light pink for white background
         break;
       case 'hotpink':
-        // Hot pink - use different shades for contrast
+        // Pink - use softer Material Design shades for better visual comfort
         foregroundColor = (background == 'black' || background == 'hotpink' || background == 'purple') 
-          ? const Color(0xFFFF69B4) // Lighter hot pink for dark backgrounds
-          : const Color(0xFFFF1493); // True hot pink (DeepPink) for white background
+          ? const Color(0xFFF48FB1) // Light pink for dark backgrounds
+          : const Color(0xFFE91E63); // Material Pink 500 for white background
         break;
       case 'gold':
         foregroundColor = (background == 'black' || background == 'gold') 

@@ -220,123 +220,6 @@ class _SetEditPageState extends State<SetEditPage> with SingleTickerProviderStat
     return shouldDiscard ?? false;
   }
   
-  void _showSetMenu() {
-    final isDuotone = Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true;
-    final duotoneExt = Theme.of(context).extension<DuotoneThemeExtension>();
-    
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => Padding(
-        padding: const EdgeInsets.only(bottom: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: Icon(
-                Icons.check_circle,
-                color: isDuotone ? duotoneExt?.duotoneColor2 : null,
-              ),
-              title: Text(
-                'Mark All as Learned',
-                style: TextStyle(
-                  color: isDuotone ? duotoneExt?.duotoneColor2 : null,
-                ),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                _showMarkAllAsLearnedDialog();
-              },
-            ),
-            if (_hasUnsavedChanges) ...[
-              Divider(
-                height: 1,
-                color: isDuotone 
-                    ? duotoneExt?.duotoneColor2?.withValues(alpha: 0.2)
-                    : null,
-              ),
-              ListTile(
-                leading: Icon(
-                  Icons.save,
-                  color: isDuotone ? duotoneExt?.duotoneColor2 : Colors.green,
-                ),
-                title: Text(
-                  'Save Changes',
-                  style: TextStyle(
-                    color: isDuotone ? duotoneExt?.duotoneColor2 : Colors.green,
-                  ),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  _saveChanges();
-                },
-              ),
-            ],
-            Divider(
-              height: 1,
-              color: isDuotone 
-                  ? duotoneExt?.duotoneColor2?.withValues(alpha: 0.2)
-                  : null,
-            ),
-            ListTile(
-              leading: Icon(
-                Icons.delete,
-                color: isDuotone ? duotoneExt?.duotoneColor2 : Colors.red,
-              ),
-              title: Text(
-                'Delete Set',
-                style: TextStyle(
-                  color: isDuotone ? duotoneExt?.duotoneColor2 : Colors.red,
-                ),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                _showDeleteDialog();
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-  
-  Future<void> _showMarkAllAsLearnedDialog() async {
-    final isDuotone = Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true;
-    final duotoneExt = Theme.of(context).extension<DuotoneThemeExtension>();
-    
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Mark All as Learned'),
-        content: Text('Mark all ${_items.length} items as learned?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: FilledButton.styleFrom(
-              backgroundColor: isDuotone 
-                  ? duotoneExt?.duotoneColor2
-                  : Theme.of(context).colorScheme.primary,
-            ),
-            child: const Text('Mark as Learned'),
-          ),
-        ],
-      ),
-    );
-    
-    if (confirmed == true && mounted) {
-      // Implementation would go here
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Feature coming soon'),
-          backgroundColor: isDuotone ? duotoneExt?.duotoneColor2 : null,
-        ),
-      );
-    }
-  }
-  
   Future<void> _showDeleteDialog() async {
     final isDuotone = Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true;
     final duotoneExt = Theme.of(context).extension<DuotoneThemeExtension>();
@@ -448,13 +331,6 @@ class _SetEditPageState extends State<SetEditPage> with SingleTickerProviderStat
               ? Theme.of(context).scaffoldBackgroundColor
               : Theme.of(context).colorScheme.surface,
           actions: [
-            IconButton(
-              icon: Icon(
-                Icons.more_vert,
-                color: isDuotone ? duotoneExt?.duotoneColor2 : null,
-              ),
-              onPressed: _showSetMenu,
-            ),
             if (_hasUnsavedChanges)
               TextButton(
                 onPressed: _isLoading ? null : _saveChanges,
@@ -550,23 +426,6 @@ class _SetEditPageState extends State<SetEditPage> with SingleTickerProviderStat
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     ),
                   ),
-                ] else ...[
-                  OutlinedButton(
-                    onPressed: () {
-                      setState(() {
-                        _isSelectionMode = true;
-                      });
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: isDuotone ? duotoneExt?.duotoneColor2 : null,
-                      side: BorderSide(
-                        color: isDuotone 
-                            ? duotoneExt?.duotoneColor2?.withValues(alpha: 0.5) ?? Colors.grey
-                            : Theme.of(context).colorScheme.outline,
-                      ),
-                    ),
-                    child: const Text('Select'),
-                  ),
                 ],
                 // View toggle button for large sets
                 if (_items.length > 15)
@@ -615,27 +474,13 @@ class _SetEditPageState extends State<SetEditPage> with SingleTickerProviderStat
                       
                       return GestureDetector(
                         onTap: () {
-                          if (_isSelectionMode) {
-                            setState(() {
-                              if (isSelected) {
-                                _selectedIndices.remove(index);
-                                if (_selectedIndices.isEmpty) {
-                                  _isSelectionMode = false;
-                                }
-                              } else {
-                                _selectedIndices.add(index);
-                              }
-                            });
-                          }
-                        },
-                        onLongPress: () {
-                          if (!_isSelectionMode) {
-                            HapticFeedback.lightImpact();
-                            setState(() {
-                              _isSelectionMode = true;
+                          setState(() {
+                            if (isSelected) {
+                              _selectedIndices.remove(index);
+                            } else {
                               _selectedIndices.add(index);
-                            });
-                          }
+                            }
+                          });
                         },
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
@@ -661,77 +506,58 @@ class _SetEditPageState extends State<SetEditPage> with SingleTickerProviderStat
                           ),
                           child: Stack(
                             children: [
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      item,
-                                      style: TextStyle(
-                                        fontSize: useCompactView 
-                                            ? (item.length == 1 ? 28 : 20)
-                                            : (item.length == 1 ? 36 : (item.length <= 3 ? 24 : 18)),
-                                        fontWeight: FontWeight.w600,
-                                        color: isDuotone 
-                                            ? duotoneExt?.duotoneColor2
-                                            : Theme.of(context).colorScheme.onSurface,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                              Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    item,
+                                    style: TextStyle(
+                                      fontSize: useCompactView 
+                                          ? (item.length == 1 ? 24 : 18)
+                                          : (item.length == 1 ? 32 : (item.length <= 3 ? 22 : 16)),
+                                      fontWeight: FontWeight.w500,
+                                      color: isDuotone 
+                                          ? duotoneExt?.duotoneColor2
+                                          : Theme.of(context).colorScheme.onSurface,
                                     ),
-                                    if (!useCompactView && widget.set.definitions?[item] != null) ...[
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        widget.set.definitions![item]!,
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: isDuotone 
-                                              ? duotoneExt?.duotoneColor2?.withValues(alpha: 0.7)
-                                              : Theme.of(context).colorScheme.onSurfaceVariant,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                              // Selection indicator - always visible in selection mode
-                              if (_isSelectionMode)
-                                Positioned(
-                                  top: 8,
-                                  right: 8,
-                                  child: Container(
-                                    width: 24,
-                                    height: 24,
-                                    decoration: BoxDecoration(
-                                      color: isSelected
-                                          ? (isDuotone 
-                                              ? duotoneExt?.duotoneColor2
-                                              : Theme.of(context).colorScheme.primary)
-                                          : Colors.transparent,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: isDuotone 
-                                            ? duotoneExt?.duotoneColor2 ?? Colors.pink
-                                            : Theme.of(context).colorScheme.primary,
-                                        width: 2,
-                                      ),
-                                    ),
-                                    child: isSelected
-                                        ? Icon(
-                                            Icons.check,
-                                            color: isDuotone 
-                                                ? Theme.of(context).scaffoldBackgroundColor
-                                                : Colors.white,
-                                            size: 16,
-                                          )
-                                        : null,
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
+                              ),
+                              // Selection indicator - always visible
+                              Positioned(
+                                top: 6,
+                                right: 6,
+                                child: Container(
+                                  width: 20,
+                                  height: 20,
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? (isDuotone 
+                                            ? duotoneExt?.duotoneColor2
+                                            : Theme.of(context).colorScheme.primary)
+                                        : Colors.transparent,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: isDuotone 
+                                          ? duotoneExt?.duotoneColor2?.withValues(alpha: 0.8) ?? Colors.pink
+                                          : Theme.of(context).colorScheme.primary,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  child: isSelected
+                                      ? Icon(
+                                          Icons.check,
+                                          color: isDuotone 
+                                              ? Theme.of(context).scaffoldBackgroundColor
+                                              : Colors.white,
+                                          size: 14,
+                                        )
+                                      : null,
+                                ),
+                              ),
                             ],
                           ),
                         ),
