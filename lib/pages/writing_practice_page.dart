@@ -1832,7 +1832,9 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       // For words, only mark as learned if ALL characters were completed correctly
       if (currentItem.length > 1) {
         // Check if all characters in the word were correct
-        final allCharactersCorrect = _wordCharacterResults.values.isEmpty || 
+        // Don't mark as learned if we haven't completed all characters
+        final hasCompletedAllCharacters = _wordCharacterResults.length >= currentItem.length;
+        final allCharactersCorrect = hasCompletedAllCharacters && 
                                       _wordCharacterResults.values.every((result) => result);
         
         if (allCharactersCorrect) {

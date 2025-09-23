@@ -217,10 +217,10 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                 ],
-                const Padding(
-                  padding: EdgeInsets.all(16),
+                Padding(
+                  padding: const EdgeInsets.all(16),
                   child: Text(
-                    'Practice Settings',
+                    AppLocalizations.of(context)!.practiceSettings,
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -422,8 +422,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                   // Swap Colors Button
                   ListTile(
-                    title: const Text('Swap Colors'),
-                    subtitle: Text('Swap background and accent colors'),
+                    title: Text(AppLocalizations.of(context)!.swapColors),
+                    subtitle: Text(AppLocalizations.of(context)!.swapColorsDesc),
                     leading: Icon(Icons.swap_vert, color: Theme.of(context).colorScheme.primary),
                     trailing: FilledButton.icon(
                       onPressed: () async {
@@ -460,10 +460,10 @@ class _SettingsPageState extends State<SettingsPage> {
                 ],
                 
                 // Practice Settings
-                const Padding(
-                  padding: EdgeInsets.all(16),
+                Padding(
+                  padding: const EdgeInsets.all(16),
                   child: Text(
-                    'Practice Settings',
+                    AppLocalizations.of(context)!.practiceSettings,
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -471,8 +471,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ),
                 SwitchListTile(
-                  title: const Text('Handwriting Mode'),
-                  subtitle: const Text('Draw freely without stroke guidance, then self-assess'),
+                  title: Text(AppLocalizations.of(context)!.handwritingMode),
+                  subtitle: Text(AppLocalizations.of(context)!.handwritingModeDesc),
                   value: _handwritingMode,
                   onChanged: (value) {
                     HapticService().selectionClick();
@@ -483,8 +483,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   },
                 ),
                 SwitchListTile(
-                  title: const Text('Show Grid'),
-                  subtitle: const Text('Display grid lines in the practice area'),
+                  title: Text(AppLocalizations.of(context)!.showGrid),
+                  subtitle: Text(AppLocalizations.of(context)!.showGridDesc),
                   value: _showGrid,
                   onChanged: (value) {
                     HapticService().selectionClick();
@@ -495,8 +495,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   },
                 ),
                 SwitchListTile(
-                  title: const Text('Show Guide by Default'),
-                  subtitle: const Text('Show character outline in learning mode'),
+                  title: Text(AppLocalizations.of(context)!.showGuideByDefault),
+                  subtitle: Text(AppLocalizations.of(context)!.showGuideDesc),
                   value: _showGuide,
                   onChanged: (value) {
                     HapticService().selectionClick();
@@ -566,8 +566,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   },
                 ),
                 SwitchListTile(
-                  title: const Text('Auto-Pronounce Chinese'),
-                  subtitle: const Text('Automatically speak characters and words'),
+                  title: Text(AppLocalizations.of(context)!.autoPronounce),
+                  subtitle: Text(AppLocalizations.of(context)!.autoPronounceDesc),
                   value: _autoPronounceChinese,
                   onChanged: (value) {
                     HapticService().selectionClick();
@@ -580,8 +580,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 
                 // Daily Learn Goal Setting
                 ListTile(
-                  title: const Text('Cards Per Group'),
-                  subtitle: Text('$_dailyLearnGoal characters per group'),
+                  title: Text(AppLocalizations.of(context)!.cardsPerGroup),
+                  subtitle: Text(AppLocalizations.of(context)!.cardsPerGroupDesc(_dailyLearnGoal)),
                   trailing: SizedBox(
                     width: 200,
                     child: Slider(
@@ -604,7 +604,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 const Padding(
                   padding: EdgeInsets.all(16),
                   child: Text(
-                    'Stroke Appearance',
+                    AppLocalizations.of(context)!.strokeAppearance,
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -687,14 +687,14 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 ListTile(
                   enabled: _themeMode != 'duotone',
-                  title: Text('Stroke Type',
+                  title: Text(AppLocalizations.of(context)!.strokeType,
                     style: TextStyle(
                       color: _themeMode == 'duotone'
                         ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5)
                         : null,
                     ),
                   ),
-                  subtitle: Text(_themeMode == 'duotone' ? 'Classic (Fixed)' : _getStrokeTypeLabel(_strokeType)),
+                  subtitle: Text(_themeMode == 'duotone' ? AppLocalizations.of(context)!.classicFixed : _getStrokeTypeLabel(_strokeType)),
                   trailing: Icon(Icons.chevron_right,
                     color: _themeMode == 'duotone'
                       ? Theme.of(context).colorScheme.onSurface.withOpacity(0.3)
@@ -704,7 +704,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
-                        title: const Text('Choose Stroke Type'),
+                        title: Text(AppLocalizations.of(context)!.chooseStrokeType),
                         content: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -771,8 +771,8 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               ListTile(
                 leading: const Icon(Icons.attribution),
-                title: const Text('Attributions'),
-                subtitle: const Text('Third-party licenses and credits'),
+                title: Text(AppLocalizations.of(context)!.attributions),
+                subtitle: Text(AppLocalizations.of(context)!.attributionsDesc),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
                   Navigator.push(

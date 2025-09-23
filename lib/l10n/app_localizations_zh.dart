@@ -167,6 +167,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get theme => '主题';
 
   @override
+  String get duotone => '双色';
+
+  @override
+  String get classicFixed => '经典（固定）';
+
+  @override
+  String get chooseStrokeType => '选择笔画类型';
+
+  @override
   String get language => '语言';
 
   @override
@@ -504,4 +513,72 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get themeColor => '主题颜色';
+
+  @override
+  String get practiceSettings => '练习设置';
+
+  @override
+  String get handwritingMode => '手写模式';
+
+  @override
+  String get handwritingModeDesc => '自由绘制无笔画引导，然后自我评估';
+
+  @override
+  String get showGrid => '显示网格';
+
+  @override
+  String get showGridDesc => '在练习区域显示网格线';
+
+  @override
+  String get showGuideByDefault => '默认显示引导';
+
+  @override
+  String get showGuideDesc => '在学习模式中显示字符轮廓';
+
+  @override
+  String get strokeWidth => '笔画宽度';
+
+  @override
+  String get strokeColor => '笔画颜色';
+
+  @override
+  String get strokeType => '笔画类型';
+
+  @override
+  String get strokeAppearance => '笔画外观';
+
+  @override
+  String get autoPronounce => '自动朗读中文';
+
+  @override
+  String get autoPronounceDesc => '自动朗读字符和词语';
+
+  @override
+  String get cardsPerGroup => '每组卡片数';
+
+  @override
+  String cardsPerGroupDesc(int count) {
+    return '每组$count个字符';
+  }
+
+  @override
+  String get attributions => '归属';
+
+  @override
+  String get attributionsDesc => '第三方许可和致谢';
+
+  @override
+  String get swapColors => '交换颜色';
+
+  @override
+  String get swapColorsDesc => '交换背景色和主题色';
+
+  @override
+  String get hintColor => '提示颜色';
+
+  @override
+  String get dailyGoal => '每日目标';
+
+  @override
+  String get charactersPerDay => '个字符/天';
 }

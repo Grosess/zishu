@@ -169,6 +169,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get theme => 'Theme';
 
   @override
+  String get duotone => 'Duotone';
+
+  @override
+  String get classicFixed => 'Classic (Fixed)';
+
+  @override
+  String get chooseStrokeType => 'Choose Stroke Type';
+
+  @override
   String get language => 'Language';
 
   @override
@@ -509,4 +518,73 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get themeColor => 'Theme Color';
+
+  @override
+  String get practiceSettings => 'Practice Settings';
+
+  @override
+  String get handwritingMode => 'Handwriting Mode';
+
+  @override
+  String get handwritingModeDesc =>
+      'Draw freely without stroke guidance, then self-assess';
+
+  @override
+  String get showGrid => 'Show Grid';
+
+  @override
+  String get showGridDesc => 'Display grid lines in the practice area';
+
+  @override
+  String get showGuideByDefault => 'Show Guide by Default';
+
+  @override
+  String get showGuideDesc => 'Show character outline in learning mode';
+
+  @override
+  String get strokeWidth => 'Stroke Width';
+
+  @override
+  String get strokeColor => 'Stroke Color';
+
+  @override
+  String get strokeType => 'Stroke Type';
+
+  @override
+  String get strokeAppearance => 'Stroke Appearance';
+
+  @override
+  String get autoPronounce => 'Auto-Pronounce Chinese';
+
+  @override
+  String get autoPronounceDesc => 'Automatically speak characters and words';
+
+  @override
+  String get cardsPerGroup => 'Cards Per Group';
+
+  @override
+  String cardsPerGroupDesc(int count) {
+    return '$count characters per group';
+  }
+
+  @override
+  String get attributions => 'Attributions';
+
+  @override
+  String get attributionsDesc => 'Third-party licenses and credits';
+
+  @override
+  String get swapColors => 'Swap Colors';
+
+  @override
+  String get swapColorsDesc => 'Swap background and accent colors';
+
+  @override
+  String get hintColor => 'Hint Color';
+
+  @override
+  String get dailyGoal => 'Daily Goal';
+
+  @override
+  String get charactersPerDay => 'characters per day';
 }

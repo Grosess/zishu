@@ -91,6 +91,9 @@
   "importFromText": "Import from text",
   
   "theme": "Theme",
+  "duotone": "Duotone",
+  "classicFixed": "Classic (Fixed)",
+  "chooseStrokeType": "Choose Stroke Type",
   "language": "Language",
   "selectLanguage": "Select Language",
   "englishLanguage": "English",
@@ -259,5 +262,32 @@
   "lightPink": "Light Pink",
   "hotPink": "Hot Pink",
   "blueGreen": "Blue Green",
-  "themeColor": "Theme Color"
+  "themeColor": "Theme Color",
+  "practiceSettings": "Practice Settings",
+  "handwritingMode": "Handwriting Mode",
+  "handwritingModeDesc": "Draw freely without stroke guidance, then self-assess",
+  "showGrid": "Show Grid",
+  "showGridDesc": "Display grid lines in the practice area",
+  "showGuideByDefault": "Show Guide by Default",
+  "showGuideDesc": "Show character outline in learning mode",
+  "strokeWidth": "Stroke Width",
+  "strokeColor": "Stroke Color",
+  "strokeType": "Stroke Type",
+  "strokeAppearance": "Stroke Appearance",
+  "autoPronounce": "Auto-Pronounce Chinese",
+  "autoPronounceDesc": "Automatically speak characters and words",
+  "cardsPerGroup": "Cards Per Group",
+  "cardsPerGroupDesc": "{count} characters per group",
+  "@cardsPerGroupDesc": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "attributions": "Attributions",
+  "attributionsDesc": "Third-party licenses and credits",
+  "swapColors": "Swap Colors",
+  "swapColorsDesc": "Swap background and accent colors",
+  "hintColor": "Hint Color",
+  "dailyGoal": "Daily Goal",
+  "charactersPerDay": "characters per day"
 }

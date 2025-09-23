@@ -398,6 +398,24 @@ abstract class AppLocalizations {
   /// **'Theme'**
   String get theme;
 
+  /// No description provided for @duotone.
+  ///
+  /// In en, this message translates to:
+  /// **'Duotone'**
+  String get duotone;
+
+  /// No description provided for @classicFixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Classic (Fixed)'**
+  String get classicFixed;
+
+  /// No description provided for @chooseStrokeType.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Stroke Type'**
+  String get chooseStrokeType;
+
   /// No description provided for @language.
   ///
   /// In en, this message translates to:
@@ -1015,6 +1033,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Theme Color'**
   String get themeColor;
+
+  /// No description provided for @practiceSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Practice Settings'**
+  String get practiceSettings;
+
+  /// No description provided for @handwritingMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Handwriting Mode'**
+  String get handwritingMode;
+
+  /// No description provided for @handwritingModeDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Draw freely without stroke guidance, then self-assess'**
+  String get handwritingModeDesc;
+
+  /// No description provided for @showGrid.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Grid'**
+  String get showGrid;
+
+  /// No description provided for @showGridDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Display grid lines in the practice area'**
+  String get showGridDesc;
+
+  /// No description provided for @showGuideByDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Guide by Default'**
+  String get showGuideByDefault;
+
+  /// No description provided for @showGuideDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Show character outline in learning mode'**
+  String get showGuideDesc;
+
+  /// No description provided for @strokeWidth.
+  ///
+  /// In en, this message translates to:
+  /// **'Stroke Width'**
+  String get strokeWidth;
+
+  /// No description provided for @strokeColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Stroke Color'**
+  String get strokeColor;
+
+  /// No description provided for @strokeType.
+  ///
+  /// In en, this message translates to:
+  /// **'Stroke Type'**
+  String get strokeType;
+
+  /// No description provided for @strokeAppearance.
+  ///
+  /// In en, this message translates to:
+  /// **'Stroke Appearance'**
+  String get strokeAppearance;
+
+  /// No description provided for @autoPronounce.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-Pronounce Chinese'**
+  String get autoPronounce;
+
+  /// No description provided for @autoPronounceDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatically speak characters and words'**
+  String get autoPronounceDesc;
+
+  /// No description provided for @cardsPerGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Cards Per Group'**
+  String get cardsPerGroup;
+
+  /// No description provided for @cardsPerGroupDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} characters per group'**
+  String cardsPerGroupDesc(int count);
+
+  /// No description provided for @attributions.
+  ///
+  /// In en, this message translates to:
+  /// **'Attributions'**
+  String get attributions;
+
+  /// No description provided for @attributionsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Third-party licenses and credits'**
+  String get attributionsDesc;
+
+  /// No description provided for @swapColors.
+  ///
+  /// In en, this message translates to:
+  /// **'Swap Colors'**
+  String get swapColors;
+
+  /// No description provided for @swapColorsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Swap background and accent colors'**
+  String get swapColorsDesc;
+
+  /// No description provided for @hintColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Hint Color'**
+  String get hintColor;
+
+  /// No description provided for @dailyGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily Goal'**
+  String get dailyGoal;
+
+  /// No description provided for @charactersPerDay.
+  ///
+  /// In en, this message translates to:
+  /// **'characters per day'**
+  String get charactersPerDay;
 }
 
 class _AppLocalizationsDelegate

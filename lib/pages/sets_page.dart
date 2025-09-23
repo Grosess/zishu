@@ -1019,32 +1019,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Text(set.name),
-                    const SizedBox(width: 8),
-                    InkWell(
-                      onTap: () {
-                        Navigator.pop(context);
-                        _showMarkAllAsLearnedDialog(set);
-                      },
-                      borderRadius: BorderRadius.circular(20),
-                      splashColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                          ? (Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.2)
-                          : null,
-                      highlightColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                          ? (Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.1)
-                          : null,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        child: const Icon(
-                          Icons.more_vert,
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                Text(set.name),
                 const SizedBox(height: 4),
                 Text(
                   '${set.characters.length} ${AppLocalizations.of(context)!.cards}',
