@@ -284,58 +284,9 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
       ),
     );
     
-    // Get all character sets to find multi-character words
-    final characterSetManager = CharacterSetManager();
-    await characterSetManager.loadPredefinedSets();
-    final allSets = characterSetManager.getAllSets();
-    
-    // Collect all multi-character words from sets
-    final allMultiCharWords = <String>{};
-    print('Loading multi-char words from ${allSets.length} sets');
-    for (final set in allSets) {
-      print('Checking set ${set.name} with ${set.characters.length} items, isWordSet: ${set.isWordSet}');
-      if (set.characters.isNotEmpty) {
-        print('First 3 items: ${set.characters.take(3).toList()}');
-      }
-      for (final item in set.characters) {
-        // Extract term (remove annotation)
-        final parenIndex = item.indexOf('(');
-        final term = parenIndex > 0 ? item.substring(0, parenIndex).trim() : item.trim();
-        if (term.length > 1) {
-          allMultiCharWords.add(term);
-          if (term == '医生') {
-            print('Found 医生 in set: ${set.name}');
-          }
-        }
-      }
-    }
-    print('Total multi-char words in all sets: ${allMultiCharWords.length}');
-    print('医生 is in word list: ${allMultiCharWords.contains('医生')}');
-    
-    // Log imported characters
-    print('Imported characters (${characters.length}): ${characters.toList().take(20).join(', ')}...');
-    print('Contains 医: ${characters.contains('医')}');
-    print('Contains 生: ${characters.contains('生')}');
-    
-    // Check which multi-character words can be formed from the imported characters
-    for (final word in allMultiCharWords) {
-      bool canFormWord = true;
-      for (int i = 0; i < word.length; i++) {
-        if (!characters.contains(word[i])) {
-          canFormWord = false;
-          break;
-        }
-      }
-      if (canFormWord) {
-        words.add(word);
-        print('Found multi-char word to mark as learned: $word');
-      } else if (word == '医生') {
-        print('Cannot form 医生 - missing characters');
-        for (int i = 0; i < word.length; i++) {
-          print('  Character ${word[i]} present: ${characters.contains(word[i])}');
-        }
-      }
-    }
+    // Only mark words as learned if they were explicitly imported
+    // Do NOT infer words from component characters
+    // Words must be explicitly in the import text to be marked as learned
     
     print('Total multi-char words found: ${words.length}');
     print('Sample words: ${words.take(10).toList()}');
@@ -344,18 +295,13 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
     final charactersList = characters.toList();
     await _learningService.markCharactersAsLearned(charactersList, updateTodayProgress: false);
     
-    // Mark all multi-character words as learned
-    for (final word in words) {
-      print('Marking word as learned: $word');
-      await _learningService.markWordAsLearned(word);
-      
-      // Verify it was saved
-      final verifyList = await _learningService.getLearnedWords();
-      print('Verified $word is in learned words: ${verifyList.contains(word)}');
-    }
+    // Don't mark any words as learned during character import
+    // Words should only be marked as learned when explicitly imported as words
+    // Remove automatic word inference logic
+    print('Skipping word marking - words must be explicitly imported');
     
     final importedCount = charactersList.length;
-    final wordsCount = words.length;
+    final wordsCount = 0; // No longer auto-marking words
     
     // Close progress dialog
     Navigator.pop(context);
@@ -629,69 +575,20 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
           ),
         );
         
-        // Get all character sets to find multi-character words
-        final characterSetManager = CharacterSetManager();
-        await characterSetManager.loadPredefinedSets();
-        final allSets = characterSetManager.getAllSets();
-        
-        // Collect all multi-character words from sets
-        final allMultiCharWords = <String>{};
-        print('CSV import - Loading multi-char words from ${allSets.length} sets');
-        for (final set in allSets) {
-          print('CSV import - Checking set ${set.name} with ${set.characters.length} items, isWordSet: ${set.isWordSet}');
-          if (set.characters.isNotEmpty) {
-            print('CSV import - First 3 items: ${set.characters.take(3).toList()}');
-          }
-          for (final item in set.characters) {
-            // Extract term (remove annotation)
-            final parenIndex = item.indexOf('(');
-            final term = parenIndex > 0 ? item.substring(0, parenIndex).trim() : item.trim();
-            if (term.length > 1) {
-              allMultiCharWords.add(term);
-              if (term == '医生') {
-                print('CSV import - Found 医生 in set: ${set.name}');
-              }
-            }
-          }
-        }
-        print('CSV import - Total multi-char words in all sets: ${allMultiCharWords.length}');
-        print('CSV import - 医生 is in word list: ${allMultiCharWords.contains('医生')}');
-        
-        // Check which multi-character words can be formed from the imported characters
-        final words = <String>{};
-        for (final word in allMultiCharWords) {
-          bool canFormWord = true;
-          for (int i = 0; i < word.length; i++) {
-            if (!characters.contains(word[i])) {
-              canFormWord = false;
-              break;
-            }
-          }
-          if (canFormWord) {
-            words.add(word);
-            print('CSV import - Found multi-char word to mark as learned: $word');
-          }
-        }
-        
-        print('CSV import - Total multi-char words found: ${words.length}');
-        print('CSV import - Sample words: ${words.take(10).toList()}');
+        // CSV import should only import characters, not infer words
+        // Words must be explicitly imported to be marked as learned
+        print('CSV import - Importing characters only, not inferring words');
         
         // Mark all characters as learned in batch
         final charactersList = characters.toList();
         await _learningService.markCharactersAsLearned(charactersList, updateTodayProgress: false);
         
-        // Mark all multi-character words as learned
-        for (final word in words) {
-          print('CSV import - Marking word as learned: $word');
-          await _learningService.markWordAsLearned(word);
-          
-          // Verify it was saved
-          final verifyList = await _learningService.getLearnedWords();
-          print('CSV import - Verified $word is in learned words: ${verifyList.contains(word)}');
-        }
+        // Don't mark any words as learned during CSV import
+        // Words should only be marked when explicitly imported
+        print('CSV import - Skipping word marking');
         
         final importedCount = charactersList.length;
-        final wordsCount = words.length;
+        final wordsCount = 0; // No automatic word inference
         
         // Close progress dialog
         Navigator.pop(context);
@@ -723,11 +620,9 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(wordsCount > 0
-                ? 'Imported $importedCount characters and $wordsCount multi-character words from CSV'
-                : importedCount == 1
-                    ? 'Imported 1 new character from CSV'
-                    : 'Imported $importedCount new characters from CSV'),
+            content: Text(importedCount == 1
+                ? 'Imported 1 new character from CSV'
+                : 'Imported $importedCount new characters from CSV'),
           ),
         );
       }

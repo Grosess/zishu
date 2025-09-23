@@ -339,14 +339,14 @@ class _SettingsPageState extends State<SettingsPage> {
                           content: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              _buildAccentColorOption('Blue', 'blue'),
-                              _buildAccentColorOption('Red', 'red'),
-                              _buildAccentColorOption('Green', 'green'),
-                              _buildAccentColorOption('Purple', 'purple'),
-                              _buildAccentColorOption('Orange', 'orange'),
-                              _buildAccentColorOption('Teal', 'teal'),
-                              _buildAccentColorOption('Light Pink', 'lightpink'),
-                              _buildAccentColorOption('Hot Pink', 'hotpink'),
+                              _buildAccentColorOption(AppLocalizations.of(context)!.blue, 'blue'),
+                              _buildAccentColorOption(AppLocalizations.of(context)!.red, 'red'),
+                              _buildAccentColorOption(AppLocalizations.of(context)!.green, 'green'),
+                              _buildAccentColorOption(AppLocalizations.of(context)!.purple, 'purple'),
+                              _buildAccentColorOption(AppLocalizations.of(context)!.orange, 'orange'),
+                              _buildAccentColorOption(AppLocalizations.of(context)!.teal, 'teal'),
+                              _buildAccentColorOption(AppLocalizations.of(context)!.lightPink, 'lightpink'),
+                              _buildAccentColorOption(AppLocalizations.of(context)!.hotPink, 'hotpink'),
                             ],
                           ),
                         ),
@@ -673,12 +673,12 @@ class _SettingsPageState extends State<SettingsPage> {
                         content: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            _buildColorOption('Theme Color', 'primary', isStroke: true),
-                            _buildColorOption('Red', 'red', isStroke: true),
-                            _buildColorOption('Green', 'green', isStroke: true),
-                            _buildColorOption('Blue', 'blue', isStroke: true),
-                            _buildColorOption('Purple', 'purple', isStroke: true),
-                            _buildColorOption('Orange', 'orange', isStroke: true),
+                            _buildColorOption(AppLocalizations.of(context)!.themeColor, 'primary', isStroke: true),
+                            _buildColorOption(AppLocalizations.of(context)!.red, 'red', isStroke: true),
+                            _buildColorOption(AppLocalizations.of(context)!.green, 'green', isStroke: true),
+                            _buildColorOption(AppLocalizations.of(context)!.blue, 'blue', isStroke: true),
+                            _buildColorOption(AppLocalizations.of(context)!.purple, 'purple', isStroke: true),
+                            _buildColorOption(AppLocalizations.of(context)!.orange, 'orange', isStroke: true),
                           ],
                         ),
                       ),
@@ -744,12 +744,12 @@ class _SettingsPageState extends State<SettingsPage> {
                           content: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              _buildColorOption('Theme Color', 'primary'),
-                              _buildColorOption('Red', 'red'),
-                              _buildColorOption('Green', 'green'),
-                              _buildColorOption('Blue', 'blue'),
-                              _buildColorOption('Purple', 'purple'),
-                              _buildColorOption('Orange', 'orange'),
+                              _buildColorOption(AppLocalizations.of(context)!.themeColor, 'primary'),
+                              _buildColorOption(AppLocalizations.of(context)!.red, 'red'),
+                              _buildColorOption(AppLocalizations.of(context)!.green, 'green'),
+                              _buildColorOption(AppLocalizations.of(context)!.blue, 'blue'),
+                              _buildColorOption(AppLocalizations.of(context)!.purple, 'purple'),
+                              _buildColorOption(AppLocalizations.of(context)!.orange, 'orange'),
                             ],
                           ),
                         ),
@@ -1038,26 +1038,26 @@ class _SettingsPageState extends State<SettingsPage> {
     if (isAccentNeutral) {
       // If accent is neutral, any color can be background (except the same color)
       if (_duotoneColor != 'white') {
-        options.add(_buildBackgroundOption('White', 'white'));
+        options.add(_buildBackgroundOption(AppLocalizations.of(context)!.white, 'white'));
       }
       if (_duotoneColor != 'black') {
-        options.add(_buildBackgroundOption('Black', 'black'));
+        options.add(_buildBackgroundOption(AppLocalizations.of(context)!.black, 'black'));
       }
       options.addAll([
-        _buildBackgroundOption('Blue', 'blue'),
-        _buildBackgroundOption('Green', 'green'),
-        _buildBackgroundOption('Blue Green', 'bluegreen'),
-        _buildBackgroundOption('Red', 'red'),
-        _buildBackgroundOption('Light Pink', 'lightpink'),
-        _buildBackgroundOption('Hot Pink', 'hotpink'),
-        _buildBackgroundOption('Gold', 'gold'),
-        _buildBackgroundOption('Purple', 'purple'),
+        _buildBackgroundOption(AppLocalizations.of(context)!.blue, 'blue'),
+        _buildBackgroundOption(AppLocalizations.of(context)!.green, 'green'),
+        _buildBackgroundOption(AppLocalizations.of(context)!.blueGreen, 'bluegreen'),
+        _buildBackgroundOption(AppLocalizations.of(context)!.red, 'red'),
+        _buildBackgroundOption(AppLocalizations.of(context)!.lightPink, 'lightpink'),
+        _buildBackgroundOption(AppLocalizations.of(context)!.hotPink, 'hotpink'),
+        _buildBackgroundOption(AppLocalizations.of(context)!.gold, 'gold'),
+        _buildBackgroundOption(AppLocalizations.of(context)!.purple, 'purple'),
       ]);
     } else {
       // If accent is a color, only neutral backgrounds are valid
       options.addAll([
-        _buildBackgroundOption('White', 'white'),
-        _buildBackgroundOption('Black', 'black'),
+        _buildBackgroundOption(AppLocalizations.of(context)!.white, 'white'),
+        _buildBackgroundOption(AppLocalizations.of(context)!.black, 'black'),
       ]);
     }
     
@@ -1073,26 +1073,26 @@ class _SettingsPageState extends State<SettingsPage> {
     if (isBackgroundNeutral) {
       // If background is neutral, any color can be accent (except the same color)
       if (_duotoneBackground != 'white') {
-        options.add(_buildDuotoneColorOption('White', 'white'));
+        options.add(_buildDuotoneColorOption(AppLocalizations.of(context)!.white, 'white'));
       }
       if (_duotoneBackground != 'black') {
-        options.add(_buildDuotoneColorOption('Black', 'black'));
+        options.add(_buildDuotoneColorOption(AppLocalizations.of(context)!.black, 'black'));
       }
       options.addAll([
-        _buildDuotoneColorOption('Blue', 'blue'),
-        _buildDuotoneColorOption('Green', 'green'),
-        _buildDuotoneColorOption('Blue Green', 'bluegreen'),
-        _buildDuotoneColorOption('Red', 'red'),
-        _buildDuotoneColorOption('Light Pink', 'lightpink'),
-        _buildDuotoneColorOption('Hot Pink', 'hotpink'),
-        _buildDuotoneColorOption('Gold', 'gold'),
-        _buildDuotoneColorOption('Purple', 'purple'),
+        _buildDuotoneColorOption(AppLocalizations.of(context)!.blue, 'blue'),
+        _buildDuotoneColorOption(AppLocalizations.of(context)!.green, 'green'),
+        _buildDuotoneColorOption(AppLocalizations.of(context)!.blueGreen, 'bluegreen'),
+        _buildDuotoneColorOption(AppLocalizations.of(context)!.red, 'red'),
+        _buildDuotoneColorOption(AppLocalizations.of(context)!.lightPink, 'lightpink'),
+        _buildDuotoneColorOption(AppLocalizations.of(context)!.hotPink, 'hotpink'),
+        _buildDuotoneColorOption(AppLocalizations.of(context)!.gold, 'gold'),
+        _buildDuotoneColorOption(AppLocalizations.of(context)!.purple, 'purple'),
       ]);
     } else {
       // If background is a color, only neutral accents are valid
       options.addAll([
-        _buildDuotoneColorOption('White', 'white'),
-        _buildDuotoneColorOption('Black', 'black'),
+        _buildDuotoneColorOption(AppLocalizations.of(context)!.white, 'white'),
+        _buildDuotoneColorOption(AppLocalizations.of(context)!.black, 'black'),
       ]);
     }
     

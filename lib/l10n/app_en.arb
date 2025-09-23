@@ -251,5 +251,13 @@
   "hoursShort": "{count}h",
   "daysShort": "{count}d",
   "setsCount": "{count} sets",
-  "setCount": "{count} set"
+  "setCount": "{count} set",
+  "todaysProgress": "Today's Progress",
+  "searchCharactersHint": "Search characters...",
+  "endless": "Endless",
+  "teal": "Teal",
+  "lightPink": "Light Pink",
+  "hotPink": "Hot Pink",
+  "blueGreen": "Blue Green",
+  "themeColor": "Theme Color"
 }

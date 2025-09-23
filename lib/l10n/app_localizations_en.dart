@@ -488,4 +488,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String setCount(Object count) {
     return '$count set';
   }
+
+  @override
+  String get searchCharactersHint => 'Search characters...';
+
+  @override
+  String get endless => 'Endless';
+
+  @override
+  String get teal => 'Teal';
+
+  @override
+  String get lightPink => 'Light Pink';
+
+  @override
+  String get hotPink => 'Hot Pink';
+
+  @override
+  String get blueGreen => 'Blue Green';
+
+  @override
+  String get themeColor => 'Theme Color';
 }

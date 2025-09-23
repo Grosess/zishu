@@ -483,4 +483,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String setCount(Object count) {
     return '$count 个字集';
   }
+
+  @override
+  String get searchCharactersHint => '搜索字符...';
+
+  @override
+  String get endless => '无尽';
+
+  @override
+  String get teal => '青色';
+
+  @override
+  String get lightPink => '浅粉色';
+
+  @override
+  String get hotPink => '亮粉色';
+
+  @override
+  String get blueGreen => '蓝绿色';
+
+  @override
+  String get themeColor => '主题颜色';
 }

@@ -215,7 +215,7 @@ class _StreakDisplayState extends State<StreakDisplay> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Today\'s Progress',
+                        AppLocalizations.of(context)!.todaysProgress,
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       Text(

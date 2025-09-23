@@ -178,5 +178,13 @@
   "hoursShort": "{count}小时",
   "daysShort": "{count}天",
   "setsCount": "{count} 个字集",
-  "setCount": "{count} 个字集"
+  "setCount": "{count} 个字集",
+  "todaysProgress": "今日进度",
+  "searchCharactersHint": "搜索字符...",
+  "endless": "无尽",
+  "teal": "青色",
+  "lightPink": "浅粉色",
+  "hotPink": "亮粉色",
+  "blueGreen": "蓝绿色",
+  "themeColor": "主题颜色"
 }

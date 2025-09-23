@@ -973,6 +973,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} set'**
   String setCount(Object count);
+
+  /// No description provided for @searchCharactersHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search characters...'**
+  String get searchCharactersHint;
+
+  /// No description provided for @endless.
+  ///
+  /// In en, this message translates to:
+  /// **'Endless'**
+  String get endless;
+
+  /// No description provided for @teal.
+  ///
+  /// In en, this message translates to:
+  /// **'Teal'**
+  String get teal;
+
+  /// No description provided for @lightPink.
+  ///
+  /// In en, this message translates to:
+  /// **'Light Pink'**
+  String get lightPink;
+
+  /// No description provided for @hotPink.
+  ///
+  /// In en, this message translates to:
+  /// **'Hot Pink'**
+  String get hotPink;
+
+  /// No description provided for @blueGreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Blue Green'**
+  String get blueGreen;
+
+  /// No description provided for @themeColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme Color'**
+  String get themeColor;
 }
 
 class _AppLocalizationsDelegate

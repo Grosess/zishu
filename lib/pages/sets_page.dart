@@ -1538,7 +1538,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Character Sets',
+                            AppLocalizations.of(context)!.characterSets,
                             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),

@@ -1829,18 +1829,32 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       // Production: removed debug print
       
       // Check if this is the last stage of learning mode
+      // For words, only mark as learned if ALL characters were completed correctly
       if (currentItem.length > 1) {
-        final wasLearned = await _learningService.isWordLearned(currentItem);
-        // Production: removed debug print
-        await _learningService.markWordAsLearned(currentItem);
-        final isNowLearned = await _learningService.isWordLearned(currentItem);
-        // Production: removed debug print
+        // Check if all characters in the word were correct
+        final allCharactersCorrect = _wordCharacterResults.values.isEmpty || 
+                                      _wordCharacterResults.values.every((result) => result);
+        
+        if (allCharactersCorrect) {
+          final wasLearned = await _learningService.isWordLearned(currentItem);
+          // Production: removed debug print
+          await _learningService.markWordAsLearned(currentItem);
+          final isNowLearned = await _learningService.isWordLearned(currentItem);
+          // Production: removed debug print
+        }
       } else {
-        final wasLearned = await _learningService.isCharacterLearned(currentItem);
-        // Production: removed debug print
-        await _learningService.markCharacterAsLearned(currentItem);
-        final isNowLearned = await _learningService.isCharacterLearned(currentItem);
-        // Production: removed debug print
+        // For single characters, check if it was completed correctly
+        final characterCorrect = _wordCharacterResults.isEmpty || 
+                                 _wordCharacterResults[0] == true || 
+                                 !_usedHint;
+        
+        if (characterCorrect) {
+          final wasLearned = await _learningService.isCharacterLearned(currentItem);
+          // Production: removed debug print
+          await _learningService.markCharacterAsLearned(currentItem);
+          final isNowLearned = await _learningService.isCharacterLearned(currentItem);
+          // Production: removed debug print
+        }
       }
     } else {
       // Production: removed debug print
