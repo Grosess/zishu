@@ -104,161 +104,875 @@ abstract class AppLocalizations {
   /// **'Zishu'**
   String get appTitle;
 
-  /// Practice button text
+  /// No description provided for @home.
   ///
   /// In en, this message translates to:
-  /// **'Practice'**
-  String get practice;
+  /// **'Home'**
+  String get home;
 
-  /// Sets tab text
+  /// No description provided for @sets.
   ///
   /// In en, this message translates to:
   /// **'Sets'**
   String get sets;
 
-  /// Statistics tab text
+  /// No description provided for @progress.
   ///
   /// In en, this message translates to:
-  /// **'Statistics'**
-  String get statistics;
+  /// **'Progress'**
+  String get progress;
 
-  /// Settings tab text
+  /// No description provided for @settings.
   ///
   /// In en, this message translates to:
   /// **'Settings'**
   String get settings;
 
-  /// Import from photo button text
+  /// No description provided for @characterSets.
   ///
   /// In en, this message translates to:
-  /// **'Import from Photo'**
-  String get importFromPhoto;
+  /// **'Character Sets'**
+  String get characterSets;
 
-  /// Scan vocabulary text
+  /// No description provided for @builtIn.
   ///
   /// In en, this message translates to:
-  /// **'Scan Vocabulary'**
-  String get scanVocabulary;
+  /// **'Built-in'**
+  String get builtIn;
 
-  /// Select photos button text
+  /// No description provided for @custom.
   ///
   /// In en, this message translates to:
-  /// **'Select Photos'**
-  String get selectPhotos;
+  /// **'Custom'**
+  String get custom;
 
-  /// From camera button text
+  /// No description provided for @learn.
   ///
   /// In en, this message translates to:
-  /// **'From Camera'**
-  String get fromCamera;
+  /// **'Learn'**
+  String get learn;
 
-  /// From gallery button text
+  /// No description provided for @practice.
   ///
   /// In en, this message translates to:
-  /// **'From Gallery'**
-  String get fromGallery;
+  /// **'Practice'**
+  String get practice;
 
-  /// Practice group size label
+  /// No description provided for @viewAll.
   ///
   /// In en, this message translates to:
-  /// **'Practice Group Size'**
-  String get practiceGroupSize;
+  /// **'View All'**
+  String get viewAll;
 
-  /// Practice group size description
+  /// No description provided for @add.
   ///
   /// In en, this message translates to:
-  /// **'How many vocabulary terms will be practiced together in each study session'**
-  String get practiceGroupDescription;
+  /// **'Add'**
+  String get add;
 
-  /// Practice group size example
+  /// No description provided for @remove.
   ///
   /// In en, this message translates to:
-  /// **'Example: 10 = practice 10 words at a time'**
-  String get practiceGroupExample;
+  /// **'Remove'**
+  String get remove;
 
-  /// Chinese column header
+  /// No description provided for @delete.
   ///
   /// In en, this message translates to:
-  /// **'Chinese'**
-  String get chinese;
+  /// **'Delete'**
+  String get delete;
 
-  /// Pinyin column header
+  /// No description provided for @save.
   ///
   /// In en, this message translates to:
-  /// **'Pinyin'**
-  String get pinyin;
+  /// **'Save'**
+  String get save;
 
-  /// English column header
+  /// No description provided for @cancel.
   ///
   /// In en, this message translates to:
-  /// **'English'**
-  String get english;
+  /// **'Cancel'**
+  String get cancel;
 
-  /// Save set button text
+  /// No description provided for @edit.
   ///
   /// In en, this message translates to:
-  /// **'Save Set'**
-  String get saveSet;
+  /// **'Edit'**
+  String get edit;
 
-  /// Character set name input label
+  /// No description provided for @rename.
   ///
   /// In en, this message translates to:
-  /// **'Character Set Name'**
-  String get characterSetName;
+  /// **'Rename'**
+  String get rename;
 
-  /// Language setting label
+  /// No description provided for @select.
+  ///
+  /// In en, this message translates to:
+  /// **'Select'**
+  String get select;
+
+  /// No description provided for @editSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Set'**
+  String get editSet;
+
+  /// No description provided for @deleteSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Set'**
+  String get deleteSet;
+
+  /// No description provided for @renameSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename Set'**
+  String get renameSet;
+
+  /// No description provided for @saveChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Changes'**
+  String get saveChanges;
+
+  /// No description provided for @discardChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard Changes?'**
+  String get discardChanges;
+
+  /// No description provided for @discardChangesMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You have unsaved changes. Do you want to discard them?'**
+  String get discardChangesMessage;
+
+  /// No description provided for @discard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get discard;
+
+  /// No description provided for @markAllAsLearned.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark All as Learned'**
+  String get markAllAsLearned;
+
+  /// No description provided for @markAllAsLearnedConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you really want to mark all {count} {type} in \"{name}\" as learned?\n\nYou will not be able to undo this action.'**
+  String markAllAsLearnedConfirm(int count, String type, String name);
+
+  /// No description provided for @words.
+  ///
+  /// In en, this message translates to:
+  /// **'Words'**
+  String get words;
+
+  /// No description provided for @characters.
+  ///
+  /// In en, this message translates to:
+  /// **'Characters'**
+  String get characters;
+
+  /// No description provided for @items.
+  ///
+  /// In en, this message translates to:
+  /// **'items'**
+  String get items;
+
+  /// No description provided for @totalItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Items'**
+  String get totalItems;
+
+  /// No description provided for @cards.
+  ///
+  /// In en, this message translates to:
+  /// **'cards'**
+  String get cards;
+
+  /// No description provided for @selected.
+  ///
+  /// In en, this message translates to:
+  /// **'selected'**
+  String get selected;
+
+  /// No description provided for @selectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select All'**
+  String get selectAll;
+
+  /// No description provided for @deselectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Deselect All'**
+  String get deselectAll;
+
+  /// No description provided for @addItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Items'**
+  String get addItems;
+
+  /// No description provided for @enterItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter items separated by commas, spaces, or new lines'**
+  String get enterItems;
+
+  /// No description provided for @exampleItems.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., 你好, 世界, 中国'**
+  String get exampleItems;
+
+  /// No description provided for @setName.
+  ///
+  /// In en, this message translates to:
+  /// **'Set name'**
+  String get setName;
+
+  /// No description provided for @enterNewName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter new name'**
+  String get enterNewName;
+
+  /// No description provided for @createdFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Created from: {source}'**
+  String createdFrom(String source);
+
+  /// No description provided for @progressLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress: {percent}%'**
+  String progressLabel(int percent);
+
+  /// No description provided for @noItemsInSet.
+  ///
+  /// In en, this message translates to:
+  /// **'No items in this set'**
+  String get noItemsInSet;
+
+  /// No description provided for @cannotSaveEmptySet.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot save an empty set'**
+  String get cannotSaveEmptySet;
+
+  /// No description provided for @deleteSetConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete \"{name}\"? This cannot be undone.'**
+  String deleteSetConfirm(String name);
+
+  /// No description provided for @createNewSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Create New Set'**
+  String get createNewSet;
+
+  /// No description provided for @enterCharacters.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter characters or words'**
+  String get enterCharacters;
+
+  /// No description provided for @importFromText.
+  ///
+  /// In en, this message translates to:
+  /// **'Import from text'**
+  String get importFromText;
+
+  /// No description provided for @theme.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get theme;
+
+  /// No description provided for @language.
   ///
   /// In en, this message translates to:
   /// **'Language'**
   String get language;
 
-  /// Language selection dialog title
+  /// No description provided for @selectLanguage.
   ///
   /// In en, this message translates to:
   /// **'Select Language'**
   String get selectLanguage;
 
-  /// English language option
+  /// No description provided for @englishLanguage.
   ///
   /// In en, this message translates to:
   /// **'English'**
   String get englishLanguage;
 
-  /// Chinese language option
+  /// No description provided for @chineseLanguage.
   ///
   /// In en, this message translates to:
   /// **'中文'**
   String get chineseLanguage;
 
-  /// Welcome dialog title
+  /// No description provided for @accentColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Accent Color'**
+  String get accentColor;
+
+  /// No description provided for @backgroundColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Background Color'**
+  String get backgroundColor;
+
+  /// No description provided for @duotoneMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Duotone Mode'**
+  String get duotoneMode;
+
+  /// No description provided for @green.
+  ///
+  /// In en, this message translates to:
+  /// **'Green'**
+  String get green;
+
+  /// No description provided for @red.
+  ///
+  /// In en, this message translates to:
+  /// **'Red'**
+  String get red;
+
+  /// No description provided for @blue.
+  ///
+  /// In en, this message translates to:
+  /// **'Blue'**
+  String get blue;
+
+  /// No description provided for @purple.
+  ///
+  /// In en, this message translates to:
+  /// **'Purple'**
+  String get purple;
+
+  /// No description provided for @orange.
+  ///
+  /// In en, this message translates to:
+  /// **'Orange'**
+  String get orange;
+
+  /// No description provided for @pink.
+  ///
+  /// In en, this message translates to:
+  /// **'Pink'**
+  String get pink;
+
+  /// No description provided for @gold.
+  ///
+  /// In en, this message translates to:
+  /// **'Gold'**
+  String get gold;
+
+  /// No description provided for @black.
+  ///
+  /// In en, this message translates to:
+  /// **'Black'**
+  String get black;
+
+  /// No description provided for @white.
+  ///
+  /// In en, this message translates to:
+  /// **'White'**
+  String get white;
+
+  /// No description provided for @gridView.
+  ///
+  /// In en, this message translates to:
+  /// **'Grid View'**
+  String get gridView;
+
+  /// No description provided for @listView.
+  ///
+  /// In en, this message translates to:
+  /// **'List View'**
+  String get listView;
+
+  /// No description provided for @allItemsLearned.
+  ///
+  /// In en, this message translates to:
+  /// **'All items in this set have been learned!'**
+  String get allItemsLearned;
+
+  /// No description provided for @featureComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Feature coming soon'**
+  String get featureComingSoon;
+
+  /// No description provided for @searchSets.
+  ///
+  /// In en, this message translates to:
+  /// **'Search sets...'**
+  String get searchSets;
+
+  /// No description provided for @noSetsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No sets found'**
+  String get noSetsFound;
+
+  /// No description provided for @searchAdditionalSets.
+  ///
+  /// In en, this message translates to:
+  /// **'Search additional sets to add...'**
+  String get searchAdditionalSets;
+
+  /// No description provided for @about.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get about;
+
+  /// No description provided for @version.
+  ///
+  /// In en, this message translates to:
+  /// **'Version'**
+  String get version;
+
+  /// No description provided for @developer.
+  ///
+  /// In en, this message translates to:
+  /// **'Developer'**
+  String get developer;
+
+  /// No description provided for @welcomeTitle.
   ///
   /// In en, this message translates to:
   /// **'Welcome to Zishu'**
   String get welcomeTitle;
 
-  /// Welcome dialog message
+  /// No description provided for @welcomeMessage.
   ///
   /// In en, this message translates to:
   /// **'Please select your preferred language:'**
   String get welcomeMessage;
 
-  /// Processing text
+  /// No description provided for @markedItemsAsLearned.
   ///
   /// In en, this message translates to:
-  /// **'Processing...'**
-  String get processing;
+  /// **'Marked {count} items as learned'**
+  String markedItemsAsLearned(int count);
 
-  /// OCR processing text
+  /// No description provided for @deletedSet.
   ///
   /// In en, this message translates to:
-  /// **'Processing image with OCR...'**
-  String get ocrProcessing;
+  /// **'Deleted \"{name}\"'**
+  String deletedSet(String name);
 
-  /// Model download message
+  /// No description provided for @changeColor.
   ///
   /// In en, this message translates to:
-  /// **'Downloading language model... This may take a moment.'**
-  String get downloadingModel;
+  /// **'Change Color'**
+  String get changeColor;
+
+  /// No description provided for @moveToFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to Folder'**
+  String get moveToFolder;
+
+  /// No description provided for @mergeWithAnotherSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge with Another Set'**
+  String get mergeWithAnotherSet;
+
+  /// No description provided for @countSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String countSelected(int count);
+
+  /// No description provided for @countItems.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} items'**
+  String countItems(int count);
+
+  /// No description provided for @charactersBy.
+  ///
+  /// In en, this message translates to:
+  /// **'characters by'**
+  String get charactersBy;
+
+  /// No description provided for @perDay.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} per day'**
+  String perDay(int count);
+
+  /// No description provided for @there.
+  ///
+  /// In en, this message translates to:
+  /// **'there'**
+  String get there;
+
+  /// No description provided for @ahead.
+  ///
+  /// In en, this message translates to:
+  /// **'ahead'**
+  String get ahead;
+
+  /// No description provided for @behind.
+  ///
+  /// In en, this message translates to:
+  /// **'behind'**
+  String get behind;
+
+  /// No description provided for @countAhead.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} ahead'**
+  String countAhead(int count);
+
+  /// No description provided for @countBehind.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} behind'**
+  String countBehind(int count);
+
+  /// No description provided for @endlessPractice.
+  ///
+  /// In en, this message translates to:
+  /// **'Endless Practice'**
+  String get endlessPractice;
+
+  /// No description provided for @practiceAllLearned.
+  ///
+  /// In en, this message translates to:
+  /// **'Practice all {count} learned items'**
+  String practiceAllLearned(int count);
+
+  /// No description provided for @searchCharacters.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Characters'**
+  String get searchCharacters;
+
+  /// No description provided for @findByPinyin.
+  ///
+  /// In en, this message translates to:
+  /// **'Find by pinyin, Chinese or English'**
+  String get findByPinyin;
+
+  /// No description provided for @recentSets.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Sets'**
+  String get recentSets;
+
+  /// No description provided for @noRecentSets.
+  ///
+  /// In en, this message translates to:
+  /// **'No recent practice sets.'**
+  String get noRecentSets;
+
+  /// No description provided for @startPracticingSets.
+  ///
+  /// In en, this message translates to:
+  /// **'Start practicing from the Sets tab!'**
+  String get startPracticingSets;
+
+  /// No description provided for @sessionSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Session Summary'**
+  String get sessionSummary;
+
+  /// No description provided for @practiceIncorrect.
+  ///
+  /// In en, this message translates to:
+  /// **'Practice Incorrect'**
+  String get practiceIncorrect;
+
+  /// No description provided for @createSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Set'**
+  String get createSet;
+
+  /// No description provided for @done.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get done;
+
+  /// No description provided for @nameYourPracticeSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Name Your Practice Set'**
+  String get nameYourPracticeSet;
+
+  /// No description provided for @noLearnedItemsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No learned items found. Please learn some characters first!'**
+  String get noLearnedItemsFound;
+
+  /// No description provided for @couldNotOpenFeedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open feedback form'**
+  String get couldNotOpenFeedback;
+
+  /// No description provided for @noValidCharactersFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No valid characters found for practice'**
+  String get noValidCharactersFound;
+
+  /// No description provided for @showGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Groups'**
+  String get showGroups;
+
+  /// No description provided for @todaysLearn.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s Learn'**
+  String get todaysLearn;
+
+  /// No description provided for @todaysReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s Review'**
+  String get todaysReview;
+
+  /// No description provided for @totalTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Time'**
+  String get totalTime;
+
+  /// No description provided for @todaysProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s Progress'**
+  String get todaysProgress;
+
+  /// No description provided for @cardsStudied.
+  ///
+  /// In en, this message translates to:
+  /// **'Cards Studied'**
+  String get cardsStudied;
+
+  /// No description provided for @timeToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Time Today'**
+  String get timeToday;
+
+  /// No description provided for @dailyStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily Streak'**
+  String get dailyStreak;
+
+  /// No description provided for @currentStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Streak'**
+  String get currentStreak;
+
+  /// No description provided for @bestStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'Best Streak'**
+  String get bestStreak;
+
+  /// No description provided for @verbs.
+  ///
+  /// In en, this message translates to:
+  /// **'Verbs'**
+  String get verbs;
+
+  /// No description provided for @dailyActivities.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily Activities'**
+  String get dailyActivities;
+
+  /// No description provided for @places.
+  ///
+  /// In en, this message translates to:
+  /// **'Places'**
+  String get places;
+
+  /// No description provided for @moreComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'More coming soon...'**
+  String get moreComingSoon;
+
+  /// No description provided for @andMoreCount.
+  ///
+  /// In en, this message translates to:
+  /// **'... and {count} more'**
+  String andMoreCount(int count);
+
+  /// No description provided for @noCustomSets.
+  ///
+  /// In en, this message translates to:
+  /// **'No Custom Sets'**
+  String get noCustomSets;
+
+  /// No description provided for @createCustomSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Custom Set'**
+  String get createCustomSet;
+
+  /// No description provided for @removeFromBuiltin.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from Built-in'**
+  String get removeFromBuiltin;
+
+  /// No description provided for @deleteCustomSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Custom Set'**
+  String get deleteCustomSet;
+
+  /// No description provided for @createFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Folder'**
+  String get createFolder;
+
+  /// No description provided for @renameFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename Folder'**
+  String get renameFolder;
+
+  /// No description provided for @deleteFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Folder'**
+  String get deleteFolder;
+
+  /// No description provided for @chooseColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Color'**
+  String get chooseColor;
+
+  /// No description provided for @mergeSets.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge Sets'**
+  String get mergeSets;
+
+  /// No description provided for @confirmMerge.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Merge'**
+  String get confirmMerge;
+
+  /// No description provided for @noFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'No Folder'**
+  String get noFolder;
+
+  /// No description provided for @allItemsLearnedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'All items in this set have been learned!'**
+  String get allItemsLearnedMessage;
+
+  /// No description provided for @noLearnedItemsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No learned items in this set yet. Use \"Learn\" first!'**
+  String get noLearnedItemsMessage;
+
+  /// No description provided for @continueButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get continueButton;
+
+  /// No description provided for @someItemsUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Some items unavailable'**
+  String get someItemsUnavailable;
+
+  /// No description provided for @ofGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'of {goal} goal'**
+  String ofGoal(Object goal);
+
+  /// No description provided for @setGoalButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Goal'**
+  String get setGoalButton;
+
+  /// No description provided for @totalCharactersLearned.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Characters Learned'**
+  String get totalCharactersLearned;
+
+  /// No description provided for @totalStudyTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Study Time'**
+  String get totalStudyTime;
+
+  /// No description provided for @minutesShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}m'**
+  String minutesShort(Object count);
+
+  /// No description provided for @hoursShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}h'**
+  String hoursShort(Object count);
+
+  /// No description provided for @daysShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}d'**
+  String daysShort(Object count);
+
+  /// No description provided for @setsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} sets'**
+  String setsCount(Object count);
+
+  /// No description provided for @setCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} set'**
+  String setCount(Object count);
 }
 
 class _AppLocalizationsDelegate

@@ -19,6 +19,7 @@ import '../services/character_set_manager.dart';
 import 'mark_as_learned_page.dart';
 import 'character_search_page.dart';
 import '../services/haptic_service.dart';
+import '../l10n/app_localizations.dart';
 
 class HomePage extends StatefulWidget {
   final Function(int)? onNavigateToTab;
@@ -796,21 +797,21 @@ class HomePageState extends State<HomePage> with RouteAware {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Mark All as Learned'),
+        title: Text(AppLocalizations.of(context)!.markAllAsLearned),
         content: Text(
           'Do you really want to mark all ${set.characters.length} ${set.isWordSet ? "words" : "characters"} in "${set.name}" as learned?\n\nYou will not be able to undo this action.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.primary,
             ),
-            child: const Text('Mark All as Learned'),
+            child: Text(AppLocalizations.of(context)!.markAllAsLearned),
           ),
         ],
       ),
@@ -859,7 +860,7 @@ class HomePageState extends State<HomePage> with RouteAware {
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text('Failed to mark items as learned'),
               backgroundColor: Colors.red,
             ),
@@ -969,7 +970,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Progress: ${(progress * 100).toInt()}%',
+                      AppLocalizations.of(context)!.progressLabel((progress * 100).toInt()),
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         color: progress >= 1.0 
                             ? Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary
@@ -984,7 +985,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                 
                 // Sample characters
                 Text(
-                  set.isWordSet ? 'Words:' : 'Characters:',
+                  set.isWordSet ? '${AppLocalizations.of(context)!.words}:' : '${AppLocalizations.of(context)!.characters}:',
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
                 const SizedBox(height: 8),
@@ -1148,7 +1149,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                             if (unlearnedItems.isEmpty) {
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
+                                SnackBar(
                                   content: Text('All items in this set have been learned!'),
                                 ),
                               );
@@ -1263,7 +1264,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                               if (learnedItems.isEmpty) {
                                 Navigator.pop(context);
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
+                                  SnackBar(
                                     content: Text('No learned items in this set yet. Use "Learn" first!'),
                                   ),
                                 );
@@ -1361,7 +1362,7 @@ class HomePageState extends State<HomePage> with RouteAware {
               children: [
                 // Sample characters
                 Text(
-                  isWordSet ? 'Words:' : 'Characters:',
+                  isWordSet ? '${AppLocalizations.of(context)!.words}:' : '${AppLocalizations.of(context)!.characters}:',
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
                 const SizedBox(height: 8),
@@ -1466,7 +1467,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                           if (unlearnedItems.isEmpty) {
                             Navigator.pop(context);
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
+                              SnackBar(
                                 content: Text('All items in this set have been learned!'),
                               ),
                             );
@@ -1548,8 +1549,8 @@ class HomePageState extends State<HomePage> with RouteAware {
     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not open feedback form'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.couldNotOpenFeedback),
           ),
         );
       }
@@ -1632,7 +1633,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'characters by',
+                          AppLocalizations.of(context)!.charactersBy,
                           style: TextStyle(
                             fontSize: 14,
                             color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
@@ -1653,7 +1654,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                         if (_dailyGoal > 0) ...[
                           const SizedBox(height: 4),
                           Text(
-                            '$_dailyGoal per day',
+                            AppLocalizations.of(context)!.perDay(_dailyGoal),
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
@@ -1698,7 +1699,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'there',
+                                    AppLocalizations.of(context)!.there,
                                     style: TextStyle(
                                       fontSize: 15,
                                       color: _getProgressColor().withValues(alpha: 0.7),
@@ -1718,7 +1719,9 @@ class HomePageState extends State<HomePage> with RouteAware {
                                       ),
                                     ),
                                     child: Text(
-                                      '${_paceOffset.abs()} ${_paceOffset > 0 ? "ahead" : "behind"}',
+                                      _paceOffset > 0 
+                                        ? AppLocalizations.of(context)!.countAhead(_paceOffset.abs())
+                                        : AppLocalizations.of(context)!.countBehind(_paceOffset.abs()),
                                       style: TextStyle(
                                         fontSize: 11,
                                         color: _getProgressColor(),
@@ -1796,7 +1799,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Endless Practice',
+                          AppLocalizations.of(context)!.endlessPractice,
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
@@ -1807,7 +1810,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                           ),
                         ),
                         Text(
-                          'Practice all ${_allLearnedItems.length} learned items',
+                          AppLocalizations.of(context)!.practiceAllLearned(_allLearnedItems.length),
                           style: TextStyle(
                             fontSize: 13,
                             color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
@@ -1887,7 +1890,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Search Characters',
+                          AppLocalizations.of(context)!.searchCharacters,
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
@@ -1896,7 +1899,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                           ),
                         ),
                         Text(
-                          'Find by pinyin, Chinese or English',
+                          AppLocalizations.of(context)!.findByPinyin,
                           style: TextStyle(
                             fontSize: 13,
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -1917,8 +1920,8 @@ class HomePageState extends State<HomePage> with RouteAware {
           const SizedBox(height: 24),
           
           // Recent sets section
-          const Text(
-            'Recent Sets',
+          Text(
+            AppLocalizations.of(context)!.recentSets,
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -1934,9 +1937,9 @@ class HomePageState extends State<HomePage> with RouteAware {
                 color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Center(
+              child: Center(
                 child: Text(
-                  'No recent practice sets.\nStart practicing from the Sets tab!',
+                  '${AppLocalizations.of(context)!.noRecentSets}\n${AppLocalizations.of(context)!.startPracticingSets}',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 16),
                 ),
@@ -2489,8 +2492,8 @@ class _EndlessPracticePageState extends State<EndlessPracticePage> {
     if (_practiceQueue.isEmpty && mounted) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No learned items found. Please learn some characters first!'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.noLearnedItemsFound),
           duration: Duration(seconds: 3),
         ),
       );
@@ -2662,7 +2665,7 @@ class _EndlessPracticePageState extends State<EndlessPracticePage> {
               color: percentage >= 80 ? Colors.amber : Colors.green,
             ),
             const SizedBox(width: 8),
-            const Text('Session Summary'),
+            Text(AppLocalizations.of(context)!.sessionSummary),
           ],
         ),
         content: Container(
@@ -2756,12 +2759,12 @@ class _EndlessPracticePageState extends State<EndlessPracticePage> {
             TextButton.icon(
               onPressed: () => _practiceIncorrect(),
               icon: const Icon(Icons.refresh),
-              label: const Text('Practice Incorrect'),
+              label: Text(AppLocalizations.of(context)!.practiceIncorrect),
             ),
             TextButton.icon(
               onPressed: () => _createCustomSetFromIncorrect(),
               icon: const Icon(Icons.add_box),
-              label: const Text('Create Set'),
+              label: Text(AppLocalizations.of(context)!.createSet),
             ),
           ],
           FilledButton(
@@ -2769,7 +2772,7 @@ class _EndlessPracticePageState extends State<EndlessPracticePage> {
               Navigator.of(context).pop();
               Navigator.of(context).pop();
             },
-            child: const Text('Done'),
+            child: Text(AppLocalizations.of(context)!.done),
           ),
         ],
       ),
@@ -2868,7 +2871,7 @@ class _EndlessPracticePageState extends State<EndlessPracticePage> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: const Text('Name Your Practice Set'),
+        title: Text(AppLocalizations.of(context)!.nameYourPracticeSet),
         content: TextField(
           controller: nameController,
           autofocus: true,
@@ -2885,7 +2888,7 @@ class _EndlessPracticePageState extends State<EndlessPracticePage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           FilledButton(
             onPressed: () {
@@ -2894,7 +2897,7 @@ class _EndlessPracticePageState extends State<EndlessPracticePage> {
                 Navigator.of(context).pop(name);
               }
             },
-            child: const Text('Create'),
+            child: Text(AppLocalizations.of(context)!.createSet),
           ),
         ],
       ),
@@ -2971,8 +2974,8 @@ class _EndlessPracticePageState extends State<EndlessPracticePage> {
         if (mounted) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('No valid characters found for practice'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.noValidCharactersFound),
             ),
           );
         }

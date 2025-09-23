@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/character_set_manager.dart';
 import '../main.dart' show DuotoneThemeExtension;
+import '../l10n/app_localizations.dart';
+import '../services/cedict_service.dart';
 
 class SetEditPage extends StatefulWidget {
   final CharacterSet set;
@@ -19,6 +21,7 @@ class SetEditPage extends StatefulWidget {
 
 class _SetEditPageState extends State<SetEditPage> with SingleTickerProviderStateMixin {
   final CharacterSetManager _setManager = CharacterSetManager();
+  final CedictService _cedictService = CedictService();
   
   late TabController _tabController;
   late TextEditingController _nameController;
@@ -26,6 +29,7 @@ class _SetEditPageState extends State<SetEditPage> with SingleTickerProviderStat
   
   late List<String> _items;
   final Set<int> _selectedIndices = {};
+  final Map<String, String> _pronunciations = {}; // Store pronunciations
   
   bool _isSelectionMode = true; // Default to selection mode
   bool _isLoading = false;
@@ -40,6 +44,23 @@ class _SetEditPageState extends State<SetEditPage> with SingleTickerProviderStat
     _nameController = TextEditingController(text: widget.set.name);
     _addItemController = TextEditingController();
     _items = List<String>.from(widget.set.characters);
+    _loadPronunciations();
+  }
+  
+  Future<void> _loadPronunciations() async {
+    await _cedictService.initialize();
+    for (final item in _items) {
+      if (item.isNotEmpty) {
+        final entry = _cedictService.lookup(item);
+        if (entry != null && entry.pinyin.isNotEmpty) {
+          if (mounted) {
+            setState(() {
+              _pronunciations[item] = entry.pinyin;
+            });
+          }
+        }
+      }
+    }
   }
   
   @override
@@ -66,6 +87,16 @@ class _SetEditPageState extends State<SetEditPage> with SingleTickerProviderStat
         _items.addAll(newItems);
         _hasUnsavedChanges = true;
       });
+      
+      // Fetch pronunciations for new items
+      for (final item in newItems) {
+        final entry = _cedictService.lookup(item);
+        if (entry != null && entry.pinyin.isNotEmpty) {
+          setState(() {
+            _pronunciations[item] = entry.pinyin;
+          });
+        }
+      }
       
       _addItemController.clear();
       
@@ -371,21 +402,21 @@ class _SetEditPageState extends State<SetEditPage> with SingleTickerProviderStat
     final isDuotone = Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true;
     final duotoneExt = Theme.of(context).extension<DuotoneThemeExtension>();
     
-    // Determine view mode based on item count
-    final bool useCompactView = _items.length > 20;
-    
     return Column(
       children: [
         // Selection controls
         if (_items.isNotEmpty)
           Container(
+            color: isDuotone 
+                ? duotoneExt?.duotoneColor2?.withValues(alpha: 0.08)
+                : null,
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
                 Text(
                   _isSelectionMode 
-                      ? '${_selectedIndices.length} selected'
-                      : '${_items.length} items',
+                      ? AppLocalizations.of(context)!.countSelected(_selectedIndices.length)
+                      : AppLocalizations.of(context)!.countItems(_items.length),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
@@ -411,13 +442,15 @@ class _SetEditPageState extends State<SetEditPage> with SingleTickerProviderStat
                       foregroundColor: isDuotone ? duotoneExt?.duotoneColor2 : null,
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     ),
-                    child: Text(_selectedIndices.length == _items.length ? 'Deselect All' : 'Select All'),
+                    child: Text(_selectedIndices.length == _items.length 
+                        ? AppLocalizations.of(context)!.deselectAll 
+                        : AppLocalizations.of(context)!.selectAll),
                   ),
                   const SizedBox(width: 8),
                   FilledButton.icon(
                     onPressed: _selectedIndices.isNotEmpty ? _removeSelectedItems : null,
                     icon: const Icon(Icons.delete, size: 18),
-                    label: const Text('Delete'),
+                    label: Text(AppLocalizations.of(context)!.delete),
                     style: FilledButton.styleFrom(
                       backgroundColor: isDuotone ? duotoneExt?.duotoneColor2 : Colors.red,
                       foregroundColor: isDuotone 
@@ -461,11 +494,11 @@ class _SetEditPageState extends State<SetEditPage> with SingleTickerProviderStat
               : Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: GridView.builder(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: useCompactView ? 4 : 3,
-                      crossAxisSpacing: useCompactView ? 8 : 12,
-                      mainAxisSpacing: useCompactView ? 8 : 12,
-                      childAspectRatio: useCompactView ? 1.2 : 0.85,
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 1.0, // Square items
                     ),
                     itemCount: _items.length,
                     itemBuilder: (context, index) {
@@ -487,10 +520,10 @@ class _SetEditPageState extends State<SetEditPage> with SingleTickerProviderStat
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? (isDuotone 
-                                    ? duotoneExt?.duotoneColor2?.withValues(alpha: 0.15)
+                                    ? duotoneExt?.duotoneColor2?.withValues(alpha: 0.2)
                                     : Theme.of(context).colorScheme.primary.withValues(alpha: 0.15))
                                 : (isDuotone
-                                    ? duotoneExt?.duotoneColor2?.withValues(alpha: 0.1)
+                                    ? duotoneExt?.duotoneColor2?.withValues(alpha: 0.08)
                                     : Theme.of(context).colorScheme.surfaceContainerHighest),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
@@ -506,33 +539,73 @@ class _SetEditPageState extends State<SetEditPage> with SingleTickerProviderStat
                           ),
                           child: Stack(
                             children: [
-                              Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(
-                                    item,
-                                    style: TextStyle(
-                                      fontSize: useCompactView 
-                                          ? (item.length == 1 ? 24 : 18)
-                                          : (item.length == 1 ? 32 : (item.length <= 3 ? 22 : 16)),
-                                      fontWeight: FontWeight.w500,
-                                      color: isDuotone 
-                                          ? duotoneExt?.duotoneColor2
-                                          : Theme.of(context).colorScheme.onSurface,
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    // Character/Word
+                                    Expanded(
+                                      child: Center(
+                                        child: FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Text(
+                                            item,
+                                            style: TextStyle(
+                                              fontSize: item.length == 1 ? 40 : (item.length <= 3 ? 28 : 20),
+                                              fontWeight: FontWeight.w500,
+                                              color: isDuotone 
+                                                  ? duotoneExt?.duotoneColor2
+                                                  : Theme.of(context).colorScheme.onSurface,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
+                                      ),
                                     ),
-                                    textAlign: TextAlign.center,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                                    // Pronunciation if available
+                                    if (_pronunciations[item] != null)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 2),
+                                        child: Text(
+                                          _pronunciations[item]!,
+                                          style: TextStyle(
+                                            fontSize: 9,
+                                            fontStyle: FontStyle.italic,
+                                            color: isDuotone 
+                                                ? duotoneExt?.duotoneColor2?.withValues(alpha: 0.5)
+                                                : Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                    // Definition if available
+                                    if (widget.set.definitions?[item] != null)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 4),
+                                        child: Text(
+                                          widget.set.definitions![item]!,
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            color: isDuotone 
+                                                ? duotoneExt?.duotoneColor2?.withValues(alpha: 0.6)
+                                                : Theme.of(context).colorScheme.onSurfaceVariant,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                  ],
                                 ),
                               ),
                               // Selection indicator - always visible
                               Positioned(
-                                top: 6,
-                                right: 6,
+                                top: 8,
+                                right: 8,
                                 child: Container(
-                                  width: 20,
-                                  height: 20,
+                                  width: 24,
+                                  height: 24,
                                   decoration: BoxDecoration(
                                     color: isSelected
                                         ? (isDuotone 
@@ -542,9 +615,9 @@ class _SetEditPageState extends State<SetEditPage> with SingleTickerProviderStat
                                     shape: BoxShape.circle,
                                     border: Border.all(
                                       color: isDuotone 
-                                          ? duotoneExt?.duotoneColor2?.withValues(alpha: 0.8) ?? Colors.pink
-                                          : Theme.of(context).colorScheme.primary,
-                                      width: 1.5,
+                                          ? duotoneExt?.duotoneColor2 ?? Colors.pink
+                                          : Theme.of(context).colorScheme.primary.withValues(alpha: 0.6),
+                                      width: isSelected ? 2 : 1,
                                     ),
                                   ),
                                   child: isSelected
@@ -553,7 +626,7 @@ class _SetEditPageState extends State<SetEditPage> with SingleTickerProviderStat
                                           color: isDuotone 
                                               ? Theme.of(context).scaffoldBackgroundColor
                                               : Colors.white,
-                                          size: 14,
+                                          size: 16,
                                         )
                                       : null,
                                 ),

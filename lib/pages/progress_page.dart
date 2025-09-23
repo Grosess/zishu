@@ -6,6 +6,7 @@ import '../services/statistics_service.dart';
 import '../services/streak_service.dart';
 import '../main.dart' show DuotoneThemeExtension;
 import '../widgets/streak_display.dart';
+import '../l10n/app_localizations.dart';
 
 class ProgressPage extends StatefulWidget {
   const ProgressPage({super.key});
@@ -530,7 +531,7 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
                           },
                         ),
                         Text(
-                          'of $_characterGoal goal',
+                          AppLocalizations.of(context)!.ofGoal(_characterGoal),
                           style: TextStyle(
                             fontSize: 14,
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -539,7 +540,7 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
                         const SizedBox(height: 8),
                         TextButton(
                           onPressed: _showGoalDialog,
-                          child: const Text('Set Goal'),
+                          child: Text(AppLocalizations.of(context)!.setGoalButton),
                         ),
                       ],
                     ),
@@ -589,7 +590,7 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Total Characters Learned',
+                  AppLocalizations.of(context)!.totalCharactersLearned,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w500,
@@ -616,7 +617,7 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Total Study Time: ${_formatDuration(_totalStudyTime)}',
+                  '${AppLocalizations.of(context)!.totalStudyTime}: ${_formatDuration(_totalStudyTime)}',
                   style: TextStyle(
                     fontSize: 18,
                     color: Theme.of(context).colorScheme.onSurface,
@@ -634,7 +635,7 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
                 // Characters learned today
                 Expanded(
                   child: _buildProgressMeter(
-                    title: 'Today\'s Learn',
+                    title: AppLocalizations.of(context)!.todaysLearn,
                     current: _dailyCharactersLearned,
                     total: _charactersNeededToday,
                     icon: Icons.school,
@@ -648,7 +649,7 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
                 // Characters reviewed/practiced today
                 Expanded(
                   child: _buildProgressMeter(
-                    title: 'Today\'s Review',
+                    title: AppLocalizations.of(context)!.todaysReview,
                     current: _dailyCharactersStudied,
                     total: _dailyPracticeGoal,
                     icon: Icons.edit,
@@ -700,7 +701,7 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Total Time',
+                            AppLocalizations.of(context)!.totalTime,
                             style: TextStyle(
                               fontSize: 16,
                               color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -729,7 +730,7 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
                 const SizedBox(height: 16),
                 
                 Text(
-                  'Today\'s Progress',
+                  AppLocalizations.of(context)!.todaysProgress,
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -744,7 +745,7 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
                     Expanded(
                       child: _buildStatCard(
                         icon: Icons.calendar_today,
-                        title: 'Cards Studied',
+                        title: AppLocalizations.of(context)!.cardsStudied,
                         value: _dailyCharactersStudied.toString(),
                         color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                           ? Theme.of(context).colorScheme.primary
@@ -755,7 +756,7 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
                     Expanded(
                       child: _buildStatCard(
                         icon: Icons.access_time,
-                        title: 'Time Today',
+                        title: AppLocalizations.of(context)!.timeToday,
                         value: _formatDuration(_dailyStudyTime),
                         color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                           ? Theme.of(context).colorScheme.primary
@@ -938,13 +939,22 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
   }
 
   String _formatDuration(Duration duration) {
+    final locale = Localizations.localeOf(context).languageCode;
     final hours = duration.inHours;
     final minutes = duration.inMinutes.remainder(60);
     
-    if (hours > 0) {
-      return '${hours}h ${minutes}m';
+    if (locale == 'zh') {
+      if (hours > 0) {
+        return '$hours小时$minutes分钟';
+      } else {
+        return '$minutes分钟';
+      }
     } else {
-      return '${minutes}m';
+      if (hours > 0) {
+        return '${hours}h ${minutes}m';
+      } else {
+        return '${minutes}m';
+      }
     }
   }
 }

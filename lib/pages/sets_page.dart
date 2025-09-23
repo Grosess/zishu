@@ -18,6 +18,7 @@ import '../services/statistics_service.dart';
 import '../main.dart' show DuotoneThemeExtension;
 import '../widgets/character_preview.dart';
 import '../services/character_database.dart';
+import '../l10n/app_localizations.dart';
 import '../services/character_preview_cache.dart';
 import '../services/haptic_service.dart';
 
@@ -879,7 +880,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
           final proceed = await showDialog<bool>(
             context: context,
             builder: (context) => AlertDialog(
-              title: const Text('Some items unavailable'),
+              title: Text(AppLocalizations.of(context)!.someItemsUnavailable),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -897,11 +898,11 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Cancel'),
+                  child: Text(AppLocalizations.of(context)!.cancel),
                 ),
                 FilledButton(
                   onPressed: () => Navigator.pop(context, true),
-                  child: const Text('Continue'),
+                  child: Text(AppLocalizations.of(context)!.continueButton),
                 ),
               ],
             ),
@@ -1046,7 +1047,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${set.characters.length} cards',
+                  '${set.characters.length} ${AppLocalizations.of(context)!.cards}',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -1102,7 +1103,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Progress: ${((_setProgress[set.id] ?? 0.0) * 100).toInt()}%',
+                      AppLocalizations.of(context)!.progressLabel(((_setProgress[set.id] ?? 0.0) * 100).toInt()),
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         color: (_setProgress[set.id] ?? 0.0) >= 1.0 
                             ? Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary
@@ -1117,7 +1118,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                 
                 // Sample characters
                 Text(
-                  set.isWordSet ? 'Words:' : 'Characters:',
+                  set.isWordSet ? '${AppLocalizations.of(context)!.words}:' : '${AppLocalizations.of(context)!.characters}:',
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
                 const SizedBox(height: 8),
@@ -1209,7 +1210,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                 if (set.characters.length > 10) ...[
                   const SizedBox(height: 8),
                   Text(
-                    '... and ${set.characters.length - 10} more',
+                    AppLocalizations.of(context)!.andMoreCount(set.characters.length - 10),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
@@ -1267,7 +1268,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                           );
                         },
                         icon: const Icon(Icons.apps, size: 18),
-                        label: const Text('Show Groups', 
+                        label: Text(AppLocalizations.of(context)!.showGroups, 
                           style: TextStyle(fontSize: 13),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -1287,8 +1288,8 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                             if (unlearnedItems.isEmpty) {
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('All items in this set have been learned!'),
+                                SnackBar(
+                                  content: Text(AppLocalizations.of(context)!.allItemsLearnedMessage),
                                 ),
                               );
                               return;
@@ -1319,7 +1320,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                             ).then((_) => _loadSetProgress());
                           },
                           icon: const Icon(Icons.school, size: 18),
-                          label: const Text('Learn',
+                          label: Text(AppLocalizations.of(context)!.learn,
                             style: TextStyle(fontSize: 13),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -1359,7 +1360,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                           ).then((_) => _loadSetProgress());
                         },
                         icon: const Icon(Icons.view_list, size: 18),
-                        label: const Text('View All',
+                        label: Text(AppLocalizations.of(context)!.viewAll,
                           style: TextStyle(fontSize: 13),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -1406,8 +1407,8 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                               if (learnedItems.isEmpty) {
                                 Navigator.pop(context);
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('No learned items in this set yet. Use "Learn" first!'),
+                                  SnackBar(
+                                    content: Text(AppLocalizations.of(context)!.noLearnedItemsMessage),
                                   ),
                                 );
                                 return;
@@ -1429,7 +1430,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                               ).then((_) => _loadSetProgress());
                             },
                             icon: const Icon(Icons.edit, size: 18),
-                            label: const Text('Practice',
+                            label: Text(AppLocalizations.of(context)!.practice,
                               style: TextStyle(fontSize: 13),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -1516,7 +1517,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                         children: [
                           Flexible(
                             child: Text(
-                              'Character Sets',
+                              AppLocalizations.of(context)!.characterSets,
                               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
@@ -1524,9 +1525,9 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                           ),
                           Row(
                             children: [
-                              _buildTabButton('Built-in', 0),
+                              _buildTabButton(AppLocalizations.of(context)!.builtIn, 0),
                               const SizedBox(width: 8),
-                              _buildTabButton('Custom', 1),
+                              _buildTabButton(AppLocalizations.of(context)!.custom, 1),
                             ],
                           ),
                         ],
@@ -1545,9 +1546,9 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                           const SizedBox(height: 8),
                           Row(
                             children: [
-                              _buildTabButton('Built-in', 0),
+                              _buildTabButton(AppLocalizations.of(context)!.builtIn, 0),
                               const SizedBox(width: 8),
-                              _buildTabButton('Custom', 1),
+                              _buildTabButton(AppLocalizations.of(context)!.custom, 1),
                             ],
                           ),
                         ],
@@ -1612,7 +1613,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
       return FloatingActionButton.extended(
         key: const ValueKey('fab-extended'),
         onPressed: _showAddSetDialog,
-        label: const Text('Create Set'),
+        label: Text(AppLocalizations.of(context)!.createSet),
         icon: const Icon(Icons.add),
       );
     }
@@ -1630,7 +1631,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
               children: [
                 ListTile(
                   leading: const Icon(Icons.create_new_folder),
-                  title: const Text('Create Folder'),
+                  title: Text(AppLocalizations.of(context)!.createFolder),
                   onTap: () {
                     HapticService().lightImpact();
                     Navigator.pop(bottomSheetContext);
@@ -1810,7 +1811,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
                       child: Center(
                         child: Text(
-                          'More coming soon...',
+                          AppLocalizations.of(context)!.moreComingSoon,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
@@ -2119,7 +2120,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
             // Mark all as learned option (available for all sets)
             ListTile(
             leading: const Icon(Icons.check_circle),
-            title: const Text('Mark All as Learned'),
+            title: Text(AppLocalizations.of(context)!.markAllAsLearned),
             onTap: () {
               Navigator.pop(context);
               _showMarkAllAsLearnedDialog(set);
@@ -2135,7 +2136,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
             ),
             ListTile(
               leading: const Icon(Icons.remove_circle, color: Colors.orange),
-              title: const Text('Remove from Built-in', style: TextStyle(color: Colors.orange)),
+              title: Text(AppLocalizations.of(context)!.removeFromBuiltin, style: const TextStyle(color: Colors.orange)),
               onTap: () {
                 Navigator.pop(context);
                 _removeFromBuiltIn(set);
@@ -2151,7 +2152,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
             ),
             ListTile(
               leading: const Icon(Icons.edit_note),
-              title: const Text('Edit Set'),
+              title: Text(AppLocalizations.of(context)!.editSet),
               onTap: () {
                 Navigator.pop(context);
                 _showEditSetDialog(set);
@@ -2159,7 +2160,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
             ),
             ListTile(
               leading: const Icon(Icons.edit),
-              title: const Text('Rename'),
+              title: Text(AppLocalizations.of(context)!.rename),
               onTap: () {
                 Navigator.pop(context);
                 _showRenameSetDialog(set);
@@ -2169,7 +2170,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
             if (Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme != true)
               ListTile(
                 leading: const Icon(Icons.color_lens),
-                title: const Text('Change Color'),
+                title: Text(AppLocalizations.of(context)!.changeColor),
                 onTap: () {
                   Navigator.pop(context);
                   _showColorPickerDialog(set);
@@ -2178,7 +2179,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
             if (_folders.isNotEmpty)
               ListTile(
                 leading: const Icon(Icons.folder),
-                title: const Text('Move to Folder'),
+                title: Text(AppLocalizations.of(context)!.moveToFolder),
                 onTap: () {
                   Navigator.pop(context);
                   _showMoveToFolderDialog(set);
@@ -2188,7 +2189,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
             if (_customSets.where((s) => s.id != set.id).isNotEmpty)
               ListTile(
                 leading: const Icon(Icons.merge),
-                title: const Text('Merge with Another Set'),
+                title: Text(AppLocalizations.of(context)!.mergeWithAnotherSet),
                 onTap: () {
                   Navigator.pop(context);
                   _showMergeDialog(set);
@@ -2232,14 +2233,14 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.primary,
             ),
-            child: const Text('Mark All as Learned'),
+            child: Text(AppLocalizations.of(context)!.markAllAsLearned),
           ),
         ],
       ),
@@ -2304,7 +2305,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Create Folder'),
+        title: Text(AppLocalizations.of(context)!.createFolder),
         content: TextField(
           controller: controller,
           decoration: const InputDecoration(
@@ -2316,7 +2317,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           FilledButton(
             onPressed: () async {
@@ -2326,7 +2327,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                 Navigator.pop(context);
               }
             },
-            child: const Text('Create'),
+            child: Text(AppLocalizations.of(context)!.createSet),
           ),
         ],
       ),
@@ -2368,7 +2369,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
           children: [
             ListTile(
             leading: const Icon(Icons.edit),
-            title: const Text('Rename Folder'),
+            title: Text(AppLocalizations.of(context)!.renameFolder),
             onTap: () {
               Navigator.pop(context);
               _showRenameFolderDialog(folder);
@@ -2406,7 +2407,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Rename Folder'),
+        title: Text(AppLocalizations.of(context)!.renameFolder),
         content: TextField(
           controller: controller,
           decoration: const InputDecoration(
@@ -2418,7 +2419,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           FilledButton(
             onPressed: () async {
@@ -2434,7 +2435,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                 Navigator.pop(context);
               }
             },
-            child: const Text('Save'),
+            child: Text(AppLocalizations.of(context)!.save),
           ),
         ],
       ),
@@ -2445,12 +2446,12 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Folder'),
+        title: Text(AppLocalizations.of(context)!.deleteFolder),
         content: Text('Are you sure you want to delete "${folder.name}"? Sets will not be deleted.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
@@ -2459,7 +2460,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                   ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2
                   : Colors.red,
             ),
-            child: const Text('Delete'),
+            child: Text(AppLocalizations.of(context)!.delete),
           ),
         ],
       ),
@@ -2482,7 +2483,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Rename Set'),
+        title: Text(AppLocalizations.of(context)!.renameSet),
         content: TextField(
           controller: controller,
           decoration: const InputDecoration(
@@ -2494,7 +2495,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           FilledButton(
             onPressed: () async {
@@ -2535,7 +2536,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                 });
               }
             },
-            child: const Text('Save'),
+            child: Text(AppLocalizations.of(context)!.save),
           ),
         ],
       ),
@@ -2559,7 +2560,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Choose Color'),
+        title: Text(AppLocalizations.of(context)!.chooseColor),
         content: SizedBox(
           width: double.maxFinite,
           child: GridView.builder(
@@ -2627,7 +2628,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
         ],
       ),
@@ -2683,7 +2684,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
     final selected = await showDialog<CharacterSet?>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Merge Sets'),
+        title: Text(AppLocalizations.of(context)!.mergeSets),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -2712,7 +2713,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
         ],
       ),
@@ -2732,7 +2733,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
+              child: Text(AppLocalizations.of(context)!.cancel),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, true),
@@ -2819,7 +2820,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
             ),
             const SizedBox(height: 16),
             Text(
-              'No Custom Sets',
+              AppLocalizations.of(context)!.noCustomSets,
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
@@ -2880,7 +2881,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           FilledButton(
             onPressed: () async {
@@ -3062,7 +3063,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                             ),
                           TextButton(
                             onPressed: () => Navigator.pop(context),
-                            child: const Text('Cancel'),
+                            child: Text(AppLocalizations.of(context)!.cancel),
                           ),
                         ],
                       ),
@@ -3071,7 +3072,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                 }
               }
             },
-            child: const Text('Create'),
+            child: Text(AppLocalizations.of(context)!.createSet),
           ),
         ],
       ),
@@ -3087,7 +3088,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
@@ -3343,7 +3344,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
         ],
       ),
@@ -3393,7 +3394,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           FilledButton(
             onPressed: () async {
@@ -3564,7 +3565,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
             ),
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
         ],
       ),
@@ -3848,7 +3849,7 @@ class _CharacterSetSquareCard extends StatelessWidget {
                               ),
                               const SizedBox(height: 1),
                               Text(
-                                '${set.characters.length} cards',
+                                '${set.characters.length} ${AppLocalizations.of(context)!.cards}',
                                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                   color: subtextColor,
                                   fontSize: 10,

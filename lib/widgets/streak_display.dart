@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/streak_service.dart';
 import '../main.dart';
+import '../l10n/app_localizations.dart';
 
 class StreakDisplay extends StatefulWidget {
   final bool showOnlyIcon;
@@ -129,7 +130,7 @@ class _StreakDisplayState extends State<StreakDisplay> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Daily Streak',
+                    AppLocalizations.of(context)!.dailyStreak,
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                 ],
@@ -161,7 +162,7 @@ class _StreakDisplayState extends State<StreakDisplay> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Current Streak',
+                            AppLocalizations.of(context)!.currentStreak,
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                             ),
@@ -195,7 +196,7 @@ class _StreakDisplayState extends State<StreakDisplay> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Best Streak',
+                            AppLocalizations.of(context)!.bestStreak,
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                             ),
@@ -261,7 +262,7 @@ class _StreakDisplayState extends State<StreakDisplay> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Current Streak: ${_streakData!.currentStreak} days',
+              '${AppLocalizations.of(context)!.currentStreak}: ${_streakData!.currentStreak} days',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),

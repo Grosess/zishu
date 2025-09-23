@@ -1,110 +1,255 @@
 {
+  "@@locale": "en",
   "appTitle": "Zishu",
   "@appTitle": {
     "description": "The title of the application"
   },
-  "practice": "Practice",
-  "@practice": {
-    "description": "Practice button text"
-  },
+  
+  "home": "Home",
   "sets": "Sets",
-  "@sets": {
-    "description": "Sets tab text"
-  },
-  "statistics": "Statistics",
-  "@statistics": {
-    "description": "Statistics tab text"
-  },
+  "progress": "Progress",
   "settings": "Settings",
-  "@settings": {
-    "description": "Settings tab text"
+  
+  "characterSets": "Character Sets",
+  "builtIn": "Built-in",
+  "custom": "Custom",
+  
+  "learn": "Learn",
+  "practice": "Practice",
+  "viewAll": "View All",
+  
+  "add": "Add",
+  "remove": "Remove",
+  "delete": "Delete",
+  "save": "Save",
+  "cancel": "Cancel",
+  "edit": "Edit",
+  "rename": "Rename",
+  "select": "Select",
+  
+  "editSet": "Edit Set",
+  "deleteSet": "Delete Set",
+  "renameSet": "Rename Set",
+  "saveChanges": "Save Changes",
+  "discardChanges": "Discard Changes?",
+  "discardChangesMessage": "You have unsaved changes. Do you want to discard them?",
+  "discard": "Discard",
+  
+  "markAllAsLearned": "Mark All as Learned",
+  "markAllAsLearnedConfirm": "Do you really want to mark all {count} {type} in \"{name}\" as learned?\n\nYou will not be able to undo this action.",
+  "@markAllAsLearnedConfirm": {
+    "placeholders": {
+      "count": {"type": "int"},
+      "type": {"type": "String"},
+      "name": {"type": "String"}
+    }
   },
-  "importFromPhoto": "Import from Photo",
-  "@importFromPhoto": {
-    "description": "Import from photo button text"
+  
+  "words": "Words",
+  "characters": "Characters",
+  "items": "items",
+  "totalItems": "Total Items",
+  "cards": "cards",
+  
+  "selected": "selected",
+  "selectAll": "Select All",
+  "deselectAll": "Deselect All",
+  
+  "addItems": "Add Items",
+  "enterItems": "Enter items separated by commas, spaces, or new lines",
+  "exampleItems": "e.g., 你好, 世界, 中国",
+  
+  "setName": "Set name",
+  "enterNewName": "Enter new name",
+  
+  "createdFrom": "Created from: {source}",
+  "@createdFrom": {
+    "placeholders": {
+      "source": {"type": "String"}
+    }
   },
-  "scanVocabulary": "Scan Vocabulary",
-  "@scanVocabulary": {
-    "description": "Scan vocabulary text"
+  
+  "progressLabel": "Progress: {percent}%",
+  "@progressLabel": {
+    "placeholders": {
+      "percent": {"type": "int"}
+    }
   },
-  "selectPhotos": "Select Photos",
-  "@selectPhotos": {
-    "description": "Select photos button text"
+  
+  "noItemsInSet": "No items in this set",
+  "cannotSaveEmptySet": "Cannot save an empty set",
+  
+  "deleteSetConfirm": "Delete \"{name}\"? This cannot be undone.",
+  "@deleteSetConfirm": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
   },
-  "fromCamera": "From Camera",
-  "@fromCamera": {
-    "description": "From camera button text"
-  },
-  "fromGallery": "From Gallery",
-  "@fromGallery": {
-    "description": "From gallery button text"
-  },
-  "practiceGroupSize": "Practice Group Size",
-  "@practiceGroupSize": {
-    "description": "Practice group size label"
-  },
-  "practiceGroupDescription": "How many vocabulary terms will be practiced together in each study session",
-  "@practiceGroupDescription": {
-    "description": "Practice group size description"
-  },
-  "practiceGroupExample": "Example: 10 = practice 10 words at a time",
-  "@practiceGroupExample": {
-    "description": "Practice group size example"
-  },
-  "chinese": "Chinese",
-  "@chinese": {
-    "description": "Chinese column header"
-  },
-  "pinyin": "Pinyin",
-  "@pinyin": {
-    "description": "Pinyin column header"
-  },
-  "english": "English",
-  "@english": {
-    "description": "English column header"
-  },
-  "saveSet": "Save Set",
-  "@saveSet": {
-    "description": "Save set button text"
-  },
-  "characterSetName": "Character Set Name",
-  "@characterSetName": {
-    "description": "Character set name input label"
-  },
+  
+  "createNewSet": "Create New Set",
+  "enterCharacters": "Enter characters or words",
+  "importFromText": "Import from text",
+  
+  "theme": "Theme",
   "language": "Language",
-  "@language": {
-    "description": "Language setting label"
-  },
   "selectLanguage": "Select Language",
-  "@selectLanguage": {
-    "description": "Language selection dialog title"
-  },
   "englishLanguage": "English",
-  "@englishLanguage": {
-    "description": "English language option"
-  },
   "chineseLanguage": "中文",
-  "@chineseLanguage": {
-    "description": "Chinese language option"
-  },
+  
+  "accentColor": "Accent Color",
+  "backgroundColor": "Background Color",
+  "duotoneMode": "Duotone Mode",
+  
+  "green": "Green",
+  "red": "Red",
+  "blue": "Blue",
+  "purple": "Purple",
+  "orange": "Orange",
+  "pink": "Pink",
+  "gold": "Gold",
+  "black": "Black",
+  "white": "White",
+  
+  "gridView": "Grid View",
+  "listView": "List View",
+  
+  "allItemsLearned": "All items in this set have been learned!",
+  "featureComingSoon": "Feature coming soon",
+  
+  "searchSets": "Search sets...",
+  "noSetsFound": "No sets found",
+  "searchAdditionalSets": "Search additional sets to add...",
+  
+  "about": "About",
+  "version": "Version",
+  "developer": "Developer",
+  
   "welcomeTitle": "Welcome to Zishu",
-  "@welcomeTitle": {
-    "description": "Welcome dialog title"
-  },
   "welcomeMessage": "Please select your preferred language:",
-  "@welcomeMessage": {
-    "description": "Welcome dialog message"
+  
+  "markedItemsAsLearned": "Marked {count} items as learned",
+  "@markedItemsAsLearned": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
   },
-  "processing": "Processing...",
-  "@processing": {
-    "description": "Processing text"
+  
+  "deletedSet": "Deleted \"{name}\"",
+  "@deletedSet": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
   },
-  "ocrProcessing": "Processing image with OCR...",
-  "@ocrProcessing": {
-    "description": "OCR processing text"
+  
+  "changeColor": "Change Color",
+  "moveToFolder": "Move to Folder",
+  "mergeWithAnotherSet": "Merge with Another Set",
+  
+  "countSelected": "{count} selected",
+  "@countSelected": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
   },
-  "downloadingModel": "Downloading language model... This may take a moment.",
-  "@downloadingModel": {
-    "description": "Model download message"
-  }
+  
+  "countItems": "{count} items",
+  "@countItems": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  
+  "charactersBy": "characters by",
+  "perDay": "{count} per day",
+  "@perDay": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "there": "there",
+  "ahead": "ahead",
+  "behind": "behind",
+  "countAhead": "{count} ahead",
+  "@countAhead": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "countBehind": "{count} behind",
+  "@countBehind": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  
+  "endlessPractice": "Endless Practice",
+  "practiceAllLearned": "Practice all {count} learned items",
+  "@practiceAllLearned": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  
+  "searchCharacters": "Search Characters",
+  "findByPinyin": "Find by pinyin, Chinese or English",
+  
+  "recentSets": "Recent Sets",
+  "noRecentSets": "No recent practice sets.",
+  "startPracticingSets": "Start practicing from the Sets tab!",
+  
+  "sessionSummary": "Session Summary",
+  "practiceIncorrect": "Practice Incorrect",
+  "createSet": "Create Set",
+  "done": "Done",
+  "nameYourPracticeSet": "Name Your Practice Set",
+  "noLearnedItemsFound": "No learned items found. Please learn some characters first!",
+  "couldNotOpenFeedback": "Could not open feedback form",
+  "noValidCharactersFound": "No valid characters found for practice",
+  "showGroups": "Show Groups",
+  
+  "todaysLearn": "Today's Learn",
+  "todaysReview": "Today's Review",
+  "totalTime": "Total Time",
+  "todaysProgress": "Today's Progress",
+  "cardsStudied": "Cards Studied",
+  "timeToday": "Time Today",
+  "dailyStreak": "Daily Streak",
+  "currentStreak": "Current Streak",
+  "bestStreak": "Best Streak",
+  
+  "verbs": "Verbs",
+  "dailyActivities": "Daily Activities",
+  "places": "Places",
+  "moreComingSoon": "More coming soon...",
+  "andMoreCount": "... and {count} more",
+  "@andMoreCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  
+  "noCustomSets": "No Custom Sets",
+  "createCustomSet": "Create Custom Set",
+  "removeFromBuiltin": "Remove from Built-in",
+  "deleteCustomSet": "Delete Custom Set",
+  "createFolder": "Create Folder",
+  "renameFolder": "Rename Folder",
+  "deleteFolder": "Delete Folder",
+  "chooseColor": "Choose Color",
+  "mergeSets": "Merge Sets",
+  "confirmMerge": "Confirm Merge",
+  "noFolder": "No Folder",
+  "allItemsLearnedMessage": "All items in this set have been learned!",
+  "noLearnedItemsMessage": "No learned items in this set yet. Use \"Learn\" first!",
+  "continueButton": "Continue",
+  "someItemsUnavailable": "Some items unavailable",
+  "ofGoal": "of {goal} goal",
+  "setGoalButton": "Set Goal",
+  "totalCharactersLearned": "Total Characters Learned",
+  "totalStudyTime": "Total Study Time",
+  "minutesShort": "{count}m",
+  "hoursShort": "{count}h",
+  "daysShort": "{count}d",
+  "setsCount": "{count} sets",
+  "setCount": "{count} set"
 }

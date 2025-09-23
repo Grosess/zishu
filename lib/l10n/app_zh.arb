@@ -1,110 +1,182 @@
 {
+  "@@locale": "zh",
   "appTitle": "字书",
-  "@appTitle": {
-    "description": "The title of the application"
-  },
-  "practice": "练习",
-  "@practice": {
-    "description": "Practice button text"
-  },
+  
+  "home": "主页",
   "sets": "字集",
-  "@sets": {
-    "description": "Sets tab text"
-  },
-  "statistics": "统计",
-  "@statistics": {
-    "description": "Statistics tab text"
-  },
+  "progress": "进度",
   "settings": "设置",
-  "@settings": {
-    "description": "Settings tab text"
-  },
-  "importFromPhoto": "从照片导入",
-  "@importFromPhoto": {
-    "description": "Import from photo button text"
-  },
-  "scanVocabulary": "扫描词汇",
-  "@scanVocabulary": {
-    "description": "Scan vocabulary text"
-  },
-  "selectPhotos": "选择照片",
-  "@selectPhotos": {
-    "description": "Select photos button text"
-  },
-  "fromCamera": "相机拍摄",
-  "@fromCamera": {
-    "description": "From camera button text"
-  },
-  "fromGallery": "从相册选择",
-  "@fromGallery": {
-    "description": "From gallery button text"
-  },
-  "practiceGroupSize": "练习组大小",
-  "@practiceGroupSize": {
-    "description": "Practice group size label"
-  },
-  "practiceGroupDescription": "每次学习中一起练习的词汇数量",
-  "@practiceGroupDescription": {
-    "description": "Practice group size description"
-  },
-  "practiceGroupExample": "例如：10 = 一次练习10个单词",
-  "@practiceGroupExample": {
-    "description": "Practice group size example"
-  },
-  "chinese": "中文",
-  "@chinese": {
-    "description": "Chinese column header"
-  },
-  "pinyin": "拼音",
-  "@pinyin": {
-    "description": "Pinyin column header"
-  },
-  "english": "英文",
-  "@english": {
-    "description": "English column header"
-  },
-  "saveSet": "保存字集",
-  "@saveSet": {
-    "description": "Save set button text"
-  },
-  "characterSetName": "字集名称",
-  "@characterSetName": {
-    "description": "Character set name input label"
-  },
+  
+  "characterSets": "字符集",
+  "builtIn": "内置",
+  "custom": "自定义",
+  
+  "learn": "学习",
+  "practice": "练习",
+  "viewAll": "查看全部",
+  
+  "add": "添加",
+  "remove": "移除",
+  "delete": "删除",
+  "save": "保存",
+  "cancel": "取消",
+  "edit": "编辑",
+  "rename": "重命名",
+  "select": "选择",
+  
+  "editSet": "编辑字集",
+  "deleteSet": "删除字集",
+  "renameSet": "重命名字集",
+  "saveChanges": "保存更改",
+  "discardChanges": "放弃更改？",
+  "discardChangesMessage": "您有未保存的更改。要放弃它们吗？",
+  "discard": "放弃",
+  
+  "markAllAsLearned": "全部标记为已学",
+  "markAllAsLearnedConfirm": "您真的要将 \"{name}\" 中的所有 {count} 个{type}标记为已学吗？\n\n此操作无法撤销。",
+  
+  "words": "词语",
+  "characters": "字符",
+  "items": "项目",
+  "totalItems": "总项目",
+  "cards": "卡片",
+  
+  "selected": "已选",
+  "selectAll": "全选",
+  "deselectAll": "取消全选",
+  
+  "addItems": "添加项目",
+  "enterItems": "输入项目，用逗号、空格或换行分隔",
+  "exampleItems": "例如：你好，世界，中国",
+  
+  "setName": "字集名称",
+  "enterNewName": "输入新名称",
+  
+  "createdFrom": "创建自：{source}",
+  "progressLabel": "进度：{percent}%",
+  
+  "noItemsInSet": "此字集中没有项目",
+  "cannotSaveEmptySet": "不能保存空字集",
+  
+  "deleteSetConfirm": "删除 \"{name}\"？此操作无法撤销。",
+  
+  "createNewSet": "创建新字集",
+  "enterCharacters": "输入字符或词语",
+  "importFromText": "从文本导入",
+  
+  "theme": "主题",
   "language": "语言",
-  "@language": {
-    "description": "Language setting label"
-  },
   "selectLanguage": "选择语言",
-  "@selectLanguage": {
-    "description": "Language selection dialog title"
-  },
   "englishLanguage": "English",
-  "@englishLanguage": {
-    "description": "English language option"
-  },
   "chineseLanguage": "中文",
-  "@chineseLanguage": {
-    "description": "Chinese language option"
-  },
+  
+  "accentColor": "主题色",
+  "backgroundColor": "背景色",
+  "duotoneMode": "双色模式",
+  
+  "green": "绿色",
+  "red": "红色",
+  "blue": "蓝色",
+  "purple": "紫色",
+  "orange": "橙色",
+  "pink": "粉色",
+  "gold": "金色",
+  "black": "黑色",
+  "white": "白色",
+  
+  "gridView": "网格视图",
+  "listView": "列表视图",
+  
+  "allItemsLearned": "此字集中的所有项目都已学习！",
+  "featureComingSoon": "功能即将推出",
+  
+  "searchSets": "搜索字集...",
+  "noSetsFound": "未找到字集",
+  "searchAdditionalSets": "搜索要添加的其他字集...",
+  
+  "about": "关于",
+  "version": "版本",
+  "developer": "开发者",
+  
   "welcomeTitle": "欢迎使用字书",
-  "@welcomeTitle": {
-    "description": "Welcome dialog title"
-  },
   "welcomeMessage": "请选择您的首选语言：",
-  "@welcomeMessage": {
-    "description": "Welcome dialog message"
-  },
-  "processing": "处理中...",
-  "@processing": {
-    "description": "Processing text"
-  },
-  "ocrProcessing": "正在处理图片 OCR...",
-  "@ocrProcessing": {
-    "description": "OCR processing text"
-  },
-  "downloadingModel": "正在下载语言模型... 可能需要一些时间。",
-  "@downloadingModel": {
-    "description": "Model download message"
-  }
+  
+  "markedItemsAsLearned": "已将 {count} 个项目标记为已学",
+  "deletedSet": "已删除 \"{name}\"",
+  
+  "changeColor": "更改颜色",
+  "moveToFolder": "移至文件夹",
+  "mergeWithAnotherSet": "与另一字集合并",
+  
+  "countSelected": "{count} 个已选",
+  "countItems": "{count} 个项目",
+  
+  "charactersBy": "个字符截止",
+  "perDay": "每天 {count} 个",
+  "there": "进度",
+  "ahead": "领先",
+  "behind": "落后",
+  "countAhead": "领先 {count} 个",
+  "countBehind": "落后 {count} 个",
+  
+  "endlessPractice": "无尽练习",
+  "practiceAllLearned": "练习全部 {count} 个已学项目",
+  
+  "searchCharacters": "搜索字符",
+  "findByPinyin": "通过拼音、中文或英文查找",
+  
+  "recentSets": "最近字集",
+  "noRecentSets": "没有最近练习的字集。",
+  "startPracticingSets": "从字集标签页开始练习！",
+  
+  "sessionSummary": "练习总结",
+  "practiceIncorrect": "练习错误项",
+  "createSet": "创建字集",
+  "done": "完成",
+  "nameYourPracticeSet": "为练习集命名",
+  "noLearnedItemsFound": "未找到已学项目。请先学习一些字符！",
+  "couldNotOpenFeedback": "无法打开反馈表单",
+  "noValidCharactersFound": "未找到有效字符进行练习",
+  "showGroups": "显示分组",
+  
+  "todaysLearn": "今日学习",
+  "todaysReview": "今日复习",
+  "totalTime": "总时间",
+  "todaysProgress": "今日进度",
+  "cardsStudied": "已学卡片",
+  "timeToday": "今日时间",
+  "dailyStreak": "连续天数",
+  "currentStreak": "当前连续",
+  "bestStreak": "最佳连续",
+  
+  "verbs": "动词",
+  "dailyActivities": "日常活动",
+  "places": "地点",
+  "moreComingSoon": "更多即将推出...",
+  "andMoreCount": "... 还有 {count} 个",
+  
+  "noCustomSets": "没有自定义字集",
+  "createCustomSet": "创建自定义字集",
+  "removeFromBuiltin": "从内置中移除",
+  "deleteCustomSet": "删除自定义字集",
+  "createFolder": "创建文件夹",
+  "renameFolder": "重命名文件夹",
+  "deleteFolder": "删除文件夹",
+  "chooseColor": "选择颜色",
+  "mergeSets": "合并字集",
+  "confirmMerge": "确认合并",
+  "noFolder": "无文件夹",
+  "allItemsLearnedMessage": "此字集中的所有项目都已学习！",
+  "noLearnedItemsMessage": "此字集中还没有已学项目。请先使用\"学习\"！",
+  "continueButton": "继续",
+  "someItemsUnavailable": "部分项目不可用",
+  "ofGoal": "目标 {goal} 个",
+  "setGoalButton": "设置目标",
+  "totalCharactersLearned": "已学字符总数",
+  "totalStudyTime": "总学习时间",
+  "minutesShort": "{count}分钟",
+  "hoursShort": "{count}小时",
+  "daysShort": "{count}天",
+  "setsCount": "{count} 个字集",
+  "setCount": "{count} 个字集"
 }

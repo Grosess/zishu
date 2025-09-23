@@ -12,6 +12,7 @@ import '../services/haptic_service.dart';
 import '../services/pronunciation_service.dart';
 import '../services/character_set_manager.dart';
 import 'set_edit_page.dart';
+import '../l10n/app_localizations.dart';
 
 // Custom page route with smooth transition
 class SlidePageRoute extends PageRouteBuilder {
@@ -313,7 +314,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
             IconButton(
               icon: const Icon(Icons.edit, size: 20),
               onPressed: _showEditSet,
-              tooltip: 'Edit Set',
+              tooltip: AppLocalizations.of(context)!.editSet,
             ),
         ],
       ),

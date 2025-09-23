@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'l10n/app_localizations.dart';
 import 'dart:async';
 import 'services/local_storage_service.dart';
 import 'services/character_cache_manager.dart';
@@ -23,7 +24,6 @@ import 'services/learning_service.dart';
 import 'services/haptic_service.dart';
 import 'widgets/streak_display.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'generated/l10n.dart';
 
 // Theme extension for duotone themes
 class DuotoneThemeExtension extends ThemeExtension<DuotoneThemeExtension> {
@@ -821,8 +821,16 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     return MaterialApp(
       title: 'Zishu - Hanzi Practice',
       theme: _buildLightTheme(),
-      localizationsDelegates: S.localizationsDelegates,
-      supportedLocales: S.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en'),
+        Locale('zh'),
+      ],
       locale: _languageService.locale,
       darkTheme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
@@ -1216,7 +1224,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
           ),
         ),
         title: Text(
-          S.of(context).appTitle,
+          AppLocalizations.of(context)!.appTitle,
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w800,
@@ -1369,7 +1377,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                   ListTile(
                     leading: Icon(Icons.settings, color: Theme.of(context).colorScheme.primary),
                     title: Text(
-                      S.of(context).settings,
+                      AppLocalizations.of(context)!.settings,
                       style: TextStyle(
                         color: Theme.of(context).brightness == Brightness.dark
                             ? Colors.white
@@ -1579,21 +1587,21 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                   _selectedIndex == 0 ? Icons.home : Icons.home_outlined,
                   size: 28,
                 ),
-                label: S.of(context).home,
+                label: AppLocalizations.of(context)!.home,
               ),
               NavigationDestination(
                 icon: Icon(
                   _selectedIndex == 1 ? Icons.folder : Icons.folder_outlined,
                   size: 28,
                 ),
-                label: S.of(context).sets,
+                label: AppLocalizations.of(context)!.sets,
               ),
               NavigationDestination(
                 icon: Icon(
                   _selectedIndex == 2 ? Icons.bar_chart : Icons.bar_chart_outlined,
                   size: 28,
                 ),
-                label: S.of(context).progress,
+                label: AppLocalizations.of(context)!.progress,
               ),
             ],
           ),

@@ -1298,7 +1298,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                     duration: const Duration(milliseconds: 150),
                     scale: (_completedStrokeIndices.isEmpty && !_showSuccess) ? 0.9 : 1.0,
                     child: TextButton.icon(
-                      onPressed: (_completedStrokeIndices.isEmpty && !_showSuccess) ? null : () {
+                      onPressed: (_completedStrokeIndices.isEmpty && !_showSuccess && !_showFullCharacter && !_showHintPath) ? null : () {
                         HapticService().lightImpact();
                         setState(() {
                           _completedStrokeIndices.clear();
@@ -1331,6 +1331,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                       setState(() {
                         _showHintPath = true;
                         _usedHint = true;
+                        // Enable erase button when hints are shown
                       });
                     },
                     icon: const Icon(Icons.lightbulb_outline),
@@ -1343,6 +1344,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                       setState(() {
                         _showFullCharacter = !_showFullCharacter;
                         if (_showFullCharacter) _usedHint = true;
+                        // Enable erase button when character is shown
                       });
                     },
                     icon: Icon(_showFullCharacter ? Icons.visibility_off : Icons.visibility),
@@ -1600,9 +1602,10 @@ class _WritingPracticePageState extends State<WritingPracticePage>
           _missedStrokeIndices.add(nextIndex);
           _missedStrokes = _missedStrokeIndices.length;
           
-          // Check if we've missed 2 different strokes - mark for failure but continue
+          // Check if we've missed 2 different strokes - mark for failure
+          // For consistent grading: 2 missed strokes = fail
           if (_missedStrokeIndices.length >= 2) {
-            // Don't stop here - let user complete the character
+            // User has failed, but let them complete the character
           }
         }
         
@@ -1703,6 +1706,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     // For individual practice of learned characters, just reset for continuous practice
     if (isLearnedCharacter) {
       // Determine if the character was completed correctly
+      // Consistent threshold: 2 or more missed strokes = fail
       final wasCorrect = !_usedHint && _missedStrokeIndices.length < 2;
       
       setState(() {
@@ -1773,10 +1777,9 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     
     // Don't save practice data here - wait for manual grading
     
-    // Determine auto-grading - scale leniency based on stroke count
-    final totalStrokes = _characterStroke?.strokes.length ?? 1;
-    final allowedMisses = _calculateAllowedMisses(totalStrokes);
-    _autoGradedAsCorrect = !_usedHint && _missedStrokeIndices.length <= allowedMisses;
+    // Determine auto-grading - consistent threshold: 2 missed strokes = fail
+    // No scaling based on stroke count for consistency
+    _autoGradedAsCorrect = !_usedHint && _missedStrokeIndices.length < 2;
     
     // Don't call completion callback here for endless practice
     // It will be called in _proceedWithGrade

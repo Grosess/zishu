@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 import '../services/haptic_service.dart';
 import '../services/language_service.dart';
-import '../generated/l10n.dart';
+import '../l10n/app_localizations.dart';
 import '../widgets/language_selection_dialog.dart';
 import 'attributions_page.dart';
 
@@ -199,7 +199,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(S.of(context).settings),
+        title: Text(AppLocalizations.of(context)!.settings),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -241,7 +241,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 // Language Selection
                 ListTile(
-                  title: Text(S.of(context).language),
+                  title: Text(AppLocalizations.of(context)!.language),
                   subtitle: Text(_languageService.getLanguageName(_languageService.locale)),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {

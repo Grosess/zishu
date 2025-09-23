@@ -280,16 +280,37 @@ class CedictService {
       (match) => match.group(1) ?? ''
     );
     
-    // Remove Chinese characters that appear as references (e.g., "see 考试卷子")
-    def = def.replaceAll(RegExp(r'see\s+[\u4e00-\u9fff\u3400-\u4dbf]+'), 'see [Chinese term]');
-    def = def.replaceAll(RegExp(r'See\s+[\u4e00-\u9fff\u3400-\u4dbf]+'), 'See [Chinese term]');
+    // Remove ALL Chinese characters from definitions - no exceptions
+    // This includes CJK Unified Ideographs and Extension blocks
+    def = def.replaceAll(RegExp(r'[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]+'), '');
     
-    // Remove standalone Chinese characters or those in parentheses
-    def = def.replaceAll(RegExp(r'\([\u4e00-\u9fff\u3400-\u4dbf]+\)'), '');
-    def = def.replaceAll(RegExp(r'\[[\u4e00-\u9fff\u3400-\u4dbf]+\]'), '');
+    // Clean up any leftover parentheses, brackets, or "see" references that are now empty
+    def = def.replaceAll(RegExp(r'\(\s*\)'), '');
+    def = def.replaceAll(RegExp(r'\[\s*\]'), '');
+    def = def.replaceAll(RegExp(r'see\s*(?:[,;]|$)', caseSensitive: false), '');
+    def = def.replaceAll(RegExp(r'See\s*(?:[,;]|$)', caseSensitive: false), '');
+    
+    // Remove "variant of", "same as", etc. that reference Chinese terms (now removed)
+    def = def.replaceAll(RegExp(r'variant of\s*(?:[,;]|$)', caseSensitive: false), '');
+    def = def.replaceAll(RegExp(r'same as\s*(?:[,;]|$)', caseSensitive: false), '');
+    def = def.replaceAll(RegExp(r'used in\s*(?:[,;]|$)', caseSensitive: false), '');
+    
+    // Clean up any double spaces, commas, or semicolons
+    def = def.replaceAll(RegExp(r'[,;]+\s*[,;]+'), ',');
+    def = def.replaceAll(RegExp(r'^[,;\s]+|[,;\s]+$'), '');
     
     // Clean up whitespace
     def = def.trim().replaceAll(RegExp(r'\s+'), ' ');
+    
+    // If definition became empty or too short after removing Chinese, mark it
+    if (def.isEmpty || def.length < 2) {
+      // Try next definition if available
+      if (parts.length > 1) {
+        return _cleanDefinition(parts.sublist(1).join('/'));
+      }
+      // Otherwise return a generic placeholder
+      return '[definition]';
+    }
     
     // Make first letter lowercase unless it's a proper noun (like China, Beijing, etc.)
     if (def.isNotEmpty && !_isProperNoun(def)) {
