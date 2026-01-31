@@ -67,8 +67,8 @@ class _SettingsPageState extends State<SettingsPage> {
     _accentColor = _prefs.getString('accent_color') ?? 'blue';
     
     // Load duotone colors - prioritize direct values over legacy presets
-    _duotoneBackground = _prefs.getString('duotone_background') ?? 'white';
-    _duotoneColor = _prefs.getString('duotone_color') ?? 'green';
+    _duotoneBackground = _prefs.getString('duotone_background') ?? 'black';
+    _duotoneColor = _prefs.getString('duotone_color') ?? 'blue';
     
     // Only check legacy preset if no direct values are saved
     if (!_prefs.containsKey('duotone_background') || !_prefs.containsKey('duotone_color')) {
@@ -79,10 +79,10 @@ class _SettingsPageState extends State<SettingsPage> {
         _duotoneBackground = parts[1];
       }
     }
-    
-    // Validate duotone colors synchronously
-    _validateDuotoneColorsSync();
-    
+
+    // Don't validate on initialization - trust saved preferences
+    // Only validate when user actively changes colors
+
     _strokeWidth = _prefs.getDouble('stroke_width') ?? 8.0; // Default 8.0
     // Clamp to valid range (3.0 - 10.0)
     _strokeWidth = _strokeWidth.clamp(3.0, 10.0);
@@ -601,11 +601,11 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 
                 // Stroke Settings
-                const Padding(
-                  padding: EdgeInsets.all(16),
+                Padding(
+                  padding: const EdgeInsets.all(16),
                   child: Text(
                     AppLocalizations.of(context)!.strokeAppearance,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
@@ -946,9 +946,9 @@ class _SettingsPageState extends State<SettingsPage> {
           _duotoneBackground = value;
         });
         await _saveStringSetting('duotone_background', value);
-        
-        // Re-validate the combination
-        _validateDuotoneColorsSync();
+
+        // Re-validate the combination and save if needed
+        _validateDuotoneColorsSync(saveToPrefs: true);
         
         if (mounted) {
           MainApp.of(context)?.updateTheme('duotone', duotoneBackground: _duotoneBackground, duotoneColor: _duotoneColor);
@@ -989,9 +989,9 @@ class _SettingsPageState extends State<SettingsPage> {
           _duotoneColor = value;
         });
         await _saveStringSetting('duotone_color', value);
-        
-        // Re-validate the combination
-        _validateDuotoneColorsSync();
+
+        // Re-validate the combination and save if needed
+        _validateDuotoneColorsSync(saveToPrefs: true);
         
         if (mounted) {
           MainApp.of(context)?.updateTheme('duotone', duotoneBackground: _duotoneBackground, duotoneColor: _duotoneColor);
@@ -1002,18 +1002,20 @@ class _SettingsPageState extends State<SettingsPage> {
   }
   
   
-  void _validateDuotoneColorsSync() {
+  void _validateDuotoneColorsSync({bool saveToPrefs = false}) {
     final isBackgroundNeutral = _duotoneBackground == 'white' || _duotoneBackground == 'black';
     final isAccentNeutral = _duotoneColor == 'white' || _duotoneColor == 'black';
-    
+
     // Check if both are the same (invalid - no contrast)
     if (_duotoneBackground == _duotoneColor) {
-      // Default to white background, green accent
-      _duotoneBackground = 'white';
-      _duotoneColor = 'green';
-      // Save corrected values
-      _prefs.setString('duotone_background', _duotoneBackground);
-      _prefs.setString('duotone_color', _duotoneColor);
+      // Default to black background, blue accent
+      _duotoneBackground = 'black';
+      _duotoneColor = 'blue';
+      // Only save if explicitly requested (e.g., user is changing colors)
+      if (saveToPrefs) {
+        _prefs.setString('duotone_background', _duotoneBackground);
+        _prefs.setString('duotone_color', _duotoneColor);
+      }
     }
     // Check if neither is neutral (invalid - must have one neutral)
     else if (!isBackgroundNeutral && !isAccentNeutral) {
@@ -1023,8 +1025,10 @@ class _SettingsPageState extends State<SettingsPage> {
       } else {
         _duotoneColor = 'white'; // Use white for dark backgrounds
       }
-      // Save corrected value
-      _prefs.setString('duotone_color', _duotoneColor);
+      // Only save if explicitly requested
+      if (saveToPrefs) {
+        _prefs.setString('duotone_color', _duotoneColor);
+      }
     }
     // Otherwise the combination is valid (one is neutral, they're different)
   }

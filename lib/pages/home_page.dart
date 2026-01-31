@@ -429,138 +429,45 @@ class HomePageState extends State<HomePage> with RouteAware {
     // Process all learned items for endless practice
     if (allLearnedChars.isNotEmpty || allLearnedWords.isNotEmpty) {
       print('Processing items for endless practice...');
-      
-      // First add all learned words exactly as they are
+
+      // STRICT MODE: Only add words that were explicitly learned as complete units
+      // Do NOT add multi-character items unless the user went through the learn flow for that exact word
       for (final word in allLearnedWords) {
-        if (!addedItems.contains(word)) {
-          practiceItems.add(word);
-          addedItems.add(word);
-          print('Adding learned word: "$word"');
-        }
-      }
-      
-      // If we have character sets loaded, try to find multi-character cards
-      if (allSetItems.isNotEmpty) {
-        print('Processing ${allSetItems.length} cards from sets...');
-        
-        // Check for multi-character cards where all characters are learned
-        for (final entry in allSetItems.entries) {
-          final card = entry.key;
-          final setName = entry.value.key;
-          
-          if (card.length > 1 && !addedItems.contains(card)) {
-            // Check if all characters in this card are learned
-            bool allCharsLearned = true;
-            for (int i = 0; i < card.length; i++) {
-              if (!allLearnedChars.contains(card[i])) {
-                allCharsLearned = false;
-                break;
-              }
-            }
-            
-            if (allCharsLearned) {
-              practiceItems.add(card);
-              addedItems.add(card);
-              print('Adding multi-char card: "$card" from set: $setName');
-            }
-          }
-        }
-      }
-      
-      // Try to form common multi-character words from learned characters
-      final commonWords = {
-        '衣服': ['衣', '服'],
-        '什么': ['什', '么'],
-        '不仅': ['不', '仅'],
-        '可以': ['可', '以'],
-        '中国': ['中', '国'],
-        '时间': ['时', '间'],
-        '工作': ['工', '作'],
-        '朋友': ['朋', '友'],
-        '学习': ['学', '习'],
-        '喜欢': ['喜', '欢'],
-        '漂亮': ['漂', '亮'],
-        '高兴': ['高', '兴'],
-        '电话': ['电', '话'],
-        '开始': ['开', '始'],
-        '介绍': ['介', '绍'],
-        '名字': ['名', '字'],
-        '告诉': ['告', '诉'],
-        '知道': ['知', '道'],
-        '认识': ['认', '识'],
-        '怎么': ['怎', '么'],
-        '明天': ['明', '天'],
-        '今天': ['今', '天'],
-        '昨天': ['昨', '天'],
-        '星期': ['星', '期'],
-        '医院': ['医', '院'],
-        '飞机': ['飞', '机'],
-        '咖啡': ['咖', '啡'],
-        '西瓜': ['西', '瓜'],
-        '苹果': ['苹', '果'],
-        '葡萄': ['葡', '萄'],
-        '房间': ['房', '间'],
-        '身体': ['身', '体'],
-        '眼睛': ['眼', '睛'],
-        '妹妹': ['妹', '妹'],
-        '姐姐': ['姐', '姐'],
-        '哥哥': ['哥', '哥'],
-        '弟弟': ['弟', '弟'],
-        '爸爸': ['爸', '爸'],
-        '妈妈': ['妈', '妈'],
-        '谢谢': ['谢', '谢'],
-        '对不起': ['对', '不', '起'],
-        '没关系': ['没', '关', '系'],
-      };
-      
-      // Check which common words can be formed from learned characters
-      for (final entry in commonWords.entries) {
-        final word = entry.key;
-        final chars = entry.value;
-        
-        if (!addedItems.contains(word)) {
-          // Check if all characters in this word are learned
-          bool canFormWord = true;
-          for (final char in chars) {
-            if (!allLearnedChars.contains(char)) {
-              canFormWord = false;
-              break;
-            }
-          }
-          
-          if (canFormWord) {
+        // Only add words that are single characters OR were explicitly learned
+        // Skip multi-character words that might have been auto-marked as learned
+        if (word.length == 1) {
+          // Single character word - safe to add
+          if (!addedItems.contains(word)) {
             practiceItems.add(word);
             addedItems.add(word);
-            print('Adding common word: "$word"');
-            
-            // Mark the individual characters as part of a word
-            for (final char in chars) {
-              addedItems.add(char); // Prevent individual char from being added
-            }
+            print('Adding single-char word: "$word"');
+          }
+        } else {
+          // Multi-character word - only add if it's from a word set
+          // This ensures the user actually learned the word as a unit, not just the components
+
+          // Check: if this is a 2-char word like 王子, did the user learn it as 王子?
+          // We verify by checking if it exists in a word set (not character set)
+          final setInfo = allSetItems[word];
+          final isFromWordSet = setInfo?.value == true; // true if from a word set
+
+          if (isFromWordSet && !addedItems.contains(word)) {
+            practiceItems.add(word);
+            addedItems.add(word);
+            print('Adding multi-char word from word set: "$word" (from ${setInfo?.key})');
+          } else {
+            print('Skipping multi-char word (not from word set): "$word"');
           }
         }
       }
-      
-      // Add single characters only if they were learned as individual cards
-      // Check if the character exists as a single-character card in any allowed set
+
+      // Add single characters that were explicitly learned
+      // Only add if they're not already added as part of a word
       for (final char in allLearnedChars) {
         if (!addedItems.contains(char)) {
-          // Check if this character exists as a single-character card in the allowed sets
-          bool isSingleCharCard = false;
-          for (final entry in allSetItems.entries) {
-            final card = entry.key;
-            final setName = entry.value.key;
-            if (card == char && allowedSets.contains(setName)) {
-              isSingleCharCard = true;
-              break;
-            }
-          }
-          
-          // Only add if it's actually a single-character card, not just part of a multi-char word
-          if (isSingleCharCard) {
-            practiceItems.add(char);
-            addedItems.add(char);
-          }
+          practiceItems.add(char);
+          addedItems.add(char);
+          print('Adding learned character: "$char"');
         }
       }
       
@@ -886,7 +793,19 @@ class HomePageState extends State<HomePage> with RouteAware {
     // Show synopsis dialog
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) {
+        // Detect small screens (iPhone SE and similar)
+        final screenWidth = MediaQuery.of(context).size.width;
+        final isSmallScreen = screenWidth < 375; // iPhone SE is 320
+
+        return AlertDialog(
+        titlePadding: isSmallScreen
+            ? const EdgeInsets.fromLTRB(16, 12, 16, 8)
+            : const EdgeInsets.fromLTRB(24, 24, 24, 20),
+        contentPadding: isSmallScreen
+            ? const EdgeInsets.fromLTRB(16, 0, 16, 8)
+            : const EdgeInsets.fromLTRB(24, 20, 24, 24),
+        actionsPadding: EdgeInsets.zero,
         title: Stack(
           children: [
             Column(
@@ -912,10 +831,12 @@ class HomePageState extends State<HomePage> with RouteAware {
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: isSmallScreen ? 2 : 4),
                 Text(
                   '${set.characters.length} ${set.isWordSet ? 'words' : 'characters'}',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  style: (isSmallScreen
+                      ? Theme.of(context).textTheme.bodySmall
+                      : Theme.of(context).textTheme.bodyMedium)?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
@@ -1104,7 +1025,9 @@ class HomePageState extends State<HomePage> with RouteAware {
         ),
         actions: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
+            padding: isSmallScreen
+                ? const EdgeInsets.symmetric(horizontal: 2, vertical: 2)
+                : const EdgeInsets.symmetric(horizontal: 4),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -1114,24 +1037,31 @@ class HomePageState extends State<HomePage> with RouteAware {
                   children: [
                     // Left side - Show Groups (aligned left)
                     if (validItems.length > 10)
-                      TextButton.icon(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => GroupsPage(
-                                setName: set.name,
-                                characters: validItems,
-                                isWordSet: set.isWordSet,
+                      Flexible(
+                        child: TextButton.icon(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => GroupsPage(
+                                  setName: set.name,
+                                  characters: validItems,
+                                  isWordSet: set.isWordSet,
+                                ),
                               ),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.apps, size: 18),
-                        label: const Text('Show Groups', 
-                          style: TextStyle(fontSize: 13),
-                          overflow: TextOverflow.ellipsis,
+                            );
+                          },
+                          icon: Icon(Icons.apps, size: isSmallScreen ? 16 : 18),
+                          label: Text(isSmallScreen ? 'Groups' : 'Show Groups',
+                            style: TextStyle(fontSize: isSmallScreen ? 11 : 13),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          style: TextButton.styleFrom(
+                            padding: isSmallScreen
+                                ? const EdgeInsets.symmetric(horizontal: 6, vertical: 8)
+                                : null,
+                          ),
                         ),
                       ),
                     
@@ -1139,13 +1069,17 @@ class HomePageState extends State<HomePage> with RouteAware {
                     
                     // Right side - Learn button
                     if (validItems.isNotEmpty && progress < 1.0)
-                      SizedBox(
-                        width: 115,
-                        child: FilledButton.icon(
-                          onPressed: () async {
+                      Flexible(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: isSmallScreen ? 85 : 110,
+                            minWidth: isSmallScreen ? 70 : 90,
+                          ),
+                          child: FilledButton.icon(
+                            onPressed: () async {
                             // Filter to only unlearned items using the proper logic
                             final unlearnedItems = await _learningService.getUnlearnedItems(validItems);
-                            
+
                             if (unlearnedItems.isEmpty) {
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -1155,7 +1089,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                               );
                               return;
                             }
-                            
+
                             HapticService().lightImpact();
                             Navigator.pop(context);
                             Navigator.push(
@@ -1180,29 +1114,34 @@ class HomePageState extends State<HomePage> with RouteAware {
                               ),
                             ).then((_) => _loadData());
                           },
-                          icon: const Icon(Icons.school, size: 18),
-                          label: const Text('Learn',
-                            style: TextStyle(fontSize: 13),
+                          icon: Icon(Icons.school, size: isSmallScreen ? 16 : 18),
+                          label: Text('Learn',
+                            style: TextStyle(fontSize: isSmallScreen ? 11 : 13),
                             overflow: TextOverflow.ellipsis,
                           ),
                           style: FilledButton.styleFrom(
                             backgroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                                 ? Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary
                                 : Theme.of(context).colorScheme.primary,
+                            padding: isSmallScreen
+                                ? const EdgeInsets.symmetric(horizontal: 8, vertical: 8)
+                                : null,
                           ),
                         ),
                       ),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: isSmallScreen ? 4 : 8),
                 // Bottom row
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Left side - View All (aligned left)
                     if (validItems.isNotEmpty)
-                      TextButton.icon(
-                        onPressed: () {
+                      Flexible(
+                        child: TextButton.icon(
+                          onPressed: () {
                           Navigator.pop(context);
                           Navigator.push(
                             context,
@@ -1217,24 +1156,30 @@ class HomePageState extends State<HomePage> with RouteAware {
                             ),
                           ).then((_) => _loadData());
                         },
-                        icon: const Icon(Icons.view_list, size: 18),
-                        label: const Text('View All',
-                          style: TextStyle(fontSize: 13),
+                        icon: Icon(Icons.view_list, size: isSmallScreen ? 16 : 18),
+                        label: Text('View All',
+                          style: TextStyle(fontSize: isSmallScreen ? 11 : 13),
                           overflow: TextOverflow.ellipsis,
                         ),
+                        style: TextButton.styleFrom(
+                          padding: isSmallScreen
+                              ? const EdgeInsets.symmetric(horizontal: 6, vertical: 8)
+                              : null,
+                        ),
                       ),
-                    
+                    ),
+
                     const Spacer(), // Space between left and right
                   
                   // Right side - Practice button
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      // Practice - always available
-                      if (validItems.isNotEmpty)
-                        SizedBox(
-                          width: 125,
-                          child: FilledButton.icon(
+                  if (validItems.isNotEmpty)
+                    Flexible(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: isSmallScreen ? 95 : 125,
+                          minWidth: isSmallScreen ? 75 : 95,
+                        ),
+                        child: FilledButton.icon(
                             onPressed: () async {
                               // Show loading
                               showDialog(
@@ -1244,23 +1189,23 @@ class HomePageState extends State<HomePage> with RouteAware {
                                   child: CircularProgressIndicator(),
                                 ),
                               );
-                              
+
                               // Clear cache to get fresh data
                               _learningService.clearCache();
                               _statsService.clearCache();
-                              
+
                               // Get ALL fresh learned items from this set
                               final learnedCharacters = await _statsService.getLearnedCharacters();
                               final learnedWords = await _statsService.getLearnedWords();
                               final allLearned = {...learnedCharacters, ...learnedWords};
-                              
+
                               // Filter this set's items against fresh learned data
                               final learnedItems = set.characters.where((item) => allLearned.contains(item)).toList();
                               learnedItems.shuffle(); // Randomize order
-                              
+
                               // Close loading dialog
                               Navigator.pop(context);
-                              
+
                               if (learnedItems.isEmpty) {
                                 Navigator.pop(context);
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -1270,7 +1215,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                                 );
                                 return;
                               }
-                              
+
                               HapticService().lightImpact();
                               Navigator.pop(context);
                               Navigator.push(
@@ -1286,28 +1231,30 @@ class HomePageState extends State<HomePage> with RouteAware {
                                 ),
                               ).then((_) => _loadData());
                             },
-                            icon: const Icon(Icons.edit, size: 18),
-                            label: const Text('Practice',
-                              style: TextStyle(fontSize: 13),
+                            icon: Icon(Icons.edit, size: isSmallScreen ? 16 : 18),
+                            label: Text('Practice',
+                              style: TextStyle(fontSize: isSmallScreen ? 11 : 13),
                               overflow: TextOverflow.ellipsis,
                             ),
                             style: FilledButton.styleFrom(
                               backgroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                                   ? (Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary).withOpacity(0.8)
                                   : Theme.of(context).colorScheme.secondary,
+                              padding: isSmallScreen
+                                  ? const EdgeInsets.symmetric(horizontal: 8, vertical: 8)
+                                  : null,
                             ),
                           ),
                         ),
-                      
-                    ],
-                  ),
+                      ),
                 ],
               ),
             ],
           ),
           ),
         ],
-      ),
+      );
+      },
     );
   }
   

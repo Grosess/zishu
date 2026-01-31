@@ -32,12 +32,13 @@ class _SetEditPageState extends State<SetEditPage> with SingleTickerProviderStat
   final Set<int> _selectedIndices = {};
   final Map<String, String> _pronunciations = {}; // Store pronunciations
   final Map<String, String> _definitions = {}; // Store definitions
-  
+
   bool _isSelectionMode = true; // Default to selection mode
   bool _isLoading = false;
   bool _hasUnsavedChanges = false;
   bool _isEditingName = false;
   bool _useListView = false; // Toggle between grid and list view
+  String? _selectedIcon; // Cover character for the set
   
   @override
   void initState() {
@@ -46,6 +47,7 @@ class _SetEditPageState extends State<SetEditPage> with SingleTickerProviderStat
     _nameController = TextEditingController(text: widget.set.name);
     _addItemController = TextEditingController();
     _items = List<String>.from(widget.set.characters);
+    _selectedIcon = widget.set.icon; // Initialize with existing icon
     _loadPronunciations();
   }
   
@@ -190,6 +192,7 @@ class _SetEditPageState extends State<SetEditPage> with SingleTickerProviderStat
         description: widget.set.description,
         isWordSet: isWordSet,
         color: widget.set.color,
+        icon: _selectedIcon, // Save the selected cover character
         source: widget.set.source,
         definitions: widget.set.definitions,
         groupSize: widget.set.groupSize ?? 10,
@@ -266,7 +269,7 @@ class _SetEditPageState extends State<SetEditPage> with SingleTickerProviderStat
   Future<void> _showDeleteDialog() async {
     final isDuotone = Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true;
     final duotoneExt = Theme.of(context).extension<DuotoneThemeExtension>();
-    
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -280,7 +283,7 @@ class _SetEditPageState extends State<SetEditPage> with SingleTickerProviderStat
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(
-              backgroundColor: isDuotone 
+              backgroundColor: isDuotone
                   ? duotoneExt?.duotoneColor2
                   : Colors.red,
             ),
@@ -289,13 +292,74 @@ class _SetEditPageState extends State<SetEditPage> with SingleTickerProviderStat
         ],
       ),
     );
-    
+
     if (confirmed == true && mounted) {
       // Delete set logic would go here
       Navigator.of(context).pop();
     }
   }
-  
+
+  void _showCoverCharacterDialog() {
+    final textController = TextEditingController(text: _selectedIcon ?? '');
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Choose Cover Character'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Enter a single character for the cover:',
+              style: TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: textController,
+              maxLength: 1,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 48),
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                counterText: '',
+              ),
+              autofocus: true,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _selectedIcon = null;
+                _hasUnsavedChanges = true;
+              });
+              Navigator.pop(context);
+            },
+            child: const Text('Reset to Default'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              final char = textController.text.trim();
+              if (char.isNotEmpty) {
+                setState(() {
+                  _selectedIcon = char;
+                  _hasUnsavedChanges = true;
+                });
+              }
+              Navigator.pop(context);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDuotone = Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true;
@@ -370,10 +434,18 @@ class _SetEditPageState extends State<SetEditPage> with SingleTickerProviderStat
                     ],
                   ),
                 ),
-          backgroundColor: isDuotone 
+          backgroundColor: isDuotone
               ? Theme.of(context).scaffoldBackgroundColor
               : Theme.of(context).colorScheme.surface,
           actions: [
+            IconButton(
+              icon: Icon(
+                Icons.image_outlined,
+                color: isDuotone ? duotoneExt?.duotoneColor2 : null,
+              ),
+              tooltip: 'Choose Cover Character',
+              onPressed: _items.isEmpty ? null : _showCoverCharacterDialog,
+            ),
             if (_hasUnsavedChanges)
               TextButton(
                 onPressed: _isLoading ? null : _saveChanges,

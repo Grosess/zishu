@@ -239,6 +239,7 @@ class CharacterSetManager {
       description: updatedSet.description,
       isWordSet: updatedSet.isWordSet,
       color: updatedSet.color,
+      icon: updatedSet.icon,
       source: updatedSet.source,
       definitions: updatedSet.definitions,
       groupSize: updatedSet.groupSize,

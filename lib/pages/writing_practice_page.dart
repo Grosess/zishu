@@ -1355,70 +1355,89 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                 ),
                 
                 // Manual grading section - always present but visibility controlled
-                Container(
-                  height: 56,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: AnimatedOpacity(
-              opacity: _showManualGrading ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 200),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  AnimatedScale(
-                    duration: const Duration(milliseconds: 200),
-                    scale: _showManualGrading ? 1.0 : 0.8,
-                    curve: Curves.easeOutBack,
+                // Use SafeArea to prevent buttons from being cut off on small screens
+                SafeArea(
+                  minimum: const EdgeInsets.only(bottom: 8),
+                  child: Container(
+                    constraints: const BoxConstraints(
+                      minHeight: 48,
+                      maxHeight: 64,
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     child: AnimatedOpacity(
+                      opacity: _showManualGrading ? 1.0 : 0.0,
                       duration: const Duration(milliseconds: 200),
-                      opacity: _showManualGrading ? 1.0 : 0.5,
-                      child: ElevatedButton.icon(
-                        onPressed: _showManualGrading ? () {
-                          HapticService().lightImpact();
-                          _proceedWithGrade(false);
-                        } : null,
-                        icon: const Icon(Icons.close),
-                        label: const Text('Incorrect'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _getButtonBackgroundColor(false),
-                          foregroundColor: _getButtonForegroundColor(),
-                          minimumSize: const Size(140, 48),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            side: !_autoGradedAsCorrect ? BorderSide(color: _getButtonBorderColor(), width: 3) : BorderSide.none,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: AnimatedScale(
+                                duration: const Duration(milliseconds: 200),
+                                scale: _showManualGrading ? 1.0 : 0.8,
+                                curve: Curves.easeOutBack,
+                                child: AnimatedOpacity(
+                                  duration: const Duration(milliseconds: 200),
+                                  opacity: _showManualGrading ? 1.0 : 0.5,
+                                  child: ElevatedButton.icon(
+                                    onPressed: _showManualGrading ? () {
+                                      HapticService().lightImpact();
+                                      _proceedWithGrade(false);
+                                    } : null,
+                                    icon: const Icon(Icons.close, size: 20),
+                                    label: const Text('Incorrect'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: _getButtonBackgroundColor(false),
+                                      foregroundColor: _getButtonForegroundColor(),
+                                      minimumSize: const Size(0, 44),
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        side: !_autoGradedAsCorrect ? BorderSide(color: _getButtonBorderColor(), width: 3) : BorderSide.none,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 6),
+                              child: AnimatedScale(
+                                duration: const Duration(milliseconds: 200),
+                                scale: _showManualGrading ? 1.0 : 0.8,
+                                curve: Curves.easeOutBack,
+                                child: AnimatedOpacity(
+                                  duration: const Duration(milliseconds: 200),
+                                  opacity: _showManualGrading ? 1.0 : 0.5,
+                                  child: ElevatedButton.icon(
+                                    onPressed: _showManualGrading ? () {
+                                      HapticService().lightImpact();
+                                      _proceedWithGrade(true);
+                                    } : null,
+                                    icon: const Icon(Icons.check, size: 20),
+                                    label: const Text('Correct'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: _getButtonBackgroundColor(true),
+                                      foregroundColor: _getButtonForegroundColor(),
+                                      minimumSize: const Size(0, 44),
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        side: _autoGradedAsCorrect ? BorderSide(color: _getButtonBorderColor(), width: 3) : BorderSide.none,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                  AnimatedScale(
-                    duration: const Duration(milliseconds: 200),
-                    scale: _showManualGrading ? 1.0 : 0.8,
-                    curve: Curves.easeOutBack,
-                    child: AnimatedOpacity(
-                      duration: const Duration(milliseconds: 200),
-                      opacity: _showManualGrading ? 1.0 : 0.5,
-                      child: ElevatedButton.icon(
-                        onPressed: _showManualGrading ? () {
-                          HapticService().lightImpact();
-                          _proceedWithGrade(true);
-                        } : null,
-                        icon: const Icon(Icons.check),
-                        label: const Text('Correct'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _getButtonBackgroundColor(true),
-                          foregroundColor: _getButtonForegroundColor(),
-                          minimumSize: const Size(140, 48),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            side: _autoGradedAsCorrect ? BorderSide(color: _getButtonBorderColor(), width: 3) : BorderSide.none,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
                 ),
               ],
             ),
@@ -1865,30 +1884,63 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   
   void _proceedWithGrade(bool wasCorrect) {
     // Debug: _proceedWithGrade called with wasCorrect: $wasCorrect
-    
+
     // Skip statistics for learning mode
     if (widget.mode != PracticeMode.learning) {
       // Save practice data only after manual grading
       _savePracticeData(wasCorrect);
-      
+
       // Track session statistics
       final currentItem = widget.isWord ? currentWord : currentCharacter;
-      if (!_itemResults.containsKey(currentItem)) {
-        _totalItemsStudied++;
-      }
-      _itemResults[currentItem] = wasCorrect;
-      if (wasCorrect) {
-        _correctItems++;
-        _incorrectItems.remove(currentItem);
-      } else {
-        if (!_incorrectItems.contains(currentItem)) {
-          _incorrectItems.add(currentItem);
+
+      // For multi-character words, track each character result separately
+      if (widget.isWord && _wordCharacters.length > 1) {
+        // Track this character's result
+        _wordCharacterResults[_currentWordCharacterIndex] = wasCorrect;
+
+        // Only update final result when we've completed ALL characters
+        if (_currentWordCharacterIndex == _wordCharacters.length - 1) {
+          // Check if ALL characters were correct
+          final allCharactersCorrect = _wordCharacterResults.values.every((result) => result);
+
+          if (!_itemResults.containsKey(currentItem)) {
+            _totalItemsStudied++;
+          }
+          _itemResults[currentItem] = allCharactersCorrect;
+
+          if (allCharactersCorrect) {
+            _correctItems++;
+            _incorrectItems.remove(currentItem);
+          } else {
+            if (!_incorrectItems.contains(currentItem)) {
+              _incorrectItems.add(currentItem);
+            }
+          }
+
+          // Update statistics based on final grade
+          if (!allCharactersCorrect) {
+            _usedHint = true; // Mark as incorrect for stats
+          }
         }
-      }
-      
-      // Update statistics based on final grade
-      if (!wasCorrect) {
-        _usedHint = true; // Mark as incorrect for stats
+      } else {
+        // Single character - use direct result
+        if (!_itemResults.containsKey(currentItem)) {
+          _totalItemsStudied++;
+        }
+        _itemResults[currentItem] = wasCorrect;
+        if (wasCorrect) {
+          _correctItems++;
+          _incorrectItems.remove(currentItem);
+        } else {
+          if (!_incorrectItems.contains(currentItem)) {
+            _incorrectItems.add(currentItem);
+          }
+        }
+
+        // Update statistics based on final grade
+        if (!wasCorrect) {
+          _usedHint = true; // Mark as incorrect for stats
+        }
       }
     }
     

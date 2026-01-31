@@ -291,17 +291,25 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
     print('Total multi-char words found: ${words.length}');
     print('Sample words: ${words.take(10).toList()}');
     
-    // Mark all characters as learned in batch
-    final charactersList = characters.toList();
-    await _learningService.markCharactersAsLearned(charactersList, updateTodayProgress: false);
-    
-    // Don't mark any words as learned during character import
-    // Words should only be marked as learned when explicitly imported as words
-    // Remove automatic word inference logic
-    print('Skipping word marking - words must be explicitly imported');
-    
-    final importedCount = charactersList.length;
-    final wordsCount = 0; // No longer auto-marking words
+    // CRITICAL: Only mark SINGLE characters as learned, never multi-character combinations
+    // Filter to ensure we only have single characters
+    final singleCharactersOnly = characters.where((char) => char.length == 1).toList();
+
+    print('Total characters extracted: ${characters.length}');
+    print('Single characters only: ${singleCharactersOnly.length}');
+
+    if (singleCharactersOnly.length < characters.length) {
+      print('WARNING: Filtered out ${characters.length - singleCharactersOnly.length} multi-character items');
+    }
+
+    // Mark all SINGLE characters as learned in batch
+    await _learningService.markCharactersAsLearned(singleCharactersOnly, updateTodayProgress: false);
+
+    // NEVER mark words as learned during text import
+    // Words must be explicitly imported through a different method
+    print('Text import complete - marked ${singleCharactersOnly.length} single characters as learned');
+
+    final importedCount = singleCharactersOnly.length;
     
     // Close progress dialog
     Navigator.pop(context);
@@ -339,11 +347,9 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
     
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(wordsCount > 0
-            ? 'Imported $importedCount characters and $wordsCount multi-character words'
-            : importedCount == 1 
-                ? 'Imported 1 new character'
-                : 'Imported $importedCount new characters'),
+        content: Text(importedCount == 1
+            ? 'Imported 1 new character'
+            : 'Imported $importedCount new characters'),
       ),
     );
   }
@@ -586,10 +592,9 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
         // Don't mark any words as learned during CSV import
         // Words should only be marked when explicitly imported
         print('CSV import - Skipping word marking');
-        
+
         final importedCount = charactersList.length;
-        final wordsCount = 0; // No automatic word inference
-        
+
         // Close progress dialog
         Navigator.pop(context);
         

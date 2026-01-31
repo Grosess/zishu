@@ -251,18 +251,12 @@ class CedictService {
   
   /// Clean up definition for display
   String _cleanDefinition(String definitions) {
-    // Split by / and take first meaningful definition
+    // Split by / and take first definition only
     final parts = definitions.split('/').where((s) => s.trim().isNotEmpty).toList();
     if (parts.isEmpty) return '';
-    
-    // For definitions with technical terms first, prefer the common meaning
-    String def = _selectBestDefinition(parts);
-    
-    // Skip surname entries if there are other definitions
-    if (parts.length > 1 && def.toLowerCase().contains('surname')) {
-      // Use the second definition if the first is just a surname
-      def = parts[1];
-    }
+
+    // ALWAYS use the FIRST definition from the database
+    String def = parts.first;
     
     // Remove CL: classifiers
     def = def.replaceAll(RegExp(r'CL:[^\s,;]+'), '');
@@ -280,9 +274,14 @@ class CedictService {
       (match) => match.group(1) ?? ''
     );
     
-    // Remove ALL Chinese characters from definitions - no exceptions
-    // This includes CJK Unified Ideographs and Extension blocks
-    def = def.replaceAll(RegExp(r'[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]+'), '');
+    // Remove ALL Chinese/CJK characters from definitions - no exceptions
+    // This includes:
+    // - CJK Unified Ideographs (U+4E00–U+9FFF)
+    // - CJK Extension A (U+3400–U+4DBF)
+    // - CJK Compatibility Ideographs (U+F900–U+FAFF)
+    // - CJK Symbols and Punctuation (U+3000–U+303F)
+    // - Hiragana (U+3040–U+309F) and Katakana (U+30A0–U+30FF)
+    def = def.replaceAll(RegExp(r'[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]+'), '');
     
     // Clean up any leftover parentheses, brackets, or "see" references that are now empty
     def = def.replaceAll(RegExp(r'\(\s*\)'), '');
@@ -633,64 +632,7 @@ class CedictService {
     
     return false;
   }
-  
-  /// Select the best definition from multiple options
-  String _selectBestDefinition(List<String> definitions) {
-    if (definitions.isEmpty) return '';
-    if (definitions.length == 1) return definitions.first;
-    
-    // Filter out less useful definitions
-    final technicalPatterns = [
-      'earthly branch',
-      'heavenly stem', 
-      'radical',
-      'kangxi radical',
-      'variant of',
-      'used in',
-      'see also',
-      'same as',
-      'ancient',
-      'archaic',
-      'classical',
-      'literary',
-      'compass point',
-      'abbr. for',
-      'abbreviation for'
-    ];
-    
-    // Find the first definition without technical terms
-    for (final def in definitions) {
-      final lowerDef = def.toLowerCase();
-      bool isTechnical = false;
-      
-      for (final pattern in technicalPatterns) {
-        if (lowerDef.contains(pattern)) {
-          isTechnical = true;
-          break;
-        }
-      }
-      
-      if (!isTechnical) {
-        return def;
-      }
-    }
-    
-    // If all definitions are technical, return the shortest one
-    // or the one with common words like 'noon', 'time', etc.
-    final commonWords = ['noon', 'time', 'hour', 'day', 'month', 'year'];
-    for (final def in definitions) {
-      final lowerDef = def.toLowerCase();
-      for (final word in commonWords) {
-        if (lowerDef.contains(word)) {
-          return def;
-        }
-      }
-    }
-    
-    // Default to first definition
-    return definitions.first;
-  }
-  
+
   /// Get manual override for common HSK characters
   CedictEntry? _getManualOverride(String character) {
     // Manual overrides for common problematic definitions
