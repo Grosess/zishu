@@ -295,18 +295,43 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
   Future<void> _loadFolders() async {
     final folders = await _folderService.getFolders();
     final setFolders = <String, String>{};
-    
+
     // Build setId -> folderId mapping
     for (final folder in folders) {
       for (final setId in folder.setIds) {
         setFolders[setId] = folder.id;
       }
     }
-    
+
     setState(() {
       _folders = folders;
       _setFolders = setFolders;
     });
+  }
+
+  /// Clean up folders by removing references to deleted sets
+  Future<void> _cleanupFolders() async {
+    final folders = await _folderService.getFolders();
+    final validSetIds = _customSets.map((s) => s.id).toSet();
+    bool needsUpdate = false;
+
+    for (final folder in folders) {
+      final invalidSetIds = folder.setIds.where((id) => !validSetIds.contains(id)).toList();
+
+      if (invalidSetIds.isNotEmpty) {
+        needsUpdate = true;
+        // Remove invalid set IDs
+        final updatedFolder = folder.copyWith(
+          setIds: folder.setIds.where((id) => validSetIds.contains(id)).toList(),
+        );
+        await _folderService.updateFolder(updatedFolder);
+      }
+    }
+
+    // Reload folders if we made changes
+    if (needsUpdate) {
+      await _loadFolders();
+    }
   }
   
   Future<void> _loadSetProgress() async {
@@ -642,15 +667,18 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
       // Always reload custom sets from SharedPreferences
       final customSets = <CharacterSet>[];
       await _loadCustomSets(customSets);
-      
+
       setState(() {
         _customSets = customSets;
         _isLoading = false;
       });
-      
+
+      // Clean up folders to remove references to deleted sets
+      await _cleanupFolders();
+
       // Load progress after sets are loaded
       await _loadSetProgress();
-      
+
       // Preload icon characters after sets are loaded
       _preloadSetIconCharacters();
     } catch (e) {
@@ -3380,7 +3408,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
   Future<void> _deleteCustomSet(CharacterSet set) async {
     final prefs = await SharedPreferences.getInstance();
     final savedCustomSets = prefs.getStringList('custom_sets') ?? [];
-    
+
     // Remove the set with matching ID
     savedCustomSets.removeWhere((setJson) {
       try {
@@ -3390,12 +3418,22 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
         return false;
       }
     });
-    
+
     await prefs.setStringList('custom_sets', savedCustomSets);
-    
+
+    // Remove from any folder it's in
+    final folder = await _folderService.getFolderForSet(set.id);
+    if (folder != null) {
+      await _folderService.removeSetFromFolder(set.id, folder.id);
+    }
+
+    // Reload folders to get updated data
+    await _loadFolders();
+
     setState(() {
       _customSets.remove(set);
-      
+      _setFolders.remove(set.id);
+
       // Find corresponding built-in set and update tracking
       for (final builtInSet in _characterSets) {
         if (_setsHaveSameCharacters(builtInSet, set)) {
@@ -3405,7 +3443,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
         }
       }
     });
-    
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
