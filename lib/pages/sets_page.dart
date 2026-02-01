@@ -859,6 +859,19 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
     await prefs.setStringList('custom_sets', customSetJsonList);
   }
 
+  // Reload custom sets from storage (e.g., after definitions are updated)
+  Future<void> _reloadCustomSets() async {
+    final manager = CharacterSetManager();
+    await manager.initialize();
+    final updatedCustomSets = manager.getCustomSets();
+
+    if (mounted) {
+      setState(() {
+        _customSets = updatedCustomSets;
+      });
+    }
+  }
+
   Future<void> _loadCharacterSet(CharacterSet set) async {
     setState(() {
       _loadingStates[set.id] = true;
@@ -1124,6 +1137,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                                     allCharacters: [item],
                                     isWord: set.isWordSet,
                                     mode: isLearned ? PracticeMode.testing : PracticeMode.learning,
+                                    definitions: set.definitions,
                                     onComplete: (success) async {
                                       if (!isLearned && success) {
                                         await _learningService.markCharacterAsLearned(item);
@@ -1131,7 +1145,10 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                                     },
                                   ),
                                 ),
-                              ).then((_) => _loadSetProgress());
+                              ).then((_) async {
+                                await _reloadCustomSets();
+                                await _loadSetProgress();
+                              });
                             },
                             borderRadius: BorderRadius.circular(8),
                             splashColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
@@ -1284,6 +1301,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                                     allCharacters: unlearnedItems,
                                     isWord: set.isWordSet,
                                     mode: PracticeMode.learning,
+                                    definitions: set.definitions,
                                     onComplete: (success) async {
                                       if (success) {
                                         if (set.isWordSet && unlearnedItems.first.length > 1) {
@@ -1295,7 +1313,10 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                                     },
                                   ),
                                 ),
-                              ).then((_) => _loadSetProgress());
+                              ).then((_) async {
+                                await _reloadCustomSets();
+                                await _loadSetProgress();
+                              });
                             },
                             style: FilledButton.styleFrom(
                               backgroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
@@ -1332,6 +1353,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                                     allCharacters: unlearnedItems,
                                     isWord: set.isWordSet,
                                     mode: PracticeMode.learning,
+                                    definitions: set.definitions,
                                     onComplete: (success) async {
                                       if (success) {
                                         if (set.isWordSet && unlearnedItems.first.length > 1) {
@@ -1343,7 +1365,10 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                                     },
                                   ),
                                 ),
-                              ).then((_) => _loadSetProgress());
+                              ).then((_) async {
+                                await _reloadCustomSets();
+                                await _loadSetProgress();
+                              });
                             },
                             icon: const Icon(Icons.school, size: 18),
                             label: Text(AppLocalizations.of(context)!.learn,
@@ -1444,6 +1469,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                                   allCharacters: learnedItems,
                                   isWord: set.isWordSet,
                                   mode: PracticeMode.testing,
+                                  definitions: set.definitions,
                                 ),
                               ),
                             ).then((_) => _loadSetProgress());
@@ -1506,6 +1532,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                                   allCharacters: learnedItems,
                                   isWord: set.isWordSet,
                                   mode: PracticeMode.testing,
+                                  definitions: set.definitions,
                                 ),
                               ),
                             ).then((_) => _loadSetProgress());

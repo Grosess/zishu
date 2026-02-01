@@ -65,12 +65,12 @@ class _SettingsPageState extends State<SettingsPage> {
     _showGrid = _prefs.getBool('show_grid') ?? true;
     _showGuide = _prefs.getBool('show_guide') ?? true;
     _userName = _prefs.getString('user_name') ?? '';
-    _themeMode = _prefs.getString('theme_mode') ?? 'system';
+    _themeMode = _prefs.getString('theme_mode') ?? 'duotone';
     _accentColor = _prefs.getString('accent_color') ?? 'blue';
     
     // Load duotone colors - prioritize direct values over legacy presets
     _duotoneBackground = _prefs.getString('duotone_background') ?? 'black';
-    _duotoneColor = _prefs.getString('duotone_color') ?? 'blue';
+    _duotoneColor = _prefs.getString('duotone_color') ?? 'white';
     
     // Only check legacy preset if no direct values are saved
     if (!_prefs.containsKey('duotone_background') || !_prefs.containsKey('duotone_color')) {

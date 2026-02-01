@@ -21,8 +21,8 @@ import '../services/radical_service.dart';
 import '../widgets/simple_radical_display.dart';
 import '../services/haptic_service.dart';
 import '../services/pronunciation_service.dart';
-import '../services/character_set_manager.dart';
 import '../services/character_statistics_service.dart';
+import '../services/user_definitions_service.dart';
 
 enum PracticeMode { learning, testing }
 
@@ -71,8 +71,8 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   final CedictService _cedictService = CedictService();
   final RadicalService _radicalService = RadicalService();
   final PronunciationService _pronunciationService = PronunciationService();
-  final CharacterSetManager _setManager = CharacterSetManager();
   final CharacterStatisticsService _characterStatsService = CharacterStatisticsService();
+  final UserDefinitionsService _userDefinitionsService = UserDefinitionsService();
 
   // Character data
   CharacterStroke? _characterStroke;
@@ -186,7 +186,10 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   void initState() {
     super.initState();
     _sessionStartTime = DateTime.now();
-    
+
+    // Initialize user definitions service
+    _userDefinitionsService.initialize();
+
     // Start timer for endless practice
     if (widget.characterSet == 'Endless Practice') {
       _endlessTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -2840,7 +2843,6 @@ class _WritingPracticePageState extends State<WritingPracticePage>
           allCharacters: _incorrectItems,
           isWord: widget.isWord,
           mode: widget.mode,
-          definitions: widget.definitions,
         ),
       ),
     );
@@ -2860,7 +2862,6 @@ class _WritingPracticePageState extends State<WritingPracticePage>
           allCharacters: allItems,
           isWord: widget.isWord,
           mode: widget.mode,
-          definitions: widget.definitions,
         ),
       ),
     );
@@ -3016,16 +3017,17 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     String? pinyin;
     String? definition;
 
-    // For OCR-imported sets, check definitions first
-    if (widget.definitions != null && widget.definitions!.containsKey(currentWord)) {
-      definition = widget.definitions![currentWord];
+    // Check user-defined custom definitions (overrides database)
+    final userDefinition = _userDefinitionsService.getDefinition(currentWord);
+    if (userDefinition != null) {
+      definition = userDefinition;
     }
 
-    if (definition == null && _cedictService.isLoaded) {
+    if (_cedictService.isLoaded) {
       final cedictEntry = _cedictService.lookup(currentWord);
       if (cedictEntry != null) {
         pinyin = PinyinUtils.convertToneNumbersToMarks(cedictEntry.pinyin);
-        definition = _formatDefinition(cedictEntry.definition, currentCharacter);
+        definition ??= _formatDefinition(cedictEntry.definition, currentCharacter);
       }
     }
 
@@ -3058,15 +3060,18 @@ class _WritingPracticePageState extends State<WritingPracticePage>
           if (definition != null)
             Padding(
               padding: EdgeInsets.only(top: isSmallScreen ? 2 : 4),
-              child: Text(
-                definition,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface,
-                  fontSize: isSmallScreen ? 14 : 18,
+              child: GestureDetector(
+                onTap: () => _editDefinition(currentWord),
+                child: Text(
+                  definition,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontSize: isSmallScreen ? 14 : 18,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: isSmallScreen ? 2 : 3,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                textAlign: TextAlign.center,
-                maxLines: isSmallScreen ? 2 : 3,
-                overflow: TextOverflow.ellipsis,
               ),
             ),
         ],
@@ -3389,33 +3394,13 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     // Check if this is continuous practice mode
     final isIndividualPractice = widget.allCharacters != null && widget.allCharacters!.length == 1;
     final isContinuousPractice = widget.mode == PracticeMode.testing && isIndividualPractice;
-    
-    // Check OCR-imported definitions first
+
     final currentTerm = widget.isWord ? currentWord : currentCharacter;
-    if (widget.definitions != null && widget.definitions!.containsKey(currentTerm)) {
-      definition = widget.definitions![currentTerm];
-      // If definition is empty (like for "表"), leave it as empty and fall back to dictionary later
-      
-      // For OCR sets, we still want to get pinyin from dictionaries even if we have OCR definition
-      // This ensures scanned sets show pronunciation in practice
-      if (_cedictService.isLoaded) {
-        final cedictEntry = _cedictService.lookup(currentTerm);
-        if (cedictEntry != null) {
-          pinyin = PinyinUtils.convertToneNumbersToMarks(cedictEntry.pinyin);
-        }
-      }
-      
-      // If no CEDICT pinyin, try character dictionary
-      if (pinyin == null) {
-        if (widget.isWord && _wordCharacters.length > 1) {
-          pinyin = _buildPinyinFromCharacters(currentWord);
-        } else {
-          final charInfo = _dictionary.getCharacterInfo(currentCharacter);
-          if (charInfo != null && charInfo.pinyin != null) {
-            pinyin = PinyinUtils.convertToneNumbersToMarks(charInfo.pinyin);
-          }
-        }
-      }
+
+    // Check user-defined custom definitions (overrides database)
+    final userDefinition = _userDefinitionsService.getDefinition(currentTerm);
+    if (userDefinition != null) {
+      definition = userDefinition;
     }
 
     // For multi-character words, show the full word definition
@@ -3529,13 +3514,11 @@ class _WritingPracticePageState extends State<WritingPracticePage>
               ),
               SizedBox(height: isSmallScreen ? 2 : 4),
               GestureDetector(
-                onTap: () => _editDefinition(currentCharacter),
+                onTap: () => _editDefinition(currentTerm),
                 child: Text(
                   definition,
                   style: TextStyle(
                     fontSize: isSmallScreen ? 14 : 16,
-                    decoration: TextDecoration.underline,
-                    decorationStyle: TextDecorationStyle.dotted,
                   ),
                   textAlign: TextAlign.center,
                   maxLines: isSmallScreen ? 2 : 3,
@@ -3552,14 +3535,12 @@ class _WritingPracticePageState extends State<WritingPracticePage>
               ),
               SizedBox(height: isSmallScreen ? 2 : 4),
               GestureDetector(
-                onTap: () => _editDefinition(currentCharacter),
+                onTap: () => _editDefinition(currentTerm),
                 child: Text(
                   definition ?? 'No definition available',
                   style: TextStyle(
                     fontSize: isSmallScreen ? 14 : 16,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    decoration: TextDecoration.underline,
-                    decorationStyle: TextDecorationStyle.dotted,
                   ),
                   textAlign: TextAlign.center,
                   maxLines: isSmallScreen ? 2 : 3,
@@ -3592,14 +3573,12 @@ class _WritingPracticePageState extends State<WritingPracticePage>
           ),
           SizedBox(height: isSmallScreen ? 2 : 4),
           GestureDetector(
-            onTap: () => _editDefinition(currentCharacter),
+            onTap: () => _editDefinition(currentTerm),
             child: Text(
               definition ?? 'No definition available',
               style: TextStyle(
                 fontSize: isSmallScreen ? 14 : 16,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
-                decoration: TextDecoration.underline,
-                decorationStyle: TextDecorationStyle.dotted,
               ),
               textAlign: TextAlign.center,
               maxLines: isSmallScreen ? 2 : 3,
@@ -3613,14 +3592,15 @@ class _WritingPracticePageState extends State<WritingPracticePage>
 
   // Edit definition dialog
   Future<void> _editDefinition(String character) async {
-    final controller = TextEditingController(
-      text: widget.definitions?[character] ?? '',
-    );
+    // Get current definition from user definitions service
+    String currentDef = _userDefinitionsService.getDefinition(character) ?? '';
+
+    final controller = TextEditingController(text: currentDef);
 
     final result = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Edit Definition for $character'),
+        title: const Text('Edit Definition'),
         content: TextField(
           controller: controller,
           autofocus: true,
@@ -3644,45 +3624,9 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     );
 
     if (result != null && mounted) {
-      // Try to find and update the custom set
-      final sets = _setManager.getCustomSets();
-      final targetSetIndex = sets.indexWhere((set) => set.id == widget.characterSet);
-
-      if (targetSetIndex != -1) {
-        final targetSet = sets[targetSetIndex];
-        final updatedDefinitions = Map<String, String>.from(targetSet.definitions ?? {});
-
-        if (result.isEmpty) {
-          updatedDefinitions.remove(character);
-        } else {
-          updatedDefinitions[character] = result;
-        }
-
-        final updatedSet = CharacterSet(
-          id: targetSet.id,
-          name: targetSet.name,
-          characters: targetSet.characters,
-          description: targetSet.description,
-          isWordSet: targetSet.isWordSet,
-          color: targetSet.color,
-          icon: targetSet.icon,
-          source: targetSet.source,
-          definitions: updatedDefinitions,
-          groupSize: targetSet.groupSize,
-        );
-
-        await _setManager.updateCustomSet(updatedSet);
-      }
-
-      // Update local widget definitions for immediate UI refresh
-      if (widget.definitions != null) {
-        if (result.isEmpty) {
-          widget.definitions!.remove(character);
-        } else {
-          widget.definitions![character] = result;
-        }
-      }
-
+      // Save to global user definitions service
+      // This will override database definitions for this character
+      await _userDefinitionsService.setDefinition(character, result);
       setState(() {});
     }
   }
