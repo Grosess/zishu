@@ -13,6 +13,7 @@ import '../services/pronunciation_service.dart';
 import '../services/character_set_manager.dart';
 import 'set_edit_page.dart';
 import '../l10n/app_localizations.dart';
+import '../services/user_definitions_service.dart';
 
 // Custom page route with smooth transition
 class SlidePageRoute extends PageRouteBuilder {
@@ -75,6 +76,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
   final LearningService _learningService = LearningService();
   final CharacterDictionary _dictionary = CharacterDictionary();
   final CedictService _cedictService = CedictService();
+  final UserDefinitionsService _userDefinitionsService = UserDefinitionsService();
   List<String> _learnedCharacters = [];
   bool _isSetFullyLearned = false;
   
@@ -91,6 +93,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
     super.initState();
     // Production: removed debug print
     _currentSetName = widget.setName;
+    _userDefinitionsService.initialize();
     _loadGroupSizeFromSettings();
     _initializeCedict();
     // Load learned status first, then shuffle with learned items first
@@ -1118,12 +1121,18 @@ class _CharacterListPageState extends State<CharacterListPage> {
     String? pronunciation;
     String? definition;
     String displayTerm = term;
-    
-    // For OCR-imported sets, ALWAYS use the imported definitions first and don't override
-    if (widget.definitions != null && widget.definitions!.containsKey(term)) {
+
+    // PRIORITY 1: Check user-defined custom definitions (global overrides)
+    final userDefinition = _userDefinitionsService.getDefinition(term);
+    if (userDefinition != null) {
+      definition = userDefinition;
+    }
+
+    // PRIORITY 2: For OCR-imported sets, use the imported definitions
+    if (definition == null && widget.definitions != null && widget.definitions!.containsKey(term)) {
       definition = widget.definitions![term];
-    } else {
-      // Only check existing definitions if no OCR definition available
+    } else if (definition == null) {
+      // Only check existing definitions if no user or OCR definition available
       final existingDef = _extractExistingDefinition(originalItem);
       if (existingDef != null) {
         // Production: removed debug print
@@ -1132,16 +1141,16 @@ class _CharacterListPageState extends State<CharacterListPage> {
     }
     
     // Try to get pronunciation and definition from dictionary or CEDICT
-    // First try character dictionary (for both single and multi-character)
-    if (term.length == 1 && definition == null) {
+    // Always get pronunciation even if we have a user definition
+    if (term.length == 1) {
       // Single character - try character dictionary first
       final charInfo = _dictionary.getCharacterInfo(term);
       if (charInfo != null) {
         // Production: removed debug print
         pronunciation = PinyinUtils.convertToneNumbersToMarks(charInfo.pinyin);
-        definition = charInfo.definition;
+        definition ??= charInfo.definition;
       }
-    } else if (definition == null) {
+    } else {
       // Multi-character - try word dictionary first
       final wordInfo = _dictionary.getWordInfo(term);
       if (wordInfo != null) {
@@ -1150,7 +1159,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
         definition ??= wordInfo.definition;
       }
     }
-    
+
     // Always try CEDICT for any missing info (both single and multi-character)
     // Check if CEDICT service is loaded (it's a singleton, so check directly)
     if (_cedictService.isLoaded && (pronunciation == null || definition == null)) {
@@ -1461,12 +1470,18 @@ class _CharacterListPageState extends State<CharacterListPage> {
     // Try to get definition and pinyin
     String? definition;
     String? pinyin;
-    
-    // For OCR-imported sets, use the imported definitions first
-    if (widget.definitions != null && widget.definitions!.containsKey(character)) {
+
+    // PRIORITY 1: Check user-defined custom definitions (global overrides)
+    final userDefinition = _userDefinitionsService.getDefinition(character);
+    if (userDefinition != null) {
+      definition = userDefinition;
+    }
+
+    // PRIORITY 2: For OCR-imported sets, use the imported definitions
+    if (definition == null && widget.definitions != null && widget.definitions!.containsKey(character)) {
       definition = widget.definitions![character];
     }
-    
+
     if (_cedictService.isLoaded) {
       final entry = _cedictService.lookup(character);
       if (entry != null) {
@@ -1808,30 +1823,38 @@ class _CharacterListPageState extends State<CharacterListPage> {
     // Try to get definition for any term (single or multi-character)
     String? definition;
     String? pinyin;
-    
-    // For OCR-imported sets, use the imported definitions first
-    if (widget.definitions != null && widget.definitions!.containsKey(term)) {
+
+    // PRIORITY 1: Check user-defined custom definitions (global overrides)
+    final userDefinition = _userDefinitionsService.getDefinition(term);
+    if (userDefinition != null) {
+      definition = userDefinition;
+    }
+
+    // PRIORITY 2: For OCR-imported sets, use the imported definitions
+    if (definition == null && widget.definitions != null && widget.definitions!.containsKey(term)) {
       definition = widget.definitions![term];
-    } else if (existingDef != null) {
+    } else if (definition == null && existingDef != null) {
       // Use existing definition from character_sets.json
       definition = existingDef;
-    } else if (_cedictService.isLoaded) {
-      // Look up in CEDICT
+    }
+
+    // Always try to get pinyin, even if we have a user definition
+    if (_cedictService.isLoaded) {
       final entry = _cedictService.lookup(term);
       if (entry != null) {
-        definition = entry.definition;
         pinyin = PinyinUtils.convertToneNumbersToMarks(entry.pinyin);
+        definition ??= entry.definition;  // ??= preserves user definition
       } else if (term.length > 1) {
         // If multi-character term has no CEDICT entry, build pinyin from individual characters
         pinyin = _buildPinyinFromCharacters(term);
       }
     }
-    
-    // If still no definition, try character dictionary for single characters
-    if (definition == null && term.length == 1) {
+
+    // If still no definition or pinyin, try character dictionary for single characters
+    if (term.length == 1) {
       final charInfo = _dictionary.getCharacterInfo(term);
       if (charInfo != null) {
-        definition = charInfo.definition;
+        definition ??= charInfo.definition;  // ??= preserves user definition
         pinyin ??= PinyinUtils.convertToneNumbersToMarks(charInfo.pinyin);
       }
     }

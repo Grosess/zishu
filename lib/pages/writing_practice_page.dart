@@ -3023,6 +3023,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       definition = userDefinition;
     }
 
+    // Always try to get pinyin, even if we have a user definition
     if (_cedictService.isLoaded) {
       final cedictEntry = _cedictService.lookup(currentWord);
       if (cedictEntry != null) {
@@ -3405,22 +3406,23 @@ class _WritingPracticePageState extends State<WritingPracticePage>
 
     // For multi-character words, show the full word definition
     if (widget.isWord && _wordCharacters.length > 1) {
-      if (definition == null && _cedictService.isLoaded) {
+      // Always try to get pinyin, even if we have a user definition
+      if (_cedictService.isLoaded) {
         final cedictEntry = _cedictService.lookup(currentWord);
         if (cedictEntry != null) {
           pinyin = PinyinUtils.convertToneNumbersToMarks(cedictEntry.pinyin);
-          definition = cedictEntry.definition;
+          definition ??= cedictEntry.definition;
         } else {
           // If multi-character term has no CEDICT entry, build pinyin from individual characters
           pinyin = _buildPinyinFromCharacters(currentWord);
         }
       }
-      
+
       if (pinyin == null || definition == null) {
         final wordInfo = _dictionary.getWordInfo(currentWord);
         pinyin ??= wordInfo?.pinyin != null ? PinyinUtils.convertToneNumbersToMarks(wordInfo!.pinyin) : null;
         definition ??= wordInfo?.definition;
-        
+
         // If still no pinyin and CEDICT is loaded, try building from characters
         if (pinyin == null && _cedictService.isLoaded) {
           pinyin = _buildPinyinFromCharacters(currentWord);
@@ -3428,13 +3430,13 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       }
     } else {
       // For single characters, show character definition
-      // Looking up character
-      if (definition == null && _cedictService.isLoaded) {
+      // Looking up character - always try to get pinyin even if we have user definition
+      if (_cedictService.isLoaded) {
         // CEDICT service is loaded
         final cedictEntry = _cedictService.lookup(currentCharacter);
         if (cedictEntry != null) {
           pinyin = PinyinUtils.convertToneNumbersToMarks(cedictEntry.pinyin);
-          definition = cedictEntry.definition;
+          definition ??= cedictEntry.definition;
           // Found in CEDICT
         } else {
           // Not found in CEDICT
@@ -3443,16 +3445,14 @@ class _WritingPracticePageState extends State<WritingPracticePage>
             pinyin = _buildPinyinFromCharacters(currentCharacter);
           }
         }
-      } else {
-        // CEDICT service not loaded or OCR definition exists
       }
-      
+
       if (pinyin == null || (definition == null || definition.isEmpty)) {
         // Falling back to CharacterDictionary (also fall back for empty OCR definitions)
         charInfo = _dictionary.getCharacterInfo(currentCharacter);
         if (charInfo != null) {
           pinyin ??= charInfo.pinyin != null ? PinyinUtils.convertToneNumbersToMarks(charInfo.pinyin) : null;
-          // Only use dictionary definition if no OCR definition exists or if OCR definition is empty
+          // Only use dictionary definition if no user/OCR definition exists or if it's empty
           if (definition == null || definition.isEmpty) {
             definition = charInfo.definition != null ? _formatDefinition(charInfo.definition, currentCharacter) : null;
           }
