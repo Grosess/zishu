@@ -397,13 +397,28 @@ class _SettingsPageState extends State<SettingsPage> {
                     onTap: () {
                       showDialog(
                         context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Choose Background Color'),
-                          content: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: _getBackgroundColorOptions(),
-                          ),
-                        ),
+                        builder: (context) {
+                          final screenWidth = MediaQuery.of(context).size.width;
+                          final isSmallDevice = screenWidth <= 400;
+
+                          return AlertDialog(
+                            title: const Text('Choose Background Color'),
+                            content: isSmallDevice
+                              ? SizedBox(
+                                  width: double.maxFinite,
+                                  child: SingleChildScrollView(
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: _getBackgroundColorOptions(),
+                                    ),
+                                  ),
+                                )
+                              : Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: _getBackgroundColorOptions(),
+                                ),
+                          );
+                        },
                       );
                     },
                   ),
@@ -429,13 +444,28 @@ class _SettingsPageState extends State<SettingsPage> {
                     onTap: () {
                       showDialog(
                         context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Choose Accent Color'),
-                          content: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: _getAccentColorOptions(),
-                          ),
-                        ),
+                        builder: (context) {
+                          final screenWidth = MediaQuery.of(context).size.width;
+                          final isSmallDevice = screenWidth <= 400;
+
+                          return AlertDialog(
+                            title: const Text('Choose Accent Color'),
+                            content: isSmallDevice
+                              ? SizedBox(
+                                  width: double.maxFinite,
+                                  child: SingleChildScrollView(
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: _getAccentColorOptions(),
+                                    ),
+                                  ),
+                                )
+                              : Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: _getAccentColorOptions(),
+                                ),
+                          );
+                        },
                       );
                     },
                   ),
