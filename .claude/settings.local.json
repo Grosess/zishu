@@ -47,7 +47,8 @@
       "Bash(xcodebuild:*)",
       "Bash(pod install:*)",
       "Bash(open:*)",
-      "Bash(export LANG=en_US.UTF-8)"
+      "Bash(export LANG=en_US.UTF-8)",
+      "Bash(softwareupdate:*)"
     ],
     "deny": []
   }
