@@ -333,6 +333,38 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
       await _loadFolders();
     }
   }
+
+  /// Get the total number of sets in a folder including all child folders (recursive)
+  int _getRecursiveSetCount(SetFolder folder) {
+    int count = folder.setIds.length;
+
+    // Add sets from all child folders recursively
+    final childFolders = _folders.where((f) => f.parentFolderId == folder.id);
+    for (final child in childFolders) {
+      count += _getRecursiveSetCount(child);
+    }
+
+    return count;
+  }
+
+  /// Recursively delete all sets in a folder and its child folders
+  Future<void> _recursivelyDeleteFolderSets(String folderId) async {
+    final folder = _folders.firstWhere((f) => f.id == folderId);
+
+    // Delete all sets in this folder
+    for (final setId in folder.setIds) {
+      final set = _customSets.firstWhere((s) => s.id == setId, orElse: () => CharacterSet(id: '', name: '', characters: []));
+      if (set.id.isNotEmpty) {
+        await _deleteCustomSet(set);
+      }
+    }
+
+    // Recursively delete sets in child folders
+    final childFolders = _folders.where((f) => f.parentFolderId == folderId);
+    for (final child in childFolders) {
+      await _recursivelyDeleteFolderSets(child.id);
+    }
+  }
   
   Future<void> _loadSetProgress() async {
     // Ensure learning service is initialized
@@ -2170,7 +2202,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
 
                     if (item is SetFolder) {
                       // Show child folder card
-                      final setCount = item.setIds.length;
+                      final setCount = _getRecursiveSetCount(item); // Recursive count includes all child folders
                       final folderCount = item.folderIds.length;
 
                       return _FolderCard(
@@ -2252,10 +2284,10 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
       itemCount: displayItems.length,
       itemBuilder: (context, index) {
         final item = displayItems[index];
-        
+
         if (item is SetFolder) {
           // Show folder card
-          final setCount = item.setIds.length;
+          final setCount = _getRecursiveSetCount(item); // Recursive count includes all child folders
           final folderCount = item.folderIds.length;
 
           return _FolderCard(
@@ -2658,11 +2690,33 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
   }
   
   Future<void> _showDeleteFolderDialog(SetFolder folder) async {
+    // Calculate total sets that will be deleted (including child folders)
+    final totalSets = _getRecursiveSetCount(folder);
+    final childFolderCount = _folders.where((f) => f.parentFolderId == folder.id).length;
+
+    String message;
+    if (childFolderCount > 0 && totalSets > 0) {
+      message = 'Are you sure you want to delete "${folder.name}"?\n\n'
+          'This will permanently DELETE:\n'
+          '• $totalSets ${totalSets == 1 ? 'set' : 'sets'}\n'
+          '• $childFolderCount ${childFolderCount == 1 ? 'folder' : 'folders'} (and all their contents)\n\n'
+          'This action cannot be undone.';
+    } else if (totalSets > 0) {
+      message = 'Are you sure you want to delete "${folder.name}"?\n\n'
+          'This will permanently DELETE $totalSets ${totalSets == 1 ? 'set' : 'sets'}.\n\n'
+          'This action cannot be undone.';
+    } else if (childFolderCount > 0) {
+      message = 'Are you sure you want to delete "${folder.name}"?\n\n'
+          'This will delete $childFolderCount ${childFolderCount == 1 ? 'folder' : 'folders'}.';
+    } else {
+      message = 'Are you sure you want to delete "${folder.name}"?';
+    }
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.deleteFolder),
-        content: Text('Are you sure you want to delete "${folder.name}"? Sets will not be deleted.'),
+        title: const Text('Delete Folder'),
+        content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -2680,15 +2734,24 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
         ],
       ),
     );
-    
+
     if (confirmed == true) {
+      // Delete all sets in this folder and child folders recursively
+      await _recursivelyDeleteFolderSets(folder.id);
+
+      // Then delete the folder structure itself
       await _folderService.deleteFolder(folder.id);
+
+      // Navigate out if we're inside the deleted folder
       if (_selectedFolderId == folder.id) {
         setState(() {
           _selectedFolderId = null;
         });
       }
+
+      // Reload data
       await _loadFolders();
+      await _loadCharacterSets();
     }
   }
   
@@ -3406,6 +3469,10 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
   }
   
   Future<void> _deleteCustomSet(CharacterSet set) async {
+    // Delete from CharacterSetManager (primary storage)
+    await _setManager.deleteCustomSet(set.id);
+
+    // Also delete from legacy SharedPreferences storage for backward compatibility
     final prefs = await SharedPreferences.getInstance();
     final savedCustomSets = prefs.getStringList('custom_sets') ?? [];
 

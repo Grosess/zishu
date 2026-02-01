@@ -341,7 +341,13 @@ class CharacterSetManager {
   List<CharacterSet> getCustomSets() {
     return _userSets.values.toList();
   }
-  
+
+  // Delete a custom set
+  Future<void> deleteCustomSet(String setId) async {
+    _userSets.remove(setId);
+    await _saveCustomSetsToStorage();
+  }
+
   // Initialize the manager and load custom sets
   Future<void> initialize() async {
     await _loadCustomSetsFromStorage();
