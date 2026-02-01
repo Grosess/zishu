@@ -882,7 +882,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
           builder: (context, constraints) {
             // Calculate max width to prevent overflow on wide screens
             final maxWidth = math.min(constraints.maxWidth, 600.0);
-            final isSmallScreen = constraints.maxWidth <= 370;  // Only iPhone SE and smaller
+            final isSmallScreen = constraints.maxWidth <= 390;  // iPhone SE and smaller devices
 
             return Center(
               child: ConstrainedBox(
@@ -3010,7 +3010,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   
   Widget _buildWordPronunciation() {
     // Detect small screens for compact layout
-    final isSmallScreen = MediaQuery.of(context).size.width <= 370;  // Only iPhone SE and smaller
+    final isSmallScreen = MediaQuery.of(context).size.width <= 390;  // iPhone SE and smaller devices
 
     // Get pronunciation for the word
     String? pinyin;
@@ -3151,7 +3151,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
 
     // Calculate responsive sizes based on character count
     final screenWidth = MediaQuery.of(context).size.width;
-    final isSmallScreen = screenWidth <= 370;  // Only iPhone SE and smaller
+    final isSmallScreen = screenWidth <= 390;  // iPhone SE and smaller devices
     final availableWidth = screenWidth - 32; // Account for container padding
     final boxCount = characterList.length;
 
@@ -3379,7 +3379,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   
   Widget _buildCharacterInfoSection() {
     // Detect small screens for compact layout
-    final isSmallScreen = MediaQuery.of(context).size.width <= 370;  // Only iPhone SE and smaller
+    final isSmallScreen = MediaQuery.of(context).size.width <= 390;  // iPhone SE and smaller devices
 
     // Try CEDICT first, then fall back to dictionary
     CharacterInfo? charInfo;
