@@ -83,9 +83,9 @@ class _SetEditPageState extends State<SetEditPage> with SingleTickerProviderStat
   void _addItem() {
     final text = _addItemController.text.trim();
     if (text.isEmpty) return;
-    
-    // Split by commas, spaces, or newlines for bulk add
-    final newItems = text.split(RegExp(r'[,\s\n]+'))
+
+    // Split by commas (English and Chinese), spaces, or newlines for bulk add
+    final newItems = text.split(RegExp(r'[,，\s\n]+'))
         .where((item) => item.trim().isNotEmpty)
         .map((item) => item.trim())
         .where((item) => !_items.contains(item))
