@@ -4,9 +4,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math' as math;
 import '../services/statistics_service.dart';
 import '../services/streak_service.dart';
+import '../services/character_statistics_service.dart';
 import '../main.dart' show DuotoneThemeExtension;
 import '../widgets/streak_display.dart';
 import '../l10n/app_localizations.dart';
+import 'writing_practice_page.dart';
 
 class ProgressPage extends StatefulWidget {
   const ProgressPage({super.key});
@@ -18,6 +20,7 @@ class ProgressPage extends StatefulWidget {
 class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixin {
   final StatisticsService _statsService = StatisticsService();
   final StreakService _streakService = StreakService();
+  final CharacterStatisticsService _charStatsService = CharacterStatisticsService();
   final ScrollController _scrollController = ScrollController();
   late SharedPreferences _prefs;
   
@@ -141,11 +144,14 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
     final dailyStats = await _statsService.getDailyStats(null);
     final learnedCharacters = await _statsService.getLearnedCharacters();
     final learnedWords = await _statsService.getLearnedWords();
-    
+
     // Get streak data from StreakService (single source of truth)
     final streakService = StreakService();
     final streakData = await streakService.getStreakData();
-    
+
+    // Load character statistics
+    await _charStatsService.loadStatistics();
+
     setState(() {
       _totalCharactersLearned = learnedCharacters.length;
       _totalWordsLearned = learnedWords.length;
@@ -774,11 +780,230 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
                   todayProgress: _dailyCharactersLearned,
                   dailyGoal: _charactersNeededToday, // Use the same goal calculation
                 ),
+
+                const SizedBox(height: 24),
+
+                // Most Missed Characters Section
+                _buildMostMissedSection(),
               ],
             ),
           ),
-          
+
         ],
+      ),
+    );
+  }
+
+  Widget _buildMostMissedSection() {
+    final mostMissed = _charStatsService.getMostMissedCharacters(limit: 5);
+    final isDuotone = Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true;
+    final primaryColor = Theme.of(context).colorScheme.primary;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDuotone
+          ? Theme.of(context).colorScheme.surface
+          : Colors.red.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDuotone
+            ? primaryColor.withValues(alpha: 0.2)
+            : Colors.red.withValues(alpha: 0.2),
+          width: 1,
+        ),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.error_outline,
+                color: isDuotone ? primaryColor : Colors.red,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Most Missed',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: isDuotone ? primaryColor : Colors.red.shade700,
+                ),
+              ),
+              if (mostMissed.isNotEmpty) ...[
+                const Spacer(),
+                TextButton(
+                  onPressed: _showAllStatistics,
+                  child: Text(
+                    'View All',
+                    style: TextStyle(
+                      color: isDuotone ? primaryColor : Colors.red,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (mostMissed.isEmpty)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.analytics_outlined,
+                      size: 48,
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'No statistics yet',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Practice characters to see your error rates',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            ...mostMissed.take(5).map((stat) => _buildMissedCharacterItem(stat, isDuotone)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMissedCharacterItem(CharacterStatistic stat, bool isDuotone) {
+    final primaryColor = Theme.of(context).colorScheme.primary;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: InkWell(
+        onTap: () => _practiceCharacter(stat.character),
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: isDuotone
+              ? primaryColor.withValues(alpha: 0.05)
+              : Colors.red.withValues(alpha: 0.03),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              // Character
+              Container(
+                width: 40,
+                height: 40,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: isDuotone
+                    ? primaryColor.withValues(alpha: 0.1)
+                    : Colors.red.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  stat.character,
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: isDuotone ? primaryColor : Colors.red.shade700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Stats
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          '${stat.errorPercentage.toStringAsFixed(1)}%',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: isDuotone ? primaryColor : Colors.red.shade700,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'error rate',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      '${stat.wrongAttempts} wrong / ${stat.totalAttempts} total',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Arrow
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: isDuotone ? primaryColor.withValues(alpha: 0.5) : Colors.red.withValues(alpha: 0.5),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _practiceCharacter(String character) async {
+    // Import WritingPracticePage at the top
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => WritingPracticePage(
+          character: character,
+          characterSet: 'Practice',
+          allCharacters: [character],
+          isWord: character.length > 1,
+          mode: PracticeMode.testing,
+        ),
+      ),
+    );
+
+    // Reload statistics after practice
+    await loadStatistics();
+  }
+
+  void _showAllStatistics() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _AllStatisticsSheet(
+        charStatsService: _charStatsService,
+        onPractice: _practiceCharacter,
+        onRefresh: () {
+          setState(() {
+            // Reload statistics after reset
+          });
+        },
       ),
     );
   }
@@ -1031,4 +1256,328 @@ class SpeedometerPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+// Statistics Sheet Widget
+class _AllStatisticsSheet extends StatefulWidget {
+  final CharacterStatisticsService charStatsService;
+  final Function(String) onPractice;
+  final VoidCallback onRefresh;
+
+  const _AllStatisticsSheet({
+    required this.charStatsService,
+    required this.onPractice,
+    required this.onRefresh,
+  });
+
+  @override
+  State<_AllStatisticsSheet> createState() => _AllStatisticsSheetState();
+}
+
+class _AllStatisticsSheetState extends State<_AllStatisticsSheet> {
+  @override
+  Widget build(BuildContext context) {
+    final allStats = widget.charStatsService.getMostMissedCharacters();
+    final isDuotone = Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true;
+    final primaryColor = Theme.of(context).colorScheme.primary;
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.8,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              // Handle bar
+              Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+
+              // Header
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.analytics_outlined,
+                      color: isDuotone ? primaryColor : Colors.red,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Character Statistics',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: isDuotone ? primaryColor : Colors.red.shade700,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+              ),
+
+              const Divider(height: 1),
+
+              // Stats count
+              if (allStats.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    '${allStats.length} characters tracked',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ),
+
+              // List
+              Expanded(
+                child: allStats.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.bar_chart,
+                            size: 64,
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No statistics yet',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Start practicing to see your stats!',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      controller: scrollController,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: allStats.length,
+                      itemBuilder: (context, index) {
+                        final stat = allStats[index];
+                        return Dismissible(
+                          key: Key(stat.character),
+                          direction: DismissDirection.endToStart,
+                          onDismissed: (direction) async {
+                            await widget.charStatsService.resetCharacter(stat.character);
+                            setState(() {
+                              // Rebuild to show updated list
+                            });
+                            widget.onRefresh();
+
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Reset statistics for ${stat.character}'),
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            }
+                          },
+                          background: Container(
+                            alignment: Alignment.centerRight,
+                            padding: const EdgeInsets.only(right: 20),
+                            decoration: BoxDecoration(
+                              color: isDuotone ? primaryColor : Colors.red,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.refresh,
+                                  color: isDuotone ? Theme.of(context).colorScheme.onPrimary : Colors.white,
+                                  size: 24,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Reset',
+                                  style: TextStyle(
+                                    color: isDuotone ? Theme.of(context).colorScheme.onPrimary : Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          child: _buildStatListItem(stat, isDuotone, primaryColor),
+                        );
+                      },
+                    ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildStatListItem(CharacterStatistic stat, bool isDuotone, Color primaryColor) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: InkWell(
+        onTap: () {
+          Navigator.pop(context);
+          widget.onPractice(stat.character);
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDuotone
+              ? primaryColor.withValues(alpha: 0.05)
+              : Colors.red.withValues(alpha: 0.03),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isDuotone
+                ? primaryColor.withValues(alpha: 0.1)
+                : Colors.red.withValues(alpha: 0.1),
+            ),
+          ),
+          child: Row(
+            children: [
+              // Character
+              Container(
+                width: 50,
+                height: 50,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: isDuotone
+                    ? primaryColor.withValues(alpha: 0.1)
+                    : Colors.red.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  stat.character,
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: isDuotone ? primaryColor : Colors.red.shade700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              // Stats
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          '${stat.errorPercentage.toStringAsFixed(1)}%',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: isDuotone ? primaryColor : Colors.red.shade700,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'error rate',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.close,
+                          size: 14,
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${stat.wrongAttempts} wrong',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Icon(
+                          Icons.check,
+                          size: 14,
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${stat.totalAttempts - stat.wrongAttempts} correct',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${stat.totalAttempts} total attempts',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Swipe hint
+              Column(
+                children: [
+                  Icon(
+                    Icons.arrow_back,
+                    size: 16,
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'swipe',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
 }

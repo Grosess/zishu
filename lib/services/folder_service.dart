@@ -24,18 +24,39 @@ class FolderService {
   }
 
   // Create a new folder
-  Future<SetFolder> createFolder(String name) async {
+  Future<SetFolder> createFolder(String name, {String? parentFolderId}) async {
     await initialize();
     final folders = await getFolders();
-    
+
+    // Validate depth if parent is specified
+    if (parentFolderId != null) {
+      final parent = folders.firstWhere((f) => f.id == parentFolderId);
+      final depth = parent.getDepth(folders);
+      if (depth >= 1) {
+        throw Exception('Cannot create folder: maximum nesting depth (1) exceeded');
+      }
+    }
+
     final newFolder = SetFolder(
       id: 'folder_${DateTime.now().millisecondsSinceEpoch}',
       name: name,
+      parentFolderId: parentFolderId,
     );
-    
+
     folders.add(newFolder);
+
+    // Add to parent's folderIds if parent exists
+    if (parentFolderId != null) {
+      final parent = folders.firstWhere((f) => f.id == parentFolderId);
+      final updatedParent = parent.copyWith(
+        folderIds: [...parent.folderIds, newFolder.id],
+      );
+      final parentIndex = folders.indexWhere((f) => f.id == parentFolderId);
+      folders[parentIndex] = updatedParent;
+    }
+
     await _saveFolders(folders);
-    
+
     return newFolder;
   }
 
@@ -51,13 +72,53 @@ class FolderService {
     }
   }
 
-  // Delete folder
+  // Delete folder (and all its children)
   Future<void> deleteFolder(String folderId) async {
     await initialize();
     final folders = await getFolders();
-    
+
+    final folder = folders.firstWhere((f) => f.id == folderId);
+
+    // Remove from parent's folderIds if has parent
+    if (folder.parentFolderId != null) {
+      final parent = folders.firstWhere((f) => f.id == folder.parentFolderId);
+      final updatedParent = parent.copyWith(
+        folderIds: parent.folderIds.where((id) => id != folderId).toList(),
+      );
+      final parentIndex = folders.indexWhere((f) => f.id == folder.parentFolderId);
+      folders[parentIndex] = updatedParent;
+    }
+
+    // Delete all child folders recursively
+    for (final childId in folder.folderIds) {
+      await deleteFolder(childId);
+    }
+
+    // Delete the folder itself
     folders.removeWhere((f) => f.id == folderId);
     await _saveFolders(folders);
+  }
+
+  // Get root folders (folders with no parent)
+  Future<List<SetFolder>> getRootFolders() async {
+    final folders = await getFolders();
+    return folders.where((f) => f.parentFolderId == null).toList();
+  }
+
+  // Get child folders of a specific folder
+  Future<List<SetFolder>> getChildFolders(String parentId) async {
+    final folders = await getFolders();
+    return folders.where((f) => f.parentFolderId == parentId).toList();
+  }
+
+  // Get folder by ID
+  Future<SetFolder?> getFolderById(String folderId) async {
+    final folders = await getFolders();
+    try {
+      return folders.firstWhere((f) => f.id == folderId);
+    } catch (e) {
+      return null;
+    }
   }
 
   // Add set to folder

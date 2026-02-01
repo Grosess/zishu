@@ -22,6 +22,7 @@ import '../widgets/simple_radical_display.dart';
 import '../services/haptic_service.dart';
 import '../services/pronunciation_service.dart';
 import '../services/character_set_manager.dart';
+import '../services/character_statistics_service.dart';
 
 enum PracticeMode { learning, testing }
 
@@ -71,7 +72,8 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   final RadicalService _radicalService = RadicalService();
   final PronunciationService _pronunciationService = PronunciationService();
   final CharacterSetManager _setManager = CharacterSetManager();
-  
+  final CharacterStatisticsService _characterStatsService = CharacterStatisticsService();
+
   // Character data
   CharacterStroke? _characterStroke;
   CharacterRadicalAnalysis? _radicalAnalysis;
@@ -992,9 +994,9 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                             ),
                           ),
                         
-                        // Completed strokes (normal mode) or all user strokes (true handwriting mode)
+                        // Completed strokes (auto mode) or all user strokes (handwriting/true handwriting mode)
                         // In learning mode, always show completed strokes normally
-                        if (_writingMode == WritingMode.trueHandwriting && widget.mode != PracticeMode.learning && _userStrokes.isNotEmpty)
+                        if ((_writingMode == WritingMode.handwriting || _writingMode == WritingMode.trueHandwriting) && widget.mode != PracticeMode.learning && _userStrokes.isNotEmpty)
                           CustomPaint(
                             size: Size.infinite,
                             painter: UserStrokesPainter(
@@ -1006,7 +1008,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                               strokeWidth: _strokeWidth,
                             ),
                           )
-                        else if (_characterStroke != null && _completedStrokeIndices.isNotEmpty && (_writingMode != WritingMode.trueHandwriting || widget.mode == PracticeMode.learning))
+                        else if (_characterStroke != null && _completedStrokeIndices.isNotEmpty && (_writingMode == WritingMode.auto || widget.mode == PracticeMode.learning))
                           AnimatedBuilder(
                             animation: _bounceAnimation ?? const AlwaysStoppedAnimation(1.0),
                             builder: (context, child) {
@@ -1932,6 +1934,16 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     if (widget.mode != PracticeMode.learning) {
       // Save practice data only after manual grading
       _savePracticeData(wasCorrect);
+
+      // Track character statistics for individual characters
+      if (widget.isWord && _wordCharacters.length > 1) {
+        // For multi-character words, track each character individually
+        final currentChar = _wordCharacters[_currentWordCharacterIndex];
+        _characterStatsService.recordAttempt(currentChar, wasCorrect);
+      } else {
+        // For single characters, track directly
+        _characterStatsService.recordAttempt(currentCharacter, wasCorrect);
+      }
 
       // Track session statistics
       final currentItem = widget.isWord ? currentWord : currentCharacter;

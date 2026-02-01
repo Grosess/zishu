@@ -1583,17 +1583,25 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
   }
   
   Widget? _buildFloatingActionButton() {
+    // Check if we're at max depth (can't create more folders)
+    bool canCreateFolder = true;
     if (_selectedFolderId != null) {
-      // Inside a folder - only show create set button
+      final currentFolder = _folders.firstWhere((f) => f.id == _selectedFolderId);
+      final depth = currentFolder.getDepth(_folders);
+      canCreateFolder = depth < 1;
+    }
+
+    // If at max depth, show extended FAB with only "Create Set"
+    if (!canCreateFolder) {
       return FloatingActionButton.extended(
-        key: const ValueKey('fab-extended'),
+        key: const ValueKey('fab-set-only'),
         onPressed: _showAddSetDialog,
-        label: Text(AppLocalizations.of(context)!.createSet),
+        label: const Text('Create Set'),
         icon: const Icon(Icons.add),
       );
     }
-    
-    // At root level - show speed dial with both options
+
+    // Otherwise show modal with both options
     return FloatingActionButton(
       key: const ValueKey('fab-normal'),
       onPressed: () {
@@ -1918,10 +1926,23 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
     
     // Custom sets tab - show folders and unfiled sets
     if (_selectedFolderId != null) {
-      // Inside a folder - show back button and sets in this folder
+      // Inside a folder - show back button, child folders, and sets in this folder
       final folder = _folders.firstWhere((f) => f.id == _selectedFolderId);
       final folderSets = sets.where((s) => folder.setIds.contains(s.id)).toList();
-      
+      final childFolders = _folders.where((f) => f.parentFolderId == _selectedFolderId).toList();
+
+      // Build display items: child folders first, then sets
+      final List<dynamic> displayItems = [];
+      displayItems.addAll(childFolders);
+      displayItems.addAll(folderSets);
+
+      // Build breadcrumb path
+      String breadcrumbPath = folder.name;
+      if (folder.parentFolderId != null) {
+        final parentFolder = _folders.firstWhere((f) => f.id == folder.parentFolderId);
+        breadcrumbPath = '${parentFolder.name} - ${folder.name}';
+      }
+
       return Column(
         children: [
           // Folder header with back button
@@ -1933,18 +1954,20 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                   icon: const Icon(Icons.arrow_back),
                   onPressed: () {
                     setState(() {
-                      _selectedFolderId = null;
+                      _selectedFolderId = folder.parentFolderId; // Navigate to parent
                     });
                   },
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  folder.name,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Text(
+                    breadcrumbPath,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const Spacer(),
                 IconButton(
                   icon: const Icon(Icons.more_vert),
                   onPressed: () => _showFolderMenu(folder),
@@ -1963,16 +1986,16 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                 // Same responsive logic for folder view
                 final width = constraints.maxWidth;
                 int crossAxisCount = 2;
-                
+
                 if (width > 600) crossAxisCount = 3;
                 if (width > 900) crossAxisCount = 4;
                 if (width > 1200) crossAxisCount = 5;
-                
+
                 final cardWidth = (width - 32 - (crossAxisCount - 1) * 16) / crossAxisCount;
                 if (cardWidth > 200) {
                   crossAxisCount = ((width - 32) / 216).floor();
                 }
-                
+
                 return GridView.builder(
                   controller: _customScrollController,
                   padding: const EdgeInsets.all(16),
@@ -1982,20 +2005,44 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                     mainAxisSpacing: 16,
                     childAspectRatio: 1.0,
                   ),
-                  itemCount: folderSets.length,
+                  itemCount: displayItems.length,
                   itemBuilder: (context, index) {
-                final set = folderSets[index];
-                final isLoading = _loadingStates[set.id] ?? false;
-                
-                return _CharacterSetSquareCard(
-                  set: set,
-                  isLoading: isLoading,
-                  isCustom: true,
-                  progress: _setProgress[set.id] ?? 0.0,
-                  onTap: isLoading ? null : () => _showSetSynopsis(set),
-                  onLongPress: null,
-                  onMenuTap: () => _showSetMenu(set),
-                );
+                    final item = displayItems[index];
+
+                    if (item is SetFolder) {
+                      // Show child folder card
+                      final setCount = item.setIds.length;
+                      final folderCount = item.folderIds.length;
+
+                      return _FolderCard(
+                        folder: item,
+                        setCount: setCount,
+                        folderCount: folderCount,
+                        onTap: () {
+                          setState(() {
+                            _selectedFolderId = item.id;
+                          });
+                        },
+                        onLongPress: () => _showFolderMenu(item),
+                        onMenuTap: () => _showFolderMenu(item),
+                      );
+                    } else if (item is CharacterSet) {
+                      // Show set card
+                      final set = item;
+                      final isLoading = _loadingStates[set.id] ?? false;
+
+                      return _CharacterSetSquareCard(
+                        set: set,
+                        isLoading: isLoading,
+                        isCustom: true,
+                        progress: _setProgress[set.id] ?? 0.0,
+                        onTap: isLoading ? null : () => _showSetSynopsis(set),
+                        onLongPress: null,
+                        onMenuTap: () => _showSetMenu(set),
+                      );
+                    }
+
+                    return const SizedBox.shrink();
                   },
                 );
               },
@@ -2005,16 +2052,17 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
       );
     }
     
-    // Root level - show folders and unfiled sets
+    // Root level - show only root folders and unfiled sets
+    final rootFolders = _folders.where((f) => f.parentFolderId == null).toList();
     final unfiledSets = sets.where((s) => !_setFolders.containsKey(s.id)).toList();
-    
-    // Build a list of items to display (folders with their expanded contents, then unfiled sets)
+
+    // Build a list of items to display (root folders first, then unfiled sets)
     final List<dynamic> displayItems = [];
-    
-    for (final folder in _folders) {
+
+    for (final folder in rootFolders) {
       displayItems.add(folder);
     }
-    
+
     // Add unfiled sets at the end
     displayItems.addAll(unfiledSets);
     
@@ -2049,10 +2097,12 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
         if (item is SetFolder) {
           // Show folder card
           final setCount = item.setIds.length;
-          
+          final folderCount = item.folderIds.length;
+
           return _FolderCard(
             folder: item,
             setCount: setCount,
+            folderCount: folderCount,
             onTap: () {
               setState(() {
                 _selectedFolderId = item.id;
@@ -2276,7 +2326,23 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
   
   Future<void> _showCreateFolderDialog() async {
     final controller = TextEditingController();
-    
+
+    // Check if we can create a folder here
+    if (_selectedFolderId != null) {
+      final currentFolder = _folders.firstWhere((f) => f.id == _selectedFolderId);
+      final depth = currentFolder.getDepth(_folders);
+      if (depth >= 1) {
+        // Already at max depth, can't create subfolder
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Cannot create folder: Maximum nesting depth reached'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+        return;
+      }
+    }
+
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -2297,9 +2363,24 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
           FilledButton(
             onPressed: () async {
               if (controller.text.isNotEmpty) {
-                await _folderService.createFolder(controller.text);
-                await _loadFolders();
-                Navigator.pop(context);
+                try {
+                  await _folderService.createFolder(
+                    controller.text,
+                    parentFolderId: _selectedFolderId,
+                  );
+                  await _loadFolders();
+                  Navigator.pop(context);
+                } catch (e) {
+                  Navigator.pop(context);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error: ${e.toString()}'),
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  }
+                }
               }
             },
             child: Text(AppLocalizations.of(context)!.createSet),
@@ -3564,6 +3645,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
 class _FolderCard extends StatelessWidget {
   final SetFolder folder;
   final int setCount;
+  final int folderCount;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
   final VoidCallback? onMenuTap;
@@ -3571,6 +3653,7 @@ class _FolderCard extends StatelessWidget {
   const _FolderCard({
     required this.folder,
     required this.setCount,
+    this.folderCount = 0,
     this.onTap,
     this.onLongPress,
     this.onMenuTap,
@@ -3632,11 +3715,16 @@ class _FolderCard extends StatelessWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '$setCount ${setCount == 1 ? 'set' : 'sets'}',
+                              folderCount > 0
+                                ? '$setCount ${setCount == 1 ? 'set' : 'sets'} • $folderCount ${folderCount == 1 ? 'folder' : 'folders'}'
+                                : '$setCount ${setCount == 1 ? 'set' : 'sets'}',
                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                 color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 fontSize: 10,
                               ),
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),

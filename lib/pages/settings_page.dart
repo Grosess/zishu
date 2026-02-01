@@ -149,11 +149,11 @@ class _SettingsPageState extends State<SettingsPage> {
   String _getWritingModeDescription(WritingMode mode) {
     switch (mode) {
       case WritingMode.auto:
-        return 'Automated guidance with instant feedback';
+        return 'Strokes convert to font after drawing';
       case WritingMode.handwriting:
-        return 'Practice writing with helpful corrections';
+        return 'Handwriting with automatic accuracy checking';
       case WritingMode.trueHandwriting:
-        return 'Pure handwriting practice, no guidance';
+        return 'Draw and self-assess, best for memory';
     }
   }
 
