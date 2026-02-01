@@ -93,9 +93,9 @@ class CharacterStatisticsService {
         return b.totalAttempts.compareTo(a.totalAttempts);
       });
 
-    // Filter out characters with no attempts or no errors
+    // Filter: require at least 3 attempts to appear in the list
     final filtered = sortedStats.where((stat) =>
-      stat.totalAttempts > 0 && stat.wrongAttempts > 0
+      stat.totalAttempts >= 3 && stat.wrongAttempts > 0
     ).toList();
 
     if (limit != null && filtered.length > limit) {

@@ -310,19 +310,73 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
   }
 
   /// Clean up folders by removing references to deleted sets
+  /// IMPORTANT: Only removes sets that are explicitly verified as deleted from BOTH storage locations
   Future<void> _cleanupFolders() async {
     final folders = await _folderService.getFolders();
+
+    // Safety check: Don't cleanup if custom sets failed to load
+    // If folders have sets but _customSets is empty, something went wrong with loading
+    final totalFolderSets = folders.fold<int>(0, (sum, folder) => sum + folder.setIds.length);
+    if (totalFolderSets > 0 && _customSets.isEmpty) {
+      // Data may not have loaded properly - skip cleanup to prevent data loss
+      print('Skipping folder cleanup: Custom sets not loaded properly');
+      return;
+    }
+
+    // Build set of valid set IDs from loaded custom sets
     final validSetIds = _customSets.map((s) => s.id).toSet();
+
+    // Also check both storage locations to verify a set is truly deleted
+    final prefs = await SharedPreferences.getInstance();
+
+    // Check legacy storage
+    final legacySetIds = <String>{};
+    final savedCustomSets = prefs.getStringList('custom_sets') ?? [];
+    for (final setJson in savedCustomSets) {
+      try {
+        final setData = jsonDecode(setJson);
+        if (setData['id'] != null) {
+          legacySetIds.add(setData['id']);
+        }
+      } catch (e) {
+        // Ignore parse errors
+      }
+    }
+
+    // Check CharacterSetManager storage
+    final managerSetIds = <String>{};
+    final customSetsString = prefs.getString('custom_character_sets');
+    if (customSetsString != null) {
+      try {
+        final List<dynamic> customSetsJson = jsonDecode(customSetsString);
+        for (final setJson in customSetsJson) {
+          if (setJson['id'] != null) {
+            managerSetIds.add(setJson['id']);
+          }
+        }
+      } catch (e) {
+        // Ignore parse errors
+      }
+    }
+
     bool needsUpdate = false;
 
     for (final folder in folders) {
-      final invalidSetIds = folder.setIds.where((id) => !validSetIds.contains(id)).toList();
+      // Only remove sets that are:
+      // 1. Not in currently loaded sets
+      // 2. Not in legacy storage
+      // 3. Not in CharacterSetManager storage
+      final setsToRemove = folder.setIds.where((id) =>
+        !validSetIds.contains(id) &&
+        !legacySetIds.contains(id) &&
+        !managerSetIds.contains(id)
+      ).toList();
 
-      if (invalidSetIds.isNotEmpty) {
+      if (setsToRemove.isNotEmpty) {
         needsUpdate = true;
-        // Remove invalid set IDs
+        print('Removing ${setsToRemove.length} deleted sets from folder ${folder.name}');
         final updatedFolder = folder.copyWith(
-          setIds: folder.setIds.where((id) => validSetIds.contains(id)).toList(),
+          setIds: folder.setIds.where((id) => !setsToRemove.contains(id)).toList(),
         );
         await _folderService.updateFolder(updatedFolder);
       }
