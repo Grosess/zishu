@@ -16,6 +16,7 @@ import 'pages/profile_page.dart';
 import 'pages/practice_history_page.dart';
 import 'pages/mark_as_learned_page.dart';
 import 'widgets/language_selection_dialog.dart';
+import 'widgets/changelog_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'services/image_cache_service.dart';
 import 'services/statistics_service.dart';
@@ -1054,6 +1055,11 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   }
   
   Future<void> _checkFirstLaunch() async {
+    final prefs = await SharedPreferences.getInstance();
+    final lastSeenVersion = prefs.getString('last_seen_version');
+    const currentVersion = '1.1.0';
+
+    // Check for first launch
     if (_languageService.isFirstLaunch) {
       await Future.delayed(const Duration(milliseconds: 500));
       if (mounted) {
@@ -1066,6 +1072,20 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
           ),
         );
       }
+      // Save current version after first launch
+      await prefs.setString('last_seen_version', currentVersion);
+    }
+    // Check for version update
+    else if (lastSeenVersion != currentVersion) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (mounted) {
+        await showDialog<void>(
+          context: context,
+          builder: (context) => ChangelogDialog(version: currentVersion),
+        );
+      }
+      // Update last seen version
+      await prefs.setString('last_seen_version', currentVersion);
     }
   }
   

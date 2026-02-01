@@ -1011,7 +1011,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
     final invalidItems = <dynamic>[];
 
     // Detect small screen
-    final isSmallScreen = MediaQuery.of(context).size.width <= 400;
+    final isSmallScreen = MediaQuery.of(context).size.width <= 370;  // Only iPhone SE and smaller
 
     // Show synopsis dialog with fade and slide-up animation
     showGeneralDialog(
@@ -1233,26 +1233,23 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                   children: [
                     // Left side - Show Groups (aligned left)
                     if (validItems.length > 10)
-                      Flexible(
-                        child: TextButton.icon(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => GroupsPage(
-                                  setName: set.name,
-                                  characters: validItems,
-                                  isWordSet: set.isWordSet,
-                                ),
+                      TextButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => GroupsPage(
+                                setName: set.name,
+                                characters: validItems,
+                                isWordSet: set.isWordSet,
                               ),
-                            );
-                          },
-                          icon: const Icon(Icons.apps, size: 18),
-                          label: Text(AppLocalizations.of(context)!.showGroups,
-                            style: TextStyle(fontSize: 13),
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.apps, size: 18),
+                        label: const Text('Groups',
+                          style: TextStyle(fontSize: 13),
                         ),
                       ),
 
@@ -1309,56 +1306,53 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                             ),
                             child: const Icon(Icons.school, size: 20),
                           )
-                        : Flexible(
-                            child: FilledButton.icon(
-                              onPressed: () async {
-                                // Filter to only unlearned items using the proper logic
-                                final unlearnedItems = await _learningService.getUnlearnedItems(validItems);
+                        : FilledButton.icon(
+                            onPressed: () async {
+                              // Filter to only unlearned items using the proper logic
+                              final unlearnedItems = await _learningService.getUnlearnedItems(validItems);
 
-                                if (unlearnedItems.isEmpty) {
-                                  Navigator.pop(context);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(AppLocalizations.of(context)!.allItemsLearnedMessage),
-                                    ),
-                                  );
-                                  return;
-                                }
-
-                                HapticService().lightImpact();
+                              if (unlearnedItems.isEmpty) {
                                 Navigator.pop(context);
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => WritingPracticePage(
-                                      character: unlearnedItems.first,
-                                      characterSet: set.name,
-                                      allCharacters: unlearnedItems,
-                                      isWord: set.isWordSet,
-                                      mode: PracticeMode.learning,
-                                      onComplete: (success) async {
-                                        if (success) {
-                                          if (set.isWordSet && unlearnedItems.first.length > 1) {
-                                            await _learningService.markWordAsLearned(unlearnedItems.first);
-                                          } else {
-                                            await _learningService.markCharacterAsLearned(unlearnedItems.first);
-                                          }
-                                        }
-                                      },
-                                    ),
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(AppLocalizations.of(context)!.allItemsLearnedMessage),
                                   ),
-                                ).then((_) => _loadSetProgress());
-                              },
-                              icon: const Icon(Icons.school, size: 18),
-                              label: Text(AppLocalizations.of(context)!.learn,
-                                style: TextStyle(fontSize: 13),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              style: FilledButton.styleFrom(
-                                backgroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                                    ? Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary
-                                    : Theme.of(context).colorScheme.primary,
-                              ),
+                                );
+                                return;
+                              }
+
+                              HapticService().lightImpact();
+                              Navigator.pop(context);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => WritingPracticePage(
+                                    character: unlearnedItems.first,
+                                    characterSet: set.name,
+                                    allCharacters: unlearnedItems,
+                                    isWord: set.isWordSet,
+                                    mode: PracticeMode.learning,
+                                    onComplete: (success) async {
+                                      if (success) {
+                                        if (set.isWordSet && unlearnedItems.first.length > 1) {
+                                          await _learningService.markWordAsLearned(unlearnedItems.first);
+                                        } else {
+                                          await _learningService.markCharacterAsLearned(unlearnedItems.first);
+                                        }
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ).then((_) => _loadSetProgress());
+                            },
+                            icon: const Icon(Icons.school, size: 18),
+                            label: Text(AppLocalizations.of(context)!.learn,
+                              style: const TextStyle(fontSize: 13),
+                            ),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                  ? Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary
+                                  : Theme.of(context).colorScheme.primary,
                             ),
                           ),
                   ],
@@ -1371,58 +1365,30 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                   children: [
                     // Left side - View All (aligned left) - show full text even on small screens
                     if (validItems.isNotEmpty)
-                      isSmallScreen
-                        ? TextButton.icon(
-                            onPressed: () {
-                              Navigator.pop(context);
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => CharacterListPage(
-                                    setName: set.name,
-                                    characters: validItems,
-                                    isWordSet: set.isWordSet,
-                                    isCustomSet: _customSets.contains(set),
-                                    setId: set.id,
-                                    source: set.source,
-                                    definitions: set.definitions,
-                                    groupSize: set.groupSize,
-                                  ),
-                                ),
-                              ).then((_) => _loadSetProgress());
-                            },
-                            icon: const Icon(Icons.view_list, size: 18),
-                            label: Text(AppLocalizations.of(context)!.viewAll,
-                              style: TextStyle(fontSize: 12),
-                            ),
-                          )
-                        : Flexible(
-                            child: TextButton.icon(
-                              onPressed: () {
-                                Navigator.pop(context);
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => CharacterListPage(
-                                      setName: set.name,
-                                      characters: validItems,
-                                      isWordSet: set.isWordSet,
-                                      isCustomSet: _customSets.contains(set),
-                                      setId: set.id,
-                                      source: set.source,
-                                      definitions: set.definitions,
-                                      groupSize: set.groupSize,
-                                    ),
-                                  ),
-                                ).then((_) => _loadSetProgress());
-                              },
-                              icon: const Icon(Icons.view_list, size: 18),
-                              label: Text(AppLocalizations.of(context)!.viewAll,
-                                style: TextStyle(fontSize: 13),
-                                overflow: TextOverflow.ellipsis,
+                      TextButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => CharacterListPage(
+                                setName: set.name,
+                                characters: validItems,
+                                isWordSet: set.isWordSet,
+                                isCustomSet: _customSets.contains(set),
+                                setId: set.id,
+                                source: set.source,
+                                definitions: set.definitions,
+                                groupSize: set.groupSize,
                               ),
                             ),
-                          ),
+                          ).then((_) => _loadSetProgress());
+                        },
+                        icon: const Icon(Icons.view_list, size: 18),
+                        label: Text(AppLocalizations.of(context)!.viewAll,
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                      ),
 
                     const Spacer(), // Space between left and right
 
@@ -1491,76 +1457,67 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                           ),
                           child: const Icon(Icons.edit, size: 20),
                         )
-                      : Flexible(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              FilledButton.icon(
-                                onPressed: () async {
-                                  // Show loading
-                                  showDialog(
-                                    context: context,
-                                    barrierDismissible: false,
-                                    builder: (context) => const Center(
-                                      child: CircularProgressIndicator(),
-                                    ),
-                                  );
+                      : FilledButton.icon(
+                          onPressed: () async {
+                            // Show loading
+                            showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (context) => const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                            );
 
-                                  // Clear cache to get fresh data
-                                  _learningService.clearCache();
-                                  _statsService.clearCache();
+                            // Clear cache to get fresh data
+                            _learningService.clearCache();
+                            _statsService.clearCache();
 
-                                  // Get ALL fresh learned items from this set
-                                  final learnedCharacters = await _statsService.getLearnedCharacters();
-                                  final learnedWords = await _statsService.getLearnedWords();
-                                  final allLearned = {...learnedCharacters, ...learnedWords};
+                            // Get ALL fresh learned items from this set
+                            final learnedCharacters = await _statsService.getLearnedCharacters();
+                            final learnedWords = await _statsService.getLearnedWords();
+                            final allLearned = {...learnedCharacters, ...learnedWords};
 
-                                  // Filter this set's items against fresh learned data
-                                  final learnedItems = validItems.where((item) => allLearned.contains(item)).toList();
+                            // Filter this set's items against fresh learned data
+                            final learnedItems = validItems.where((item) => allLearned.contains(item)).toList();
 
-                                  learnedItems.shuffle(); // Randomize order
+                            learnedItems.shuffle(); // Randomize order
 
-                                  // Close loading dialog
-                                  Navigator.pop(context);
+                            // Close loading dialog
+                            Navigator.pop(context);
 
-                                  if (learnedItems.isEmpty) {
-                                    Navigator.pop(context);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(AppLocalizations.of(context)!.noLearnedItemsMessage),
-                                      ),
-                                    );
-                                    return;
-                                  }
-
-                                  HapticService().lightImpact();
-                                  Navigator.pop(context);
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => WritingPracticePage(
-                                        character: learnedItems.first,
-                                        characterSet: set.name,
-                                        allCharacters: learnedItems,
-                                        isWord: set.isWordSet,
-                                        mode: PracticeMode.testing,
-                                      ),
-                                    ),
-                                  ).then((_) => _loadSetProgress());
-                                },
-                                icon: const Icon(Icons.edit, size: 18),
-                                label: Text(AppLocalizations.of(context)!.practice,
-                                  style: TextStyle(fontSize: 13),
-                                  overflow: TextOverflow.ellipsis,
+                            if (learnedItems.isEmpty) {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(AppLocalizations.of(context)!.noLearnedItemsMessage),
                                 ),
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                                      ? (Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.8)
-                                      : Theme.of(context).colorScheme.secondary,
+                              );
+                              return;
+                            }
+
+                            HapticService().lightImpact();
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => WritingPracticePage(
+                                  character: learnedItems.first,
+                                  characterSet: set.name,
+                                  allCharacters: learnedItems,
+                                  isWord: set.isWordSet,
+                                  mode: PracticeMode.testing,
                                 ),
                               ),
-                            ],
+                            ).then((_) => _loadSetProgress());
+                          },
+                          icon: const Icon(Icons.edit, size: 18),
+                          label: Text(AppLocalizations.of(context)!.practice,
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                ? (Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.8)
+                                : Theme.of(context).colorScheme.secondary,
                           ),
                         ),
                 ],

@@ -882,7 +882,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
           builder: (context, constraints) {
             // Calculate max width to prevent overflow on wide screens
             final maxWidth = math.min(constraints.maxWidth, 600.0);
-            final isSmallScreen = constraints.maxWidth <= 400;
+            final isSmallScreen = constraints.maxWidth <= 370;  // Only iPhone SE and smaller
 
             return Center(
               child: ConstrainedBox(
@@ -3010,7 +3010,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   
   Widget _buildWordPronunciation() {
     // Detect small screens for compact layout
-    final isSmallScreen = MediaQuery.of(context).size.width <= 400;
+    final isSmallScreen = MediaQuery.of(context).size.width <= 370;  // Only iPhone SE and smaller
 
     // Get pronunciation for the word
     String? pinyin;
@@ -3051,7 +3051,6 @@ class _WritingPracticePageState extends State<WritingPracticePage>
               pinyin,
               style: TextStyle(
                 color: Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.w500,
                 fontSize: isSmallScreen ? 20 : 28,
               ),
               textAlign: TextAlign.center,
@@ -3152,7 +3151,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
 
     // Calculate responsive sizes based on character count
     final screenWidth = MediaQuery.of(context).size.width;
-    final isSmallScreen = screenWidth <= 400;
+    final isSmallScreen = screenWidth <= 370;  // Only iPhone SE and smaller
     final availableWidth = screenWidth - 32; // Account for container padding
     final boxCount = characterList.length;
 
@@ -3163,28 +3162,28 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     bool shouldStack = false;
 
     if (boxCount == 1) {
-      boxSize = isSmallScreen ? 50 : 60;
+      boxSize = isSmallScreen ? 50 : 110;
       horizontalMargin = 0;
-      fontSize = isSmallScreen ? 26 : 32;
+      fontSize = isSmallScreen ? 26 : 60;
     } else if (boxCount <= 4) {
       // Calculate box size to fit all boxes with margins
-      final maxBoxSize = isSmallScreen ? 50.0 : 60.0;
-      final minBoxSize = isSmallScreen ? 38.0 : 45.0;
+      final maxBoxSize = isSmallScreen ? 50.0 : 70.0;
+      final minBoxSize = isSmallScreen ? 38.0 : 55.0;
       final totalMargins = (boxCount - 1) * 8 + 32; // margins between boxes + padding
       final availableForBoxes = availableWidth - totalMargins;
       boxSize = (availableForBoxes / boxCount).clamp(minBoxSize, maxBoxSize);
       horizontalMargin = isSmallScreen ? 3 : 4;
       fontSize = boxSize * 0.5;
     } else if (boxCount <= 6) {
-      boxSize = isSmallScreen ? 38 : 45;
+      boxSize = isSmallScreen ? 38 : 55;
       horizontalMargin = isSmallScreen ? 2 : 3;
-      fontSize = isSmallScreen ? 18 : 22;
+      fontSize = isSmallScreen ? 18 : 27;
     } else {
       // For 7-8 characters, use 4x4 stacking
       shouldStack = true;
-      boxSize = isSmallScreen ? 42 : 50;
+      boxSize = isSmallScreen ? 42 : 60;
       horizontalMargin = isSmallScreen ? 3 : 4;
-      fontSize = isSmallScreen ? 20 : 24;
+      fontSize = isSmallScreen ? 20 : 30;
     }
     
     Widget buildBox(int index) {
@@ -3380,7 +3379,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   
   Widget _buildCharacterInfoSection() {
     // Detect small screens for compact layout
-    final isSmallScreen = MediaQuery.of(context).size.width <= 400;
+    final isSmallScreen = MediaQuery.of(context).size.width <= 370;  // Only iPhone SE and smaller
 
     // Try CEDICT first, then fall back to dictionary
     CharacterInfo? charInfo;
@@ -3526,7 +3525,6 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                 style: TextStyle(
                   fontSize: isSmallScreen ? 20 : 28,
                   color: Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.w500,
                 ),
               ),
               SizedBox(height: isSmallScreen ? 2 : 4),
@@ -3550,7 +3548,6 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                 style: TextStyle(
                   fontSize: isSmallScreen ? 20 : 28,
                   color: Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.w500,
                 ),
               ),
               SizedBox(height: isSmallScreen ? 2 : 4),
@@ -3590,7 +3587,6 @@ class _WritingPracticePageState extends State<WritingPracticePage>
             style: TextStyle(
               fontSize: isSmallScreen ? 20 : 28,
               color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.w500,
             ),
             textAlign: TextAlign.center,
           ),
