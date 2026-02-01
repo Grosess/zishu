@@ -316,17 +316,11 @@ class _SetEditPageState extends State<SetEditPage> with SingleTickerProviderStat
             const SizedBox(height: 16),
             TextField(
               controller: textController,
-              maxLength: 1,
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 48),
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
-                counterText: '',
               ),
-              inputFormatters: [
-                // Only allow Chinese characters (CJK Unified Ideographs)
-                FilteringTextInputFormatter.allow(RegExp(r'[\u4e00-\u9fff\u3400-\u4dbf]')),
-              ],
               autofocus: true,
             ),
           ],
@@ -349,13 +343,25 @@ class _SetEditPageState extends State<SetEditPage> with SingleTickerProviderStat
           TextButton(
             onPressed: () {
               final char = textController.text.trim();
-              if (char.isNotEmpty) {
+              // Validate: must be exactly one Chinese character
+              final isSingleChinese = char.length == 1 &&
+                  RegExp(r'[\u4e00-\u9fff\u3400-\u4dbf]').hasMatch(char);
+
+              if (isSingleChinese) {
                 setState(() {
                   _selectedIcon = char;
                   _hasUnsavedChanges = true;
                 });
+                Navigator.pop(context);
+              } else if (char.isNotEmpty) {
+                // Show error if invalid input
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Please enter exactly one Chinese character'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
               }
-              Navigator.pop(context);
             },
             child: const Text('Save'),
           ),

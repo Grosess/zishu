@@ -1071,7 +1071,10 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (set.description != null && set.description!.isNotEmpty) ...[
+                // Don't show description for custom sets
+                if (set.description != null &&
+                    set.description!.isNotEmpty &&
+                    !_customSets.any((s) => s.id == set.id)) ...[
                   Text(
                     set.description!,
                     style: Theme.of(context).textTheme.bodyMedium,
