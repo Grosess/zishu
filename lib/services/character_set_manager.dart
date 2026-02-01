@@ -204,8 +204,11 @@ class CharacterSetManager {
     Map<String, String>? definitions,
     int? groupSize,
   }) async {
-    // Filter out phrases longer than 8 characters
-    final filteredCharacters = characters.where((item) => item.length <= 8).toList();
+    // Filter out phrases longer than 8 characters and remove duplicates
+    final filteredCharacters = characters
+        .where((item) => item.length <= 8)
+        .toSet()
+        .toList();
     
     final id = 'custom_${DateTime.now().millisecondsSinceEpoch}';
     final set = CharacterSet(
@@ -229,8 +232,11 @@ class CharacterSetManager {
   
   // Update an existing custom set
   Future<CharacterSet> updateCustomSet(CharacterSet updatedSet) async {
-    // Filter out phrases longer than 8 characters
-    final filteredCharacters = updatedSet.characters.where((item) => item.length <= 8).toList();
+    // Filter out phrases longer than 8 characters and remove duplicates
+    final filteredCharacters = updatedSet.characters
+        .where((item) => item.length <= 8)
+        .toSet()
+        .toList();
     
     final set = CharacterSet(
       id: updatedSet.id,

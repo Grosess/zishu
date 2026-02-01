@@ -710,13 +710,25 @@ class _SettingsPageState extends State<SettingsPage> {
                             ? _getDuotoneAccentColor(_duotoneColor, _duotoneBackground) // Use actual duotone foreground color
                             : _getColorFromString(_strokeColor),
                           borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: Theme.of(context).colorScheme.outline),
+                          border: Border.all(
+                            color: _themeMode == 'duotone'
+                              ? (_duotoneBackground == 'black' ? Colors.white : Colors.black)
+                              : Theme.of(context).colorScheme.outline,
+                            width: 1,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Text(_themeMode == 'duotone'
-                        ? 'Using Duotone Foreground'
-                        : _strokeColor == 'primary' ? 'Theme Color' : _strokeColor.substring(0, 1).toUpperCase() + _strokeColor.substring(1)),
+                      Text(
+                        _themeMode == 'duotone'
+                          ? 'Using Duotone Foreground'
+                          : _strokeColor == 'primary' ? 'Theme Color' : _strokeColor.substring(0, 1).toUpperCase() + _strokeColor.substring(1),
+                        style: TextStyle(
+                          color: _themeMode == 'duotone'
+                            ? _getDuotoneAccentColor(_duotoneColor, _duotoneBackground)
+                            : null,
+                        ),
+                      ),
                     ],
                   ),
                   trailing: Icon(Icons.chevron_right,
@@ -753,7 +765,14 @@ class _SettingsPageState extends State<SettingsPage> {
                         : null,
                     ),
                   ),
-                  subtitle: Text(_themeMode == 'duotone' ? AppLocalizations.of(context)!.classicFixed : _getStrokeTypeLabel(_strokeType)),
+                  subtitle: Text(
+                    _themeMode == 'duotone' ? AppLocalizations.of(context)!.classicFixed : _getStrokeTypeLabel(_strokeType),
+                    style: TextStyle(
+                      color: _themeMode == 'duotone'
+                        ? _getDuotoneAccentColor(_duotoneColor, _duotoneBackground)
+                        : null,
+                    ),
+                  ),
                   trailing: Icon(Icons.chevron_right,
                     color: _themeMode == 'duotone'
                       ? Theme.of(context).colorScheme.onSurface.withOpacity(0.3)
