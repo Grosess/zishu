@@ -6,6 +6,7 @@ import '../services/language_service.dart';
 import '../l10n/app_localizations.dart';
 import '../widgets/language_selection_dialog.dart';
 import 'attributions_page.dart';
+import '../pages/writing_practice_page.dart' show WritingMode;
 
 enum StrokeType {
   invisible,
@@ -36,8 +37,9 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _showRadicalAnalysis = false;
   StrokeType _strokeType = StrokeType.classic;
   int _dailyLearnGoal = 10;
+  double _strokeLeniency = 0.55; // Default leniency (0.3-0.8 range)
   bool _hapticFeedbackEnabled = true;
-  bool _handwritingMode = false;
+  WritingMode _writingMode = WritingMode.auto;
   bool _autoPronounceChinese = true;
   final LanguageService _languageService = LanguageService();
 
@@ -96,8 +98,14 @@ class _SettingsPageState extends State<SettingsPage> {
       orElse: () => StrokeType.classic,
     );
     _dailyLearnGoal = _prefs.getInt('daily_learn_goal') ?? 10;
+    _strokeLeniency = _prefs.getDouble('stroke_leniency') ?? 0.55;
+    _strokeLeniency = _strokeLeniency.clamp(0.3, 0.8); // Clamp to valid range
     _hapticFeedbackEnabled = _prefs.getBool('haptic_feedback_enabled') ?? true;
-    _handwritingMode = _prefs.getBool('handwriting_mode') ?? false;
+    final writingModeString = _prefs.getString('writing_mode') ?? 'auto';
+    _writingMode = WritingMode.values.firstWhere(
+      (mode) => mode.name == writingModeString,
+      orElse: () => WritingMode.auto,
+    );
     _autoPronounceChinese = _prefs.getBool('auto_pronounce_chinese') ?? true;
     
     // Initialize haptic service
@@ -137,7 +145,18 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _saveIntSetting(String key, int value) async {
     await _prefs.setInt(key, value);
   }
-  
+
+  String _getWritingModeDescription(WritingMode mode) {
+    switch (mode) {
+      case WritingMode.auto:
+        return 'Automated guidance with instant feedback';
+      case WritingMode.handwriting:
+        return 'Practice writing with helpful corrections';
+      case WritingMode.trueHandwriting:
+        return 'Pure handwriting practice, no guidance';
+    }
+  }
+
   void _updateTheme(String mode) async {
     setState(() {
       _themeMode = mode;
@@ -470,17 +489,35 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                 ),
-                SwitchListTile(
-                  title: Text(AppLocalizations.of(context)!.handwritingMode),
-                  subtitle: Text(AppLocalizations.of(context)!.handwritingModeDesc),
-                  value: _handwritingMode,
-                  onChanged: (value) {
-                    HapticService().selectionClick();
-                    setState(() {
-                      _handwritingMode = value;
-                    });
-                    _saveBoolSetting('handwriting_mode', value);
-                  },
+                ListTile(
+                  title: const Text('Writing Mode'),
+                  subtitle: Text(_getWritingModeDescription(_writingMode)),
+                  trailing: DropdownButton<WritingMode>(
+                    value: _writingMode,
+                    items: const [
+                      DropdownMenuItem(
+                        value: WritingMode.auto,
+                        child: Text('Auto'),
+                      ),
+                      DropdownMenuItem(
+                        value: WritingMode.handwriting,
+                        child: Text('Handwriting'),
+                      ),
+                      DropdownMenuItem(
+                        value: WritingMode.trueHandwriting,
+                        child: Text('True Handwriting'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        HapticService().selectionClick();
+                        setState(() {
+                          _writingMode = value;
+                        });
+                        _prefs.setString('writing_mode', value.name);
+                      }
+                    },
+                  ),
                 ),
                 SwitchListTile(
                   title: Text(AppLocalizations.of(context)!.showGrid),
@@ -599,7 +636,29 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                 ),
-                
+
+                // Stroke Leniency Setting
+                ListTile(
+                  title: const Text('Stroke Leniency'),
+                  subtitle: Text('How forgiving stroke validation is (${(_strokeLeniency * 100).toInt()}%)'),
+                  trailing: SizedBox(
+                    width: 200,
+                    child: Slider(
+                      value: _strokeLeniency,
+                      min: 0.3,
+                      max: 0.8,
+                      divisions: 10,
+                      label: '${(_strokeLeniency * 100).toInt()}%',
+                      onChanged: (value) {
+                        setState(() {
+                          _strokeLeniency = value;
+                        });
+                        _prefs.setDouble('stroke_leniency', value);
+                      },
+                    ),
+                  ),
+                ),
+
                 // Stroke Settings
                 Padding(
                   padding: const EdgeInsets.all(16),

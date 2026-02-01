@@ -323,6 +323,10 @@ class _SetEditPageState extends State<SetEditPage> with SingleTickerProviderStat
                 border: OutlineInputBorder(),
                 counterText: '',
               ),
+              inputFormatters: [
+                // Only allow Chinese characters (CJK Unified Ideographs)
+                FilteringTextInputFormatter.allow(RegExp(r'[\u4e00-\u9fff\u3400-\u4dbf]')),
+              ],
               autofocus: true,
             ),
           ],

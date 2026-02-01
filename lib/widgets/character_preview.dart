@@ -106,7 +106,10 @@ class _CharacterPreviewState extends State<CharacterPreview> {
     if (_characterStroke == null && !widget.forceText) {
       // If no stroke data available and not forcing text, retry loading
       Future.microtask(() => _loadCharacterData());
-      
+
+      // Check if character is a number for better styling
+      final isNumber = RegExp(r'^[0-9]$').hasMatch(widget.character);
+
       // Show loading state while retrying
       return Center(
         child: Container(
@@ -125,9 +128,10 @@ class _CharacterPreviewState extends State<CharacterPreview> {
                 child: Text(
                   widget.character,
                   style: TextStyle(
-                    fontSize: 120,
+                    fontSize: isNumber ? 140 : 120,
                     color: (widget.color ?? Theme.of(context).colorScheme.onSurface).withValues(alpha: 0.3),
-                    fontWeight: FontWeight.w400,
+                    fontWeight: isNumber ? FontWeight.w700 : FontWeight.w400,
+                    letterSpacing: isNumber ? -2 : 0,
                   ),
                 ),
               ),
@@ -139,15 +143,19 @@ class _CharacterPreviewState extends State<CharacterPreview> {
     
     if (_characterStroke == null) {
       // Final fallback to text if forced or no data
+      // Check if character is a number for better styling
+      final isNumber = RegExp(r'^[0-9]$').hasMatch(widget.character);
+
       return Center(
         child: FittedBox(
           fit: BoxFit.contain,
           child: Text(
             widget.character,
             style: TextStyle(
-              fontSize: 120,
+              fontSize: isNumber ? 140 : 120,
               color: widget.color ?? Theme.of(context).colorScheme.onSurface,
-              fontWeight: FontWeight.w400,
+              fontWeight: isNumber ? FontWeight.w700 : FontWeight.w400,
+              letterSpacing: isNumber ? -2 : 0,
             ),
           ),
         ),

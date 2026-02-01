@@ -21,8 +21,15 @@ import '../services/radical_service.dart';
 import '../widgets/simple_radical_display.dart';
 import '../services/haptic_service.dart';
 import '../services/pronunciation_service.dart';
+import '../services/character_set_manager.dart';
 
 enum PracticeMode { learning, testing }
+
+enum WritingMode {
+  auto,              // Auto-validated with SVG guidance
+  handwriting,       // Handwriting practice with feedback
+  trueHandwriting,   // Pure handwriting, self-assess
+}
 
 class WritingPracticePage extends StatefulWidget {
   final String character;
@@ -63,6 +70,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   final CedictService _cedictService = CedictService();
   final RadicalService _radicalService = RadicalService();
   final PronunciationService _pronunciationService = PronunciationService();
+  final CharacterSetManager _setManager = CharacterSetManager();
   
   // Character data
   CharacterStroke? _characterStroke;
@@ -147,8 +155,9 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   
   // Settings
   bool _showRadicalAnalysis = false;
-  bool _handwritingMode = false;
-  
+  WritingMode _writingMode = WritingMode.auto;
+  double _strokeLeniency = 0.55; // Default leniency
+
   String get currentWord {
     if (widget.isWord && widget.allCharacters != null) {
       return widget.allCharacters![_currentCharacterIndex];
@@ -211,8 +220,12 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         final savedSetting = prefs.getBool('show_radical_analysis') ?? true;
         _showRadicalAnalysis = widget.mode == PracticeMode.learning && savedSetting;
         
-        // Load handwriting mode setting
-        _handwritingMode = prefs.getBool('handwriting_mode') ?? false;
+        // Load writing mode setting
+        final writingModeString = prefs.getString('writing_mode') ?? 'auto';
+        _writingMode = WritingMode.values.firstWhere(
+          (mode) => mode.name == writingModeString,
+          orElse: () => WritingMode.auto,
+        );
         
         // Initialize classic stroke animation if needed
         if (_strokeType == StrokeType.classic) {
@@ -289,11 +302,19 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       final savedSetting = prefs.getBool('show_radical_analysis') ?? true;
       _showRadicalAnalysis = widget.mode == PracticeMode.learning && savedSetting;
       
-      // Load handwriting mode - but check if it changed to clear progress
-      final newHandwritingMode = prefs.getBool('handwriting_mode') ?? false;
-      if (newHandwritingMode != _handwritingMode) {
-        _handwritingMode = newHandwritingMode;
-        // Clear progress when handwriting mode changes
+      // Load stroke leniency setting
+      _strokeLeniency = prefs.getDouble('stroke_leniency') ?? 0.55;
+      _strokeLeniency = _strokeLeniency.clamp(0.3, 0.8);
+
+      // Load writing mode - but check if it changed to clear progress
+      final newWritingModeString = prefs.getString('writing_mode') ?? 'auto';
+      final newWritingMode = WritingMode.values.firstWhere(
+        (mode) => mode.name == newWritingModeString,
+        orElse: () => WritingMode.auto,
+      );
+      if (newWritingMode != _writingMode) {
+        _writingMode = newWritingMode;
+        // Clear progress when writing mode changes
         _completedStrokeIndices.clear();
         _userStrokes.clear();
         _currentStroke.clear();
@@ -801,6 +822,10 @@ class _WritingPracticePageState extends State<WritingPracticePage>
 
   @override
   Widget build(BuildContext context) {
+    // Detect small screens (iPhone SE and similar)
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 375; // iPhone SE is 320
+
     final scaffold = Scaffold(
       appBar: AppBar(
         title: _buildAppBarTitle(),
@@ -967,9 +992,9 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                             ),
                           ),
                         
-                        // Completed strokes (normal mode) or all user strokes (handwriting mode)
+                        // Completed strokes (normal mode) or all user strokes (true handwriting mode)
                         // In learning mode, always show completed strokes normally
-                        if (_handwritingMode && widget.mode != PracticeMode.learning && _userStrokes.isNotEmpty)
+                        if (_writingMode == WritingMode.trueHandwriting && widget.mode != PracticeMode.learning && _userStrokes.isNotEmpty)
                           CustomPaint(
                             size: Size.infinite,
                             painter: UserStrokesPainter(
@@ -981,7 +1006,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                               strokeWidth: _strokeWidth,
                             ),
                           )
-                        else if (_characterStroke != null && _completedStrokeIndices.isNotEmpty && (!_handwritingMode || widget.mode == PracticeMode.learning))
+                        else if (_characterStroke != null && _completedStrokeIndices.isNotEmpty && (_writingMode != WritingMode.trueHandwriting || widget.mode == PracticeMode.learning))
                           AnimatedBuilder(
                             animation: _bounceAnimation ?? const AlwaysStoppedAnimation(1.0),
                             builder: (context, child) {
@@ -1011,7 +1036,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                             final showAnimation = snapshot.data ?? true;
                             // Show animated hints in learning stage 0 or when hint is requested after 2 wrong attempts
                             // Always show in learning mode, only restrict in practice/testing mode
-                            final shouldBlockHints = _handwritingMode && widget.mode != PracticeMode.learning;
+                            final shouldBlockHints = _writingMode == WritingMode.trueHandwriting && widget.mode != PracticeMode.learning;
                             if (_characterStroke != null && showAnimation && !shouldBlockHints &&
                                 _completedStrokeIndices.length < _characterStroke!.strokes.length &&
                                 ((widget.mode == PracticeMode.learning && _learningStage == 0 && !_showFullCharacter) ||
@@ -1252,8 +1277,8 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                 // Practice control buttons (erase, show next, show all) - directly under character box
                 Padding(
                   padding: const EdgeInsets.only(left: 16, right: 16, top: 0, bottom: 4),
-            child: (_handwritingMode && widget.mode != PracticeMode.learning) ? 
-              // Handwriting mode buttons
+            child: (_writingMode == WritingMode.trueHandwriting && widget.mode != PracticeMode.learning) ?
+              // True handwriting mode buttons
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -1357,13 +1382,16 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                 // Manual grading section - always present but visibility controlled
                 // Use SafeArea to prevent buttons from being cut off on small screens
                 SafeArea(
-                  minimum: const EdgeInsets.only(bottom: 8),
+                  minimum: EdgeInsets.only(bottom: isSmallScreen ? 4 : 8),
                   child: Container(
-                    constraints: const BoxConstraints(
-                      minHeight: 48,
-                      maxHeight: 64,
+                    constraints: BoxConstraints(
+                      minHeight: isSmallScreen ? 40 : 48,
+                      maxHeight: isSmallScreen ? 52 : 64,
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isSmallScreen ? 8 : 12,
+                      vertical: isSmallScreen ? 2 : 4,
+                    ),
                     child: AnimatedOpacity(
                       opacity: _showManualGrading ? 1.0 : 0.0,
                       duration: const Duration(milliseconds: 200),
@@ -1372,7 +1400,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                         children: [
                           Expanded(
                             child: Padding(
-                              padding: const EdgeInsets.only(right: 6),
+                              padding: EdgeInsets.only(right: isSmallScreen ? 4 : 6),
                               child: AnimatedScale(
                                 duration: const Duration(milliseconds: 200),
                                 scale: _showManualGrading ? 1.0 : 0.8,
@@ -1385,16 +1413,22 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                                       HapticService().lightImpact();
                                       _proceedWithGrade(false);
                                     } : null,
-                                    icon: const Icon(Icons.close, size: 20),
-                                    label: const Text('Incorrect'),
+                                    icon: Icon(Icons.close, size: isSmallScreen ? 16 : 20),
+                                    label: Text(
+                                      'Incorrect',
+                                      style: TextStyle(fontSize: isSmallScreen ? 12 : 14),
+                                    ),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: _getButtonBackgroundColor(false),
                                       foregroundColor: _getButtonForegroundColor(),
-                                      minimumSize: const Size(0, 44),
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                      minimumSize: Size(0, isSmallScreen ? 36 : 44),
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: isSmallScreen ? 8 : 12,
+                                        vertical: isSmallScreen ? 6 : 8,
+                                      ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(8),
-                                        side: !_autoGradedAsCorrect ? BorderSide(color: _getButtonBorderColor(), width: 3) : BorderSide.none,
+                                        side: !_autoGradedAsCorrect ? BorderSide(color: _getButtonBorderColor(), width: isSmallScreen ? 2 : 3) : BorderSide.none,
                                       ),
                                     ),
                                   ),
@@ -1404,7 +1438,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                           ),
                           Expanded(
                             child: Padding(
-                              padding: const EdgeInsets.only(left: 6),
+                              padding: EdgeInsets.only(left: isSmallScreen ? 4 : 6),
                               child: AnimatedScale(
                                 duration: const Duration(milliseconds: 200),
                                 scale: _showManualGrading ? 1.0 : 0.8,
@@ -1417,16 +1451,22 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                                       HapticService().lightImpact();
                                       _proceedWithGrade(true);
                                     } : null,
-                                    icon: const Icon(Icons.check, size: 20),
-                                    label: const Text('Correct'),
+                                    icon: Icon(Icons.check, size: isSmallScreen ? 16 : 20),
+                                    label: Text(
+                                      'Correct',
+                                      style: TextStyle(fontSize: isSmallScreen ? 12 : 14),
+                                    ),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: _getButtonBackgroundColor(true),
                                       foregroundColor: _getButtonForegroundColor(),
-                                      minimumSize: const Size(0, 44),
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                      minimumSize: Size(0, isSmallScreen ? 36 : 44),
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: isSmallScreen ? 8 : 12,
+                                        vertical: isSmallScreen ? 6 : 8,
+                                      ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(8),
-                                        side: _autoGradedAsCorrect ? BorderSide(color: _getButtonBorderColor(), width: 3) : BorderSide.none,
+                                        side: _autoGradedAsCorrect ? BorderSide(color: _getButtonBorderColor(), width: isSmallScreen ? 2 : 3) : BorderSide.none,
                                       ),
                                     ),
                                   ),
@@ -1493,8 +1533,8 @@ class _WritingPracticePageState extends State<WritingPracticePage>
       return;
     }
     
-    // In handwriting mode (but not learning mode), just store the stroke without validation
-    if (_handwritingMode && widget.mode != PracticeMode.learning) {
+    // In true handwriting mode (but not learning mode), just store the stroke without validation
+    if (_writingMode == WritingMode.trueHandwriting && widget.mode != PracticeMode.learning) {
       setState(() {
         _userStrokes.add(List.from(_currentStroke));
         _currentStroke.clear();
@@ -1573,18 +1613,21 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     final isVertical = _isLongVerticalStroke(nextIndex);
     final isMultiDir = _isMultiDirectionalStroke(nextIndex);
     
-    // Use balanced tolerances for all strokes
-    double baseTolerance = 0.55; // Balanced base tolerance
-    
+    // Use user-configured leniency as base tolerance
+    double baseTolerance = _strokeLeniency;
+
     // Slightly adjust based on stroke type
     if (isHorizontal || isVertical) {
-      baseTolerance = 0.60; // More forgiving for straight strokes
+      baseTolerance += 0.05; // More forgiving for straight strokes
     } else if (isDiagonal) {
-      baseTolerance = 0.57; // Slightly more forgiving for diagonals
+      baseTolerance += 0.02; // Slightly more forgiving for diagonals
     } else if (isMultiDir) {
-      baseTolerance = 0.52; // Slightly less forgiving for complex strokes
+      baseTolerance -= 0.03; // Slightly less forgiving for complex strokes
     }
-    
+
+    // Clamp to reasonable range
+    baseTolerance = baseTolerance.clamp(0.3, 0.85);
+
     // Always validate with the appropriate tolerance
     isCorrect = StrokeValidator.validateStroke(
       _currentStroke,
@@ -3452,10 +3495,16 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                   color: Theme.of(context).colorScheme.primary,
                 ),
               ),
-              Text(
-                definition,
-                style: Theme.of(context).textTheme.titleMedium,
-                textAlign: TextAlign.center,
+              GestureDetector(
+                onTap: () => _editDefinition(currentCharacter),
+                child: Text(
+                  definition,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    decoration: TextDecoration.underline,
+                    decorationStyle: TextDecorationStyle.dotted,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
               ),
             ] else ...[
               Text(
@@ -3464,12 +3513,17 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                   color: Theme.of(context).colorScheme.primary,
                 ),
               ),
-              Text(
-                definition ?? 'No definition available',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+              GestureDetector(
+                onTap: () => _editDefinition(currentCharacter),
+                child: Text(
+                  definition ?? 'No definition available',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    decoration: TextDecoration.underline,
+                    decorationStyle: TextDecorationStyle.dotted,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
               ),
             ],
           ],
@@ -3493,18 +3547,99 @@ class _WritingPracticePageState extends State<WritingPracticePage>
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 4),
-          Text(
-            definition ?? 'No definition available',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+          GestureDetector(
+            onTap: () => _editDefinition(currentCharacter),
+            child: Text(
+              definition ?? 'No definition available',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                decoration: TextDecoration.underline,
+                decorationStyle: TextDecorationStyle.dotted,
+              ),
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
-  
+
+  // Edit definition dialog
+  Future<void> _editDefinition(String character) async {
+    final controller = TextEditingController(
+      text: widget.definitions?[character] ?? '',
+    );
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Edit Definition for $character'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLines: 3,
+          decoration: const InputDecoration(
+            hintText: 'Enter definition...',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (result != null && mounted) {
+      // Try to find and update the custom set
+      final sets = _setManager.getCustomSets();
+      final targetSetIndex = sets.indexWhere((set) => set.id == widget.characterSet);
+
+      if (targetSetIndex != -1) {
+        final targetSet = sets[targetSetIndex];
+        final updatedDefinitions = Map<String, String>.from(targetSet.definitions ?? {});
+
+        if (result.isEmpty) {
+          updatedDefinitions.remove(character);
+        } else {
+          updatedDefinitions[character] = result;
+        }
+
+        final updatedSet = CharacterSet(
+          id: targetSet.id,
+          name: targetSet.name,
+          characters: targetSet.characters,
+          description: targetSet.description,
+          isWordSet: targetSet.isWordSet,
+          color: targetSet.color,
+          icon: targetSet.icon,
+          source: targetSet.source,
+          definitions: updatedDefinitions,
+          groupSize: targetSet.groupSize,
+        );
+
+        await _setManager.updateCustomSet(updatedSet);
+      }
+
+      // Update local widget definitions for immediate UI refresh
+      if (widget.definitions != null) {
+        if (result.isEmpty) {
+          widget.definitions!.remove(character);
+        } else {
+          widget.definitions![character] = result;
+        }
+      }
+
+      setState(() {});
+    }
+  }
+
   // Check if the stroke error is due to wrong direction
   bool _checkDirectionError(List<Offset> userStroke, int strokeIndex) {
     if (_characterStroke == null || userStroke.length < 2) return false;

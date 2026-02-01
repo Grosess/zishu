@@ -2733,16 +2733,29 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
       // Get all unique characters/words
       final Set<String> mergedItems = {...targetSet.characters};
       mergedItems.addAll(sourceSet.characters);
-      
+
+      // Merge definitions from both sets
+      final Map<String, String> mergedDefinitions = {};
+      if (targetSet.definitions != null) {
+        mergedDefinitions.addAll(targetSet.definitions!);
+      }
+      if (sourceSet.definitions != null) {
+        mergedDefinitions.addAll(sourceSet.definitions!);
+      }
+
       // Update the target set with merged items
       final prefs = await SharedPreferences.getInstance();
       final customSets = prefs.getStringList('custom_sets') ?? [];
-      
+
       // Find and update the target set
       final updatedSets = customSets.map((setJson) {
         final setData = jsonDecode(setJson) as Map<String, dynamic>;
         if (setData['id'] == targetSet.id) {
           setData['characters'] = mergedItems.toList();
+          // Add merged definitions
+          if (mergedDefinitions.isNotEmpty) {
+            setData['definitions'] = mergedDefinitions;
+          }
         }
         return jsonEncode(setData);
       }).toList();

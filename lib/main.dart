@@ -371,17 +371,11 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     
     // Check if both are the same (invalid - no contrast)
     if (_duotoneBackground == _duotoneColor) {
-      // Default to white background, green accent
-      _duotoneBackground = 'white';
-      _duotoneColor = 'green';
+      // Default to black background, blue accent
+      _duotoneBackground = 'black';
+      _duotoneColor = 'blue';
       needsSave = true;
     }
-    // Check if both are neutral (invalid)
-    else if (isBackgroundNeutral && isAccentNeutral) {
-      // Keep white/black background, change accent to green
-      _duotoneColor = 'green';
-      needsSave = true;
-    } 
     // Check if both are colors (invalid - must have one neutral)
     else if (!isBackgroundNeutral && !isAccentNeutral) {
       // Keep the background, make accent white or black based on background brightness
