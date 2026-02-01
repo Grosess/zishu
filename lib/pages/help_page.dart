@@ -73,7 +73,7 @@ class HelpPage extends StatelessWidget {
               context,
               'Daily Streak',
               '• Complete your daily goal to maintain your streak\n'
-              '• Tap the streak icon (🔥) to adjust your daily goal\n'
+              '• Tap the streak icon to adjust your daily goal\n'
               '• Track your progress in the Progress tab\n'
               '• Keep practicing daily to build a long streak!',
               Icons.local_fire_department,
@@ -86,8 +86,10 @@ class HelpPage extends StatelessWidget {
               context,
               'Character Sets',
               '• **Sample Sets**: Pre-made sets to get started\n'
-              '• **Custom Sets**: Create your own character lists\n'
-              '• **Organize**: Create folders to group your sets\n'
+              '• **Custom Sets**: Create your own character lists manually\n'
+              '• **OCR Import**: Scan vocabulary sheets to create sets instantly\n'
+              '• **Folders**: Create nested folders to organize your sets\n'
+              '• **Cover Character**: Customize set icons with any character\n'
               '• **Progress**: Green checkmark shows completed sets',
               Icons.folder,
               primaryColor,
@@ -106,9 +108,37 @@ class HelpPage extends StatelessWidget {
               Icons.check_circle_outline,
               primaryColor,
             ),
-            
+
             const SizedBox(height: 24),
-            
+
+            _buildSection(
+              context,
+              'Custom Definitions',
+              '• Add your own definitions to any character\n'
+              '• Tap a character in any set to edit its definition\n'
+              '• Custom definitions appear everywhere in the app\n'
+              '• Perfect for mnemonics or personal associations\n'
+              '• Definitions are preserved when importing from OCR',
+              Icons.description,
+              primaryColor,
+            ),
+
+            const SizedBox(height: 24),
+
+            _buildSection(
+              context,
+              'Missed Words',
+              '• Track characters you\'re struggling with\n'
+              '• Found in Progress tab under Statistics\n'
+              '• Shows accuracy rate for each character\n'
+              '• Requires at least 3 practice attempts to appear\n'
+              '• Create practice sets from your missed words',
+              Icons.error_outline,
+              primaryColor,
+            ),
+
+            const SizedBox(height: 24),
+
             _buildSection(
               context,
               'Tips for Success',
