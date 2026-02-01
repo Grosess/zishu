@@ -46,7 +46,8 @@
       "Bash(killall:*)",
       "Bash(xcodebuild:*)",
       "Bash(pod install:*)",
-      "Bash(open:*)"
+      "Bash(open:*)",
+      "Bash(export LANG=en_US.UTF-8)"
     ],
     "deny": []
   }
