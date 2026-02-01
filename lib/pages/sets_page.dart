@@ -1005,11 +1005,14 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
     // Production: removed debug print
     // Don't validate all items - just show the dialog immediately
     // Apply round-robin distribution for word sets to spread out similar characters
-    final validItems = set.isWordSet 
+    final validItems = set.isWordSet
         ? _applyRoundRobinDistribution(List<String>.from(set.characters))
         : List<String>.from(set.characters);
     final invalidItems = <dynamic>[];
-    
+
+    // Detect small screen
+    final isSmallScreen = MediaQuery.of(context).size.width <= 400;
+
     // Show synopsis dialog with fade and slide-up animation
     showGeneralDialog(
       context: context,
@@ -1220,205 +1223,346 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Top row
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     // Left side - Show Groups (aligned left)
                     if (validItems.length > 10)
-                      TextButton.icon(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => GroupsPage(
-                                setName: set.name,
-                                characters: validItems,
-                                isWordSet: set.isWordSet,
-                              ),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.apps, size: 18),
-                        label: Text(AppLocalizations.of(context)!.showGroups, 
-                          style: TextStyle(fontSize: 13),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    
-                    const Spacer(), // Space between left and right
-                    
-                    // Right side - Learn button
-                    if (validItems.isNotEmpty && (_setProgress[set.id] ?? 0.0) < 1.0)
-                      SizedBox(
-                        width: 115,
-                        child: FilledButton.icon(
-                          onPressed: () async {
-                            // Filter to only unlearned items using the proper logic
-                            final unlearnedItems = await _learningService.getUnlearnedItems(validItems);
-                            
-                            if (unlearnedItems.isEmpty) {
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(AppLocalizations.of(context)!.allItemsLearnedMessage),
-                                ),
-                              );
-                              return;
-                            }
-                            
-                            HapticService().lightImpact();
+                      Flexible(
+                        child: TextButton.icon(
+                          onPressed: () {
                             Navigator.pop(context);
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => WritingPracticePage(
-                                  character: unlearnedItems.first,
-                                  characterSet: set.name,
-                                  allCharacters: unlearnedItems,
-                                  isWord: set.isWordSet,
-                                  mode: PracticeMode.learning,
-                                  onComplete: (success) async {
-                                    if (success) {
-                                      if (set.isWordSet && unlearnedItems.first.length > 1) {
-                                        await _learningService.markWordAsLearned(unlearnedItems.first);
-                                      } else {
-                                        await _learningService.markCharacterAsLearned(unlearnedItems.first);
-                                      }
-                                    }
-                                  },
+                                builder: (context) => GroupsPage(
+                                  setName: set.name,
+                                  characters: validItems,
+                                  isWordSet: set.isWordSet,
                                 ),
                               ),
-                            ).then((_) => _loadSetProgress());
+                            );
                           },
-                          icon: const Icon(Icons.school, size: 18),
-                          label: Text(AppLocalizations.of(context)!.learn,
+                          icon: const Icon(Icons.apps, size: 18),
+                          label: Text(AppLocalizations.of(context)!.showGroups,
                             style: TextStyle(fontSize: 13),
                             overflow: TextOverflow.ellipsis,
                           ),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                                ? Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary
-                                : Theme.of(context).colorScheme.primary,
-                          ),
                         ),
                       ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                // Bottom row
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Left side - View All (aligned left)
-                    if (validItems.isNotEmpty)
-                      TextButton.icon(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => CharacterListPage(
-                                setName: set.name,
-                                characters: validItems,
-                                isWordSet: set.isWordSet,
-                                isCustomSet: _customSets.contains(set),
-                                setId: set.id,
-                                source: set.source,
-                                definitions: set.definitions,
-                                groupSize: set.groupSize,
-                              ),
-                            ),
-                          ).then((_) => _loadSetProgress());
-                        },
-                        icon: const Icon(Icons.view_list, size: 18),
-                        label: Text(AppLocalizations.of(context)!.viewAll,
-                          style: TextStyle(fontSize: 13),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    
+
                     const Spacer(), // Space between left and right
-                  
-                  // Right side - Practice button
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      // Practice - always available
-                      if (validItems.isNotEmpty)
-                        SizedBox(
-                          width: 125,
-                          child: FilledButton.icon(
+
+                    // Right side - Learn button - icon-only on small screens
+                    if (validItems.isNotEmpty && (_setProgress[set.id] ?? 0.0) < 1.0)
+                      isSmallScreen
+                        ? FilledButton(
                             onPressed: () async {
-                              // Show loading
-                              showDialog(
-                                context: context,
-                                barrierDismissible: false,
-                                builder: (context) => const Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                              );
-                              
-                              // Clear cache to get fresh data
-                              _learningService.clearCache();
-                              _statsService.clearCache();
-                              
-                              // Get ALL fresh learned items from this set
-                              final learnedCharacters = await _statsService.getLearnedCharacters();
-                              final learnedWords = await _statsService.getLearnedWords();
-                              final allLearned = {...learnedCharacters, ...learnedWords};
-                              
-                              // Filter this set's items against fresh learned data
-                              final learnedItems = validItems.where((item) => allLearned.contains(item)).toList();
-                              
-                              learnedItems.shuffle(); // Randomize order
-                              
-                              // Close loading dialog
-                              Navigator.pop(context);
-                              
-                              if (learnedItems.isEmpty) {
+                              // Filter to only unlearned items using the proper logic
+                              final unlearnedItems = await _learningService.getUnlearnedItems(validItems);
+
+                              if (unlearnedItems.isEmpty) {
                                 Navigator.pop(context);
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text(AppLocalizations.of(context)!.noLearnedItemsMessage),
+                                    content: Text(AppLocalizations.of(context)!.allItemsLearnedMessage),
                                   ),
                                 );
                                 return;
                               }
-                              
+
                               HapticService().lightImpact();
                               Navigator.pop(context);
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => WritingPracticePage(
-                                    character: learnedItems.first,
+                                    character: unlearnedItems.first,
                                     characterSet: set.name,
-                                    allCharacters: learnedItems,
+                                    allCharacters: unlearnedItems,
                                     isWord: set.isWordSet,
-                                    mode: PracticeMode.testing,
+                                    mode: PracticeMode.learning,
+                                    onComplete: (success) async {
+                                      if (success) {
+                                        if (set.isWordSet && unlearnedItems.first.length > 1) {
+                                          await _learningService.markWordAsLearned(unlearnedItems.first);
+                                        } else {
+                                          await _learningService.markCharacterAsLearned(unlearnedItems.first);
+                                        }
+                                      }
+                                    },
                                   ),
                                 ),
                               ).then((_) => _loadSetProgress());
                             },
-                            icon: const Icon(Icons.edit, size: 18),
-                            label: Text(AppLocalizations.of(context)!.practice,
-                              style: TextStyle(fontSize: 13),
-                              overflow: TextOverflow.ellipsis,
-                            ),
                             style: FilledButton.styleFrom(
                               backgroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                                  ? (Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary).withOpacity(0.8)
-                                  : Theme.of(context).colorScheme.secondary,
+                                  ? Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary
+                                  : Theme.of(context).colorScheme.primary,
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              minimumSize: const Size(48, 48),
+                            ),
+                            child: const Icon(Icons.school, size: 20),
+                          )
+                        : Flexible(
+                            child: FilledButton.icon(
+                              onPressed: () async {
+                                // Filter to only unlearned items using the proper logic
+                                final unlearnedItems = await _learningService.getUnlearnedItems(validItems);
+
+                                if (unlearnedItems.isEmpty) {
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(AppLocalizations.of(context)!.allItemsLearnedMessage),
+                                    ),
+                                  );
+                                  return;
+                                }
+
+                                HapticService().lightImpact();
+                                Navigator.pop(context);
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => WritingPracticePage(
+                                      character: unlearnedItems.first,
+                                      characterSet: set.name,
+                                      allCharacters: unlearnedItems,
+                                      isWord: set.isWordSet,
+                                      mode: PracticeMode.learning,
+                                      onComplete: (success) async {
+                                        if (success) {
+                                          if (set.isWordSet && unlearnedItems.first.length > 1) {
+                                            await _learningService.markWordAsLearned(unlearnedItems.first);
+                                          } else {
+                                            await _learningService.markCharacterAsLearned(unlearnedItems.first);
+                                          }
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                ).then((_) => _loadSetProgress());
+                              },
+                              icon: const Icon(Icons.school, size: 18),
+                              label: Text(AppLocalizations.of(context)!.learn,
+                                style: TextStyle(fontSize: 13),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                    ? Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary
+                                    : Theme.of(context).colorScheme.primary,
+                              ),
                             ),
                           ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                // Bottom row
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Left side - View All (aligned left) - show full text even on small screens
+                    if (validItems.isNotEmpty)
+                      isSmallScreen
+                        ? TextButton.icon(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => CharacterListPage(
+                                    setName: set.name,
+                                    characters: validItems,
+                                    isWordSet: set.isWordSet,
+                                    isCustomSet: _customSets.contains(set),
+                                    setId: set.id,
+                                    source: set.source,
+                                    definitions: set.definitions,
+                                    groupSize: set.groupSize,
+                                  ),
+                                ),
+                              ).then((_) => _loadSetProgress());
+                            },
+                            icon: const Icon(Icons.view_list, size: 18),
+                            label: Text(AppLocalizations.of(context)!.viewAll,
+                              style: TextStyle(fontSize: 12),
+                            ),
+                          )
+                        : Flexible(
+                            child: TextButton.icon(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => CharacterListPage(
+                                      setName: set.name,
+                                      characters: validItems,
+                                      isWordSet: set.isWordSet,
+                                      isCustomSet: _customSets.contains(set),
+                                      setId: set.id,
+                                      source: set.source,
+                                      definitions: set.definitions,
+                                      groupSize: set.groupSize,
+                                    ),
+                                  ),
+                                ).then((_) => _loadSetProgress());
+                              },
+                              icon: const Icon(Icons.view_list, size: 18),
+                              label: Text(AppLocalizations.of(context)!.viewAll,
+                                style: TextStyle(fontSize: 13),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+
+                    const Spacer(), // Space between left and right
+
+                  // Right side - Practice button - icon-only on small screens
+                  if (validItems.isNotEmpty)
+                    isSmallScreen
+                      ? FilledButton(
+                          onPressed: () async {
+                            // Show loading
+                            showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (context) => const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                            );
+
+                            // Clear cache to get fresh data
+                            _learningService.clearCache();
+                            _statsService.clearCache();
+
+                            // Get ALL fresh learned items from this set
+                            final learnedCharacters = await _statsService.getLearnedCharacters();
+                            final learnedWords = await _statsService.getLearnedWords();
+                            final allLearned = {...learnedCharacters, ...learnedWords};
+
+                            // Filter this set's items against fresh learned data
+                            final learnedItems = validItems.where((item) => allLearned.contains(item)).toList();
+
+                            learnedItems.shuffle(); // Randomize order
+
+                            // Close loading dialog
+                            Navigator.pop(context);
+
+                            if (learnedItems.isEmpty) {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(AppLocalizations.of(context)!.noLearnedItemsMessage),
+                                ),
+                              );
+                              return;
+                            }
+
+                            HapticService().lightImpact();
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => WritingPracticePage(
+                                  character: learnedItems.first,
+                                  characterSet: set.name,
+                                  allCharacters: learnedItems,
+                                  isWord: set.isWordSet,
+                                  mode: PracticeMode.testing,
+                                ),
+                              ),
+                            ).then((_) => _loadSetProgress());
+                          },
+                          style: FilledButton.styleFrom(
+                            backgroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                ? (Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.8)
+                                : Theme.of(context).colorScheme.secondary,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            minimumSize: const Size(48, 48),
+                          ),
+                          child: const Icon(Icons.edit, size: 20),
+                        )
+                      : Flexible(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              FilledButton.icon(
+                                onPressed: () async {
+                                  // Show loading
+                                  showDialog(
+                                    context: context,
+                                    barrierDismissible: false,
+                                    builder: (context) => const Center(
+                                      child: CircularProgressIndicator(),
+                                    ),
+                                  );
+
+                                  // Clear cache to get fresh data
+                                  _learningService.clearCache();
+                                  _statsService.clearCache();
+
+                                  // Get ALL fresh learned items from this set
+                                  final learnedCharacters = await _statsService.getLearnedCharacters();
+                                  final learnedWords = await _statsService.getLearnedWords();
+                                  final allLearned = {...learnedCharacters, ...learnedWords};
+
+                                  // Filter this set's items against fresh learned data
+                                  final learnedItems = validItems.where((item) => allLearned.contains(item)).toList();
+
+                                  learnedItems.shuffle(); // Randomize order
+
+                                  // Close loading dialog
+                                  Navigator.pop(context);
+
+                                  if (learnedItems.isEmpty) {
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(AppLocalizations.of(context)!.noLearnedItemsMessage),
+                                      ),
+                                    );
+                                    return;
+                                  }
+
+                                  HapticService().lightImpact();
+                                  Navigator.pop(context);
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => WritingPracticePage(
+                                        character: learnedItems.first,
+                                        characterSet: set.name,
+                                        allCharacters: learnedItems,
+                                        isWord: set.isWordSet,
+                                        mode: PracticeMode.testing,
+                                      ),
+                                    ),
+                                  ).then((_) => _loadSetProgress());
+                                },
+                                icon: const Icon(Icons.edit, size: 18),
+                                label: Text(AppLocalizations.of(context)!.practice,
+                                  style: TextStyle(fontSize: 13),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                                      ? (Theme.of(context).extension<DuotoneThemeExtension>()?.duotoneColor2 ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.8)
+                                      : Theme.of(context).colorScheme.secondary,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      
-                    ],
-                  ),
                 ],
               ),
             ],

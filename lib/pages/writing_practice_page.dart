@@ -882,13 +882,14 @@ class _WritingPracticePageState extends State<WritingPracticePage>
           builder: (context, constraints) {
             // Calculate max width to prevent overflow on wide screens
             final maxWidth = math.min(constraints.maxWidth, 600.0);
-            
+            final isSmallScreen = constraints.maxWidth <= 400;
+
             return Center(
               child: ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: maxWidth),
                 child: Column(
                   children: [
-                  // Character info section
+                  // Character info section for multi-character words (always on top)
                   if (widget.isWord && _wordCharacters.length > 1) ...[
                     // For multi-character words, show pronunciation above progress boxes
                     _buildWordPronunciation(),
@@ -898,20 +899,21 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                       child: _buildWordProgressBoxes(),
                     ),
                   ] else ...[
-                    // For single characters, show pronunciation and definition only if available
+                    // For single characters, show pronunciation and definition above
                     _buildCharacterInfoIfAvailable(),
                   ],
-                  
+
                   // Drawing area (square) with all buttons right below
                   Flexible(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       mainAxisAlignment: widget.characterSet == 'Tutorial' ? MainAxisAlignment.center : MainAxisAlignment.start,
                       children: [
-                        AspectRatio(
-                          aspectRatio: 1.0, // Force square
-                          child: Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        Flexible(
+                          child: AspectRatio(
+                            aspectRatio: 1.0, // Force square
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
                       ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor1! // Use background color
@@ -1273,9 +1275,10 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                       },
                     ),
                   ),
-                  ),
-                ),
-                
+                                ),
+                              ),
+                            ),
+
                 // Practice control buttons (erase, show next, show all) - directly under character box
                 Padding(
                   padding: const EdgeInsets.only(left: 16, right: 16, top: 0, bottom: 4),
@@ -3006,15 +3009,18 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   
   
   Widget _buildWordPronunciation() {
+    // Detect small screens for compact layout
+    final isSmallScreen = MediaQuery.of(context).size.width <= 400;
+
     // Get pronunciation for the word
     String? pinyin;
     String? definition;
-    
+
     // For OCR-imported sets, check definitions first
     if (widget.definitions != null && widget.definitions!.containsKey(currentWord)) {
       definition = widget.definitions![currentWord];
     }
-    
+
     if (definition == null && _cedictService.isLoaded) {
       final cedictEntry = _cedictService.lookup(currentWord);
       if (cedictEntry != null) {
@@ -3022,41 +3028,46 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         definition = _formatDefinition(cedictEntry.definition, currentCharacter);
       }
     }
-    
+
     if (pinyin == null || definition == null) {
       final wordInfo = _dictionary.getWordInfo(currentWord);
       pinyin ??= wordInfo?.pinyin != null ? PinyinUtils.convertToneNumbersToMarks(wordInfo!.pinyin) : null;
       definition ??= wordInfo?.definition;
     }
-    
+
     if (pinyin == null && definition == null) return const SizedBox.shrink();
-    
+
     return Container(
       alignment: Alignment.center,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: isSmallScreen ? 4 : 8,
+      ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           if (pinyin != null)
             Text(
               pinyin,
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              style: TextStyle(
                 color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.w500,
-                fontSize: 28,
+                fontSize: isSmallScreen ? 20 : 28,
               ),
               textAlign: TextAlign.center,
             ),
           if (definition != null)
             Padding(
-              padding: const EdgeInsets.only(top: 4),
+              padding: EdgeInsets.only(top: isSmallScreen ? 2 : 4),
               child: Text(
                 definition,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurface,
-                  fontSize: 18,
+                  fontSize: isSmallScreen ? 14 : 18,
                 ),
                 textAlign: TextAlign.center,
+                maxLines: isSmallScreen ? 2 : 3,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
         ],
@@ -3135,44 +3146,45 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   Widget _buildWordProgressBoxes() {
     // Show progress boxes for multi-character practice only
     if (!widget.isWord || _wordCharacters.length <= 1) return const SizedBox.shrink();
-    
+
     final characterList = _wordCharacters;
     if (characterList.isEmpty) return const SizedBox.shrink();
-    
+
     // Calculate responsive sizes based on character count
     final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth <= 400;
     final availableWidth = screenWidth - 32; // Account for container padding
     final boxCount = characterList.length;
-    
+
     // Dynamic sizing based on character count
     double boxSize;
     double horizontalMargin;
     double fontSize;
     bool shouldStack = false;
-    
+
     if (boxCount == 1) {
-      boxSize = 60;
+      boxSize = isSmallScreen ? 50 : 60;
       horizontalMargin = 0;
-      fontSize = 32;
+      fontSize = isSmallScreen ? 26 : 32;
     } else if (boxCount <= 4) {
       // Calculate box size to fit all boxes with margins
-      final maxBoxSize = 60.0;
-      final minBoxSize = 45.0;
+      final maxBoxSize = isSmallScreen ? 50.0 : 60.0;
+      final minBoxSize = isSmallScreen ? 38.0 : 45.0;
       final totalMargins = (boxCount - 1) * 8 + 32; // margins between boxes + padding
       final availableForBoxes = availableWidth - totalMargins;
       boxSize = (availableForBoxes / boxCount).clamp(minBoxSize, maxBoxSize);
-      horizontalMargin = 4;
+      horizontalMargin = isSmallScreen ? 3 : 4;
       fontSize = boxSize * 0.5;
     } else if (boxCount <= 6) {
-      boxSize = 45;
-      horizontalMargin = 3;
-      fontSize = 22;
+      boxSize = isSmallScreen ? 38 : 45;
+      horizontalMargin = isSmallScreen ? 2 : 3;
+      fontSize = isSmallScreen ? 18 : 22;
     } else {
       // For 7-8 characters, use 4x4 stacking
       shouldStack = true;
-      boxSize = 50;
-      horizontalMargin = 4;
-      fontSize = 24;
+      boxSize = isSmallScreen ? 42 : 50;
+      horizontalMargin = isSmallScreen ? 3 : 4;
+      fontSize = isSmallScreen ? 20 : 24;
     }
     
     Widget buildBox(int index) {
@@ -3367,11 +3379,14 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   }
   
   Widget _buildCharacterInfoSection() {
+    // Detect small screens for compact layout
+    final isSmallScreen = MediaQuery.of(context).size.width <= 400;
+
     // Try CEDICT first, then fall back to dictionary
     CharacterInfo? charInfo;
     String? pinyin;
     String? definition;
-    
+
     // Check if this is continuous practice mode
     final isIndividualPractice = widget.allCharacters != null && widget.allCharacters!.length == 1;
     final isContinuousPractice = widget.mode == PracticeMode.testing && isIndividualPractice;
@@ -3467,22 +3482,25 @@ class _WritingPracticePageState extends State<WritingPracticePage>
     if (widget.mode == PracticeMode.testing) {
       // Testing mode: show pronunciation and definition, hide character
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: EdgeInsets.symmetric(
+          horizontal: 8,
+          vertical: isSmallScreen ? 2 : 4,
+        ),
         child: Column(
           children: [
             // Character reveal box - only show for single characters
             if (!widget.isWord || _wordCharacters.length <= 1)
               Container(
-                width: 80,
-                height: 80,
-                margin: const EdgeInsets.only(bottom: 4),
+                width: isSmallScreen ? 60 : 80,
+                height: isSmallScreen ? 60 : 80,
+                margin: EdgeInsets.only(bottom: isSmallScreen ? 2 : 4),
                 decoration: BoxDecoration(
                   border: Border.all(
                     color: Theme.of(context).colorScheme.primary,
                     width: 2,
                   ),
                   borderRadius: BorderRadius.circular(8),
-                  color: _testingCharacterRevealed 
+                  color: _testingCharacterRevealed
                       ? Theme.of(context).colorScheme.primaryContainer
                       : Theme.of(context).colorScheme.surface,
                 ),
@@ -3490,9 +3508,11 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                   child: Text(
                     _testingCharacterRevealed ? currentCharacter : ' ',
                     style: TextStyle(
-                      fontSize: _testingCharacterRevealed ? 48 : 36,
+                      fontSize: _testingCharacterRevealed
+                          ? (isSmallScreen ? 36 : 48)
+                          : (isSmallScreen ? 28 : 36),
                       fontWeight: FontWeight.w300,
-                      color: _testingCharacterRevealed 
+                      color: _testingCharacterRevealed
                           ? Theme.of(context).colorScheme.onPrimaryContainer
                           : Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
@@ -3503,38 +3523,50 @@ class _WritingPracticePageState extends State<WritingPracticePage>
             if (pinyin != null && definition != null) ...[
               Text(
                 pinyin,
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                style: TextStyle(
+                  fontSize: isSmallScreen ? 20 : 28,
                   color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
+              SizedBox(height: isSmallScreen ? 2 : 4),
               GestureDetector(
                 onTap: () => _editDefinition(currentCharacter),
                 child: Text(
                   definition,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  style: TextStyle(
+                    fontSize: isSmallScreen ? 14 : 16,
                     decoration: TextDecoration.underline,
                     decorationStyle: TextDecorationStyle.dotted,
                   ),
                   textAlign: TextAlign.center,
+                  maxLines: isSmallScreen ? 2 : 3,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ] else ...[
               Text(
                 pinyin ?? '',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                style: TextStyle(
+                  fontSize: isSmallScreen ? 20 : 28,
                   color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
+              SizedBox(height: isSmallScreen ? 2 : 4),
               GestureDetector(
                 onTap: () => _editDefinition(currentCharacter),
                 child: Text(
                   definition ?? 'No definition available',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  style: TextStyle(
+                    fontSize: isSmallScreen ? 14 : 16,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                     decoration: TextDecoration.underline,
                     decorationStyle: TextDecorationStyle.dotted,
                   ),
                   textAlign: TextAlign.center,
+                  maxLines: isSmallScreen ? 2 : 3,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -3542,33 +3574,40 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         ),
       );
     }
-    
+
     // Learning mode: show pronunciation and definition
     return Container(
       alignment: Alignment.center,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: isSmallScreen ? 4 : 8,
+      ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             pinyin ?? '',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+            style: TextStyle(
+              fontSize: isSmallScreen ? 20 : 28,
               color: Theme.of(context).colorScheme.primary,
               fontWeight: FontWeight.w500,
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: isSmallScreen ? 2 : 4),
           GestureDetector(
             onTap: () => _editDefinition(currentCharacter),
             child: Text(
               definition ?? 'No definition available',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              style: TextStyle(
+                fontSize: isSmallScreen ? 14 : 16,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
                 decoration: TextDecoration.underline,
                 decorationStyle: TextDecorationStyle.dotted,
               ),
               textAlign: TextAlign.center,
+              maxLines: isSmallScreen ? 2 : 3,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
