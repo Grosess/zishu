@@ -979,6 +979,13 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
     await manager.initialize();
     final updatedCustomSets = manager.getCustomSets();
 
+    // CRITICAL: Don't wipe existing sets if reload returns empty
+    // This prevents data loss if there's a temporary loading issue
+    if (updatedCustomSets.isEmpty && _customSets.isNotEmpty) {
+      print('WARNING: Reload returned 0 sets but we have ${_customSets.length} sets loaded. Keeping existing sets.');
+      return;
+    }
+
     if (mounted) {
       setState(() {
         _customSets = updatedCustomSets;

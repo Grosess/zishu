@@ -267,7 +267,7 @@ class _StreakDisplayState extends State<StreakDisplay> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Longest Streak: ${_streakData!.longestStreak} days',
+              '${AppLocalizations.of(context)!.bestStreak}: ${_streakData!.longestStreak} days',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 16),

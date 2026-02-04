@@ -309,37 +309,137 @@ class CharacterSetManager {
     return availability;
   }
   
-  // Save custom sets to SharedPreferences
+  // Save custom sets to SharedPreferences with backup protection
   Future<void> _saveCustomSetsToStorage() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+
+      // CRITICAL: Create backup before overwriting
+      final existingData = prefs.getString('custom_character_sets');
+      if (existingData != null && existingData.isNotEmpty) {
+        await prefs.setString('custom_character_sets_backup', existingData);
+      }
+
+      // Prepare new data
       final customSetsJson = _userSets.values.map((set) => set.toJson()).toList();
-      await prefs.setString('custom_character_sets', jsonEncode(customSetsJson));
-      print('CharacterSetManager: Saved ${_userSets.length} custom sets to storage');
+      final newData = jsonEncode(customSetsJson);
+
+      // CRITICAL: Validate before saving
+      if (customSetsJson.isEmpty && _userSets.isNotEmpty) {
+        print('CharacterSetManager: WARNING - Attempted to save empty data when sets exist!');
+        return; // Don't save empty data if we have sets in memory
+      }
+
+      // Save new data
+      final success = await prefs.setString('custom_character_sets', newData);
+
+      if (success) {
+        print('CharacterSetManager: Successfully saved ${_userSets.length} custom sets to storage');
+
+        // Also save to legacy storage for backwards compatibility
+        final legacySets = customSetsJson.map((json) => jsonEncode(json)).toList();
+        await prefs.setStringList('custom_sets', legacySets);
+      } else {
+        print('CharacterSetManager: ERROR - Failed to save custom sets!');
+        // Restore from backup if save failed
+        if (existingData != null) {
+          await prefs.setString('custom_character_sets', existingData);
+        }
+      }
     } catch (e) {
-      print('CharacterSetManager: Error saving custom sets: $e');
+      print('CharacterSetManager: CRITICAL ERROR saving custom sets: $e');
+      // Don't silently fail - try to restore from backup
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final backup = prefs.getString('custom_character_sets_backup');
+        if (backup != null) {
+          await prefs.setString('custom_character_sets', backup);
+          print('CharacterSetManager: Restored from backup after save error');
+        }
+      } catch (restoreError) {
+        print('CharacterSetManager: Failed to restore from backup: $restoreError');
+      }
     }
   }
-  
-  // Load custom sets from SharedPreferences
+
+  // Load custom sets from SharedPreferences with recovery protection
   Future<void> _loadCustomSetsFromStorage() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final customSetsString = prefs.getString('custom_character_sets');
-      
-      if (customSetsString != null) {
-        final List<dynamic> customSetsJson = jsonDecode(customSetsString);
-        _userSets.clear();
-        
-        for (final setJson in customSetsJson) {
-          final set = CharacterSet.fromJson(setJson);
-          _userSets[set.id] = set;
+
+      if (customSetsString != null && customSetsString.isNotEmpty) {
+        try {
+          // CRITICAL: Parse FIRST, only clear if successful
+          final List<dynamic> customSetsJson = jsonDecode(customSetsString);
+          final Map<String, CharacterSet> newSets = {};
+
+          // Parse all sets
+          for (final setJson in customSetsJson) {
+            try {
+              final set = CharacterSet.fromJson(setJson);
+              newSets[set.id] = set;
+            } catch (setError) {
+              print('CharacterSetManager: Error parsing set: $setError');
+              // Continue with other sets
+            }
+          }
+
+          // CRITICAL: Only replace if we successfully loaded data
+          if (newSets.isNotEmpty || customSetsJson.isEmpty) {
+            _userSets.clear();
+            _userSets.addAll(newSets);
+            print('CharacterSetManager: Loaded ${_userSets.length} custom sets from storage');
+          } else {
+            print('CharacterSetManager: WARNING - Parsed 0 sets from non-empty data, keeping existing sets');
+          }
+        } catch (parseError) {
+          print('CharacterSetManager: Error parsing custom sets JSON: $parseError');
+          // Try to recover from backup
+          final backup = prefs.getString('custom_character_sets_backup');
+          if (backup != null && backup.isNotEmpty) {
+            try {
+              final List<dynamic> backupJson = jsonDecode(backup);
+              final Map<String, CharacterSet> backupSets = {};
+              for (final setJson in backupJson) {
+                final set = CharacterSet.fromJson(setJson);
+                backupSets[set.id] = set;
+              }
+              _userSets.clear();
+              _userSets.addAll(backupSets);
+              print('CharacterSetManager: Recovered ${_userSets.length} sets from backup');
+              // Restore the backup to main storage
+              await prefs.setString('custom_character_sets', backup);
+            } catch (backupError) {
+              print('CharacterSetManager: Failed to recover from backup: $backupError');
+            }
+          }
         }
-        
-        print('CharacterSetManager: Loaded ${_userSets.length} custom sets from storage');
+      } else {
+        // Try legacy storage if new storage is empty
+        final legacySets = prefs.getStringList('custom_sets') ?? [];
+        if (legacySets.isNotEmpty) {
+          print('CharacterSetManager: Loading from legacy storage...');
+          final Map<String, CharacterSet> migratedSets = {};
+          for (final setJson in legacySets) {
+            try {
+              final setData = jsonDecode(setJson);
+              final set = CharacterSet.fromJson(setData);
+              migratedSets[set.id] = set;
+            } catch (e) {
+              print('CharacterSetManager: Error migrating legacy set: $e');
+            }
+          }
+          _userSets.clear();
+          _userSets.addAll(migratedSets);
+          print('CharacterSetManager: Migrated ${_userSets.length} sets from legacy storage');
+          // Save to new storage
+          await _saveCustomSetsToStorage();
+        }
       }
     } catch (e) {
-      print('CharacterSetManager: Error loading custom sets: $e');
+      print('CharacterSetManager: CRITICAL ERROR loading custom sets: $e');
+      // Keep existing sets in memory - don't clear them
     }
   }
   

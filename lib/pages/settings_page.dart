@@ -274,22 +274,22 @@ class _SettingsPageState extends State<SettingsPage> {
                   },
                 ),
                 ListTile(
-                  title: const Text('Theme'),
-                  subtitle: Text(_themeMode == 'system' ? 'System' : 
-                               _themeMode == 'light' ? 'Light' : 
-                               _themeMode == 'dark' ? 'Dark' : 
-                               _themeMode == 'duotone' ? 'Duotone' : 'System'),
+                  title: Text(AppLocalizations.of(context)!.theme),
+                  subtitle: Text(_themeMode == 'system' ? AppLocalizations.of(context)!.system :
+                               _themeMode == 'light' ? AppLocalizations.of(context)!.light :
+                               _themeMode == 'dark' ? AppLocalizations.of(context)!.dark :
+                               _themeMode == 'duotone' ? AppLocalizations.of(context)!.duotone : AppLocalizations.of(context)!.system),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {
                     showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
-                        title: const Text('Choose Theme'),
+                        title: Text(AppLocalizations.of(context)!.chooseTheme),
                         content: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             RadioListTile<String>(
-                              title: const Text('System'),
+                              title: Text(AppLocalizations.of(context)!.system),
                               value: 'system',
                               groupValue: _themeMode,
                               onChanged: (value) {
@@ -298,7 +298,7 @@ class _SettingsPageState extends State<SettingsPage> {
                               },
                             ),
                             RadioListTile<String>(
-                              title: const Text('Light'),
+                              title: Text(AppLocalizations.of(context)!.light),
                               value: 'light',
                               groupValue: _themeMode,
                               onChanged: (value) {
@@ -307,7 +307,7 @@ class _SettingsPageState extends State<SettingsPage> {
                               },
                             ),
                             RadioListTile<String>(
-                              title: const Text('Dark'),
+                              title: Text(AppLocalizations.of(context)!.dark),
                               value: 'dark',
                               groupValue: _themeMode,
                               onChanged: (value) {
@@ -316,7 +316,7 @@ class _SettingsPageState extends State<SettingsPage> {
                               },
                             ),
                             RadioListTile<String>(
-                              title: const Text('Duotone'),
+                              title: Text(AppLocalizations.of(context)!.duotone),
                               value: 'duotone',
                               groupValue: _themeMode,
                               onChanged: (value) {
@@ -332,7 +332,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 if (_themeMode != 'duotone')
                   ListTile(
-                    title: const Text('Accent Color'),
+                    title: Text(AppLocalizations.of(context)!.accentColor),
                     subtitle: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -354,7 +354,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       showDialog(
                         context: context,
                         builder: (context) => AlertDialog(
-                          title: const Text('Choose Accent Color'),
+                          title: Text(AppLocalizations.of(context)!.accentColor),
                           content: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -376,7 +376,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 // Duotone Settings (only show when duotone theme is selected)
                 if (_themeMode == 'duotone') ...[
                   ListTile(
-                    title: const Text('Background Color'),
+                    title: Text(AppLocalizations.of(context)!.backgroundColor),
                     subtitle: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -402,7 +402,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           final isSmallDevice = screenWidth <= 400;
 
                           return AlertDialog(
-                            title: const Text('Choose Background Color'),
+                            title: Text(AppLocalizations.of(context)!.backgroundColor),
                             content: isSmallDevice
                               ? SizedBox(
                                   width: double.maxFinite,
@@ -423,7 +423,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     },
                   ),
                   ListTile(
-                    title: const Text('Accent Color'),
+                    title: Text(AppLocalizations.of(context)!.accentColor),
                     subtitle: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -449,7 +449,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           final isSmallDevice = screenWidth <= 400;
 
                           return AlertDialog(
-                            title: const Text('Choose Accent Color'),
+                            title: Text(AppLocalizations.of(context)!.accentColor),
                             content: isSmallDevice
                               ? SizedBox(
                                   width: double.maxFinite,
@@ -657,11 +657,12 @@ class _SettingsPageState extends State<SettingsPage> {
                       max: 50.0,
                       divisions: 9,
                       label: _dailyLearnGoal.toString(),
-                      onChanged: (value) {
+                      onChanged: (value) async {
+                        final newGoal = value.round();
                         setState(() {
-                          _dailyLearnGoal = value.round();
+                          _dailyLearnGoal = newGoal;
                         });
-                        _saveIntSetting('daily_learn_goal', _dailyLearnGoal);
+                        await _saveIntSetting('daily_learn_goal', newGoal);
                       },
                     ),
                   ),
