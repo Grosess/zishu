@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
+import '../l10n/app_localizations.dart';
 
 class HelpPage extends StatelessWidget {
   const HelpPage({super.key});
@@ -13,7 +14,7 @@ class HelpPage extends StatelessWidget {
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('How to Use Zishu'),
+        title: Text(AppLocalizations.of(context)!.howToUseZishu),
         elevation: 0,
       ),
       body: SingleChildScrollView(

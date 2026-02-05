@@ -289,5 +289,377 @@
   "swapColorsDesc": "Swap background and accent colors",
   "hintColor": "Hint Color",
   "dailyGoal": "Daily Goal",
-  "charactersPerDay": "characters per day"
+  "charactersPerDay": "characters per day",
+
+  "dataRecoveryTitle": "Data Recovery Notice",
+  "dataRecoverySuccess": "Successfully recovered {count} sets from backup",
+  "@dataRecoverySuccess": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "dataLoadError": "Error Loading Sets",
+  "dataLoadErrorMessage": "Some sets could not be loaded due to corrupted data. Recovered {recovered} out of {total} sets.",
+  "@dataLoadErrorMessage": {
+    "placeholders": {
+      "recovered": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "dataParseError": "Failed to load custom sets. Data may be corrupted. Attempting recovery from backup...",
+  "dataRecoveryFromBackup": "Recovered data from backup! {count} sets restored.",
+  "@dataRecoveryFromBackup": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "noBackupAvailable": "No backup available. Please report this issue if you lost data.",
+  "dataSaveWarning": "Warning: Unable to save changes. Please try again or contact support if the problem persists.",
+  "ok": "OK",
+  "viewDetails": "View Details",
+
+  "goodEvening": "Good evening, {name}",
+  "@goodEvening": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "goodMorning": "Good morning, {name}",
+  "@goodMorning": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "goodAfternoon": "Good afternoon, {name}",
+  "@goodAfternoon": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "goodNight": "Good night, {name}",
+  "@goodNight": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "keepUpTheGreatWork": "Keep up the great work!",
+  "writingMode": "Writing Mode",
+  "writingModeNormal": "Stroke by Stroke",
+  "writingModeNormalDesc": "Follow stroke order with guidance",
+  "writingModeFree": "Free Draw",
+  "writingModeFreeDesc": "Draw freely without stroke guidance",
+  "showStrokeAnimation": "Show Stroke Animation",
+  "showStrokeAnimationDesc": "Animate the correct stroke path",
+  "showRadicalAnalysis": "Show Radical Analysis",
+  "showRadicalAnalysisDesc": "Display character radical breakdown",
+  "beta": "Beta",
+  "hapticFeedback": "Haptic Feedback",
+  "hapticFeedbackDesc": "Vibrate on interactions",
+  "strokeLeniency": "Stroke Leniency",
+  "strokeLeniencyDesc": "How strict stroke validation is",
+  "about": "About",
+  "version": "Version",
+  "mostMissed": "Most Missed",
+  "errorRate": "Error Rate",
+  "wrong": "Wrong",
+  "right": "Right",
+  "attempts": "Attempts",
+  "dataAndProgress": "Data & Progress",
+  "dataBackup": "Data Backup",
+  "practiceHistory": "Practice History",
+  "markAsLearned": "Mark as Learned",
+  "giveFeedback": "Give Feedback",
+  "profile": "Profile",
+  "saveProfile": "Save Profile",
+  "howToUseZishu": "How to Use Zishu",
+  "howToUseZishuTutorial": "How to Use Zishu Tutorial",
+  "enterFolderName": "Enter folder name",
+  "folderName": "Folder Name",
+  "hours": "hours",
+  "minutes": "minutes",
+  "seconds": "seconds",
+  "hour": "hour",
+  "minute": "minute",
+  "second": "second",
+  "usingDuotoneForeground": "Using Duotone Foreground",
+  "pixels": "pixels",
+  "auto": "Auto",
+  "strokesConvertToFont": "Strokes convert to font after drawing",
+  "exportData": "Export Data",
+  "saveProgressToShare": "Save your progress to share with other devices",
+  "exportDataButton": "Export Data",
+  "importData": "Import Data",
+  "restoreProgress": "Restore your progress from another device",
+  "pasteExportedData": "Paste exported data here",
+  "importDataButton": "Import Data",
+  "howItWorks": "How it works:",
+  "exportDataStep1": "1. Export your data on one device",
+  "exportDataStep2": "2. Copy the exported text",
+  "exportDataStep3": "3. Send it to your other device (email, message, etc.)",
+  "exportDataStep4": "4. Paste and import on the other device",
+  "backupNote": "Note: This is a simple backup solution. Your data stays on your devices only.",
+  "noPracticeSessions": "No practice sessions yet",
+  "startPracticingToSeeHistory": "Start practicing to see your history here",
+  "importKnownCharacters": "Import Your Known Characters",
+  "import": "Import",
+  "characterMarkedAsLearned": "1 character marked as learned",
+  "charactersMarkedAsLearned": "{count} characters marked as learned",
+  "searchCharacters": "Search Characters",
+  "searchByPinyin": "Search by pinyin, Chinese, or English...",
+  "showLearnedOnly": "Show learned only",
+  "enterPinyinToSearch": "Enter pinyin to search",
+  "examples": "Examples:",
+  "pinyinExample": "Pinyin: \"shang\" → 上, 伤, 尚",
+  "chineseExample": "Chinese: \"上\" → above/on",
+  "englishExample": "English: \"water\" → 水, 江, 河",
+  "writingModeAutoDesc": "Strokes convert to font after drawing",
+  "writingModeHandwritingDesc": "Handwriting with automatic accuracy checking",
+  "writingModeTrueHandwritingDesc": "Draw and self-assess, best for memory",
+  "handwriting": "Handwriting",
+  "trueHandwriting": "True Handwriting",
+
+  "name": "Name",
+  "enterYourName": "Enter your name",
+  "targetCharacters": "Target Characters",
+  "exampleNumber": "e.g., {number}",
+  "@exampleNumber": {
+    "placeholders": {
+      "number": {"type": "String"}
+    }
+  },
+  "dailyReviewTarget": "Daily Review Target",
+  "characterSetName": "Character Set Name",
+  "enterNameForSet": "Enter a name for this set",
+  "chineseText": "Chinese Text",
+  "pasteOrTypeChineseText": "Paste or type Chinese text here...",
+  "enterDefinition": "Enter definition...",
+  "exampleMyPracticeSet": "e.g., My Practice Set",
+  "exampleCharactersOrWords": "e.g., 我，你，他 or 你好世界",
+  "exampleMyVocabulary": "e.g., My Vocabulary",
+  "optional": "Optional",
+  "newFolder": "New Folder",
+  "pleaseEnterFolderName": "Please enter a folder name",
+  "coverCharacter": "Cover Character",
+  "selectCoverCharacter": "Select a character to represent this set",
+  "charactersOrWords": "Characters/Words",
+  "useCommasForWords": "Use commas for words.",
+  "allChineseCharactersExtracted": "All Chinese characters will be extracted",
+  "characterCount": "{count} characters",
+  "@characterCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "enterAllCharactersYouKnow": "Enter all characters you already know:",
+  "exampleChineseCharacters": "你好世界学习中文...",
+
+  "january": "January",
+  "february": "February",
+  "march": "March",
+  "april": "April",
+  "may": "May",
+  "june": "June",
+  "july": "July",
+  "august": "August",
+  "september": "September",
+  "october": "October",
+  "november": "November",
+  "december": "December",
+
+  "settingsHeader": "SETTINGS",
+  "supportHeader": "SUPPORT",
+  "tapToEditProfile": "Tap to edit profile",
+  "user": "User",
+
+  "system": "System",
+  "light": "Light",
+  "dark": "Dark",
+  "chooseTheme": "Choose Theme",
+  "swap": "Swap",
+  "pixelsValue": "{value} pixels",
+  "@pixelsValue": {
+    "placeholders": {
+      "value": {"type": "String"}
+    }
+  },
+
+  "attributions": "Attributions",
+  "strokeOrderData": "Stroke order data and character decomposition",
+  "dictionaryData": "Chinese-English dictionary data",
+  "characterInfoData": "Character information and radical data",
+  "viewOnGitHub": "View on GitHub",
+  "visitMDBG": "Visit MDBG",
+  "learnMore": "Learn More",
+  "openSource": "Open Source",
+  "openSourceDescription": "Zishu is built with Flutter and uses various open-source libraries. We are grateful to all the contributors who make these resources available.",
+  "copyrightShaunak": "Copyright (c) 2016 Shaunak Kishore",
+  "licensedLGPL": "Licensed under LGPL-3.0",
+  "copyrightMDBG": "Copyright (c) 2024 MDBG",
+  "licensedCCBY": "Licensed under CC BY-SA 4.0",
+  "copyrightUnicode": "Copyright (c) 1991-2024 Unicode, Inc.",
+  "licensedUnicode": "Licensed under the Unicode License Agreement",
+
+  "takePhoto": "Take Photo",
+  "selectFromGallery": "Select from Gallery",
+  "addPhotos": "Add Photos",
+  "importFromPhoto": "Import from Photo",
+  "removeAll": "Remove All",
+  "scanVocabulary": "Scan Vocabulary",
+  "processingImages": "Processing Images",
+  "extractingCharacters": "Extracting Characters",
+  "mayTakeMoment": "May take a moment",
+  "ocrProcessing": "OCR Processing",
+  "downloadingModel": "Downloading Model",
+
+  "importText": "Import Text",
+  "pasteCharactersYouKnow": "Paste characters you know",
+  "importFromCSV": "Import from CSV/TSV",
+  "uploadCSVFile": "Upload .csv or .tsv file",
+  "importFromCSVOrText": "Import from CSV or text files",
+
+  "importKnownCharacters": "Import Known Characters",
+  "importCSVDescription": "Import Chinese characters from a CSV or TSV file.",
+  "fileFormat": "File format:",
+  "firstColumnChineseChars": "• First column should contain Chinese characters",
+  "canIncludeWordsOrChars": "• Can include words or individual characters",
+  "otherColumnsIgnored": "• Other columns will be ignored",
+  "supportedFormatsCSV": "Supported formats: .csv, .tsv",
+  "selectFile": "Select File",
+  "tipPasteFromOtherSources": "Tip: You can paste characters from other sources.",
+
+  "setDailyReviewGoal": "Set Daily Review Goal",
+  "setDailyReviewDescription": "Set how many characters you want to review/practice each day.",
+
+  "appearance": "Appearance",
+  "dataExportedSuccessfully": "Data exported successfully",
+  "pleasePasteDataToImport": "Please paste data to import",
+
+  "dangerZone": "Danger Zone",
+  "permanentlyDeleteAllData": "Permanently delete all your data",
+  "deleteAllDataWarning": "This will delete all your learned characters, practice history, custom sets, and all other data. This action cannot be undone!",
+  "resetAllData": "Reset All Data",
+
+  "streakSettings": "Streak Settings",
+  "learnCharsToMaintainStreak": "Learn {goal} new characters today to maintain your streak",
+  "@learnCharsToMaintainStreak": {
+    "placeholders": {
+      "goal": {"type": "int"}
+    }
+  },
+  "basedOnProgressGoal": "Based on your progress goal",
+  "close": "Close",
+
+  "noStatisticsYet": "No statistics yet",
+  "practiceToSeeErrorRates": "Practice characters to see your error rates",
+
+  "save": "Save",
+  "import": "Import",
+  "days": "days",
+  "exportedDataTapToCopy": "Exported Data (tap to copy):",
+  "confirmImport": "Confirm Import",
+  "foundCharactersToImport": "Found {count} unique characters to import. Continue?",
+  "@foundCharactersToImport": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+
+  "groups": "Groups",
+  "hskLevelVocabulary": "HSK Level {level} vocabulary",
+  "@hskLevelVocabulary": {
+    "placeholders": {
+      "level": {"type": "String"}
+    }
+  },
+  "groupNumber": "Group {number}",
+  "@groupNumber": {
+    "placeholders": {
+      "number": {"type": "int"}
+    }
+  },
+  "itemsCount": "({count} items)",
+  "@itemsCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "setGroups": "{setName} - Groups",
+  "@setGroups": {
+    "placeholders": {
+      "setName": {"type": "String"}
+    }
+  },
+  "supergroupNumber": "Supergroup {number}",
+  "@supergroupNumber": {
+    "placeholders": {
+      "number": {"type": "int"}
+    }
+  },
+  "backToSupergroups": "← Back to Supergroups",
+  "hideGroups": "Hide Groups",
+  "showGroups": "Show Groups",
+  "hideSupergroups": "Hide Supergroups",
+  "showSupergroups": "Show Supergroups",
+  "learningMode": "Learning Mode",
+  "practiceAll": "Practice All",
+  "setLearned": "Set Learned!",
+  "noGroupsNeeded": "No groups needed",
+  "setGroupNumber": "{setName} - Group {number}",
+  "@setGroupNumber": {
+    "placeholders": {
+      "setName": {"type": "String"},
+      "number": {"type": "int"}
+    }
+  },
+
+  "changeProfilePicture": "Change Profile Picture",
+  "loading": "Loading...",
+  "chooseFromFiles": "Choose from Files",
+  "enterNameToUseInitials": "Enter name to use initials",
+  "useInitials": "Use Initials ({initial})",
+  "@useInitials": {
+    "placeholders": {
+      "initial": {"type": "String"}
+    }
+  },
+  "imageSelected": "Image selected",
+  "noImageSelected": "No image selected",
+  "submit": "Submit",
+
+  "dataImportedSuccessfully": "Data imported successfully",
+  "invalidDataFormat": "Invalid data format",
+  "failedToImportData": "Failed to import data",
+  "copiedToClipboard": "Copied to clipboard",
+  "confirmReset": "Confirm Reset",
+  "confirmResetQuestion": "Are you absolutely sure you want to reset all data?",
+  "thisWillPermanentlyDelete": "This will permanently delete:",
+  "allLearnedCharactersAndWords": "• All learned characters and words",
+  "allPracticeHistoryAndStats": "• All practice history and statistics",
+  "allCustomCharacterSets": "• All custom character sets",
+  "allFoldersAndOrganization": "• All folders and organization",
+  "allSettingsAndPreferences": "• All settings and preferences",
+  "thisActionCannotBeUndone": "This action cannot be undone!",
+  "yesDeleteEverything": "Yes, Delete Everything",
+  "allDataHasBeenReset": "All data has been reset",
+
+  "showGroupsButton": "Show Groups",
+  "groupsButton": "Groups",
+  "chooseHintColor": "Choose Hint Color",
+
+  "hskLevel1Description": "HSK Level 1 vocabulary",
+  "hskLevel2Description": "HSK Level 2 vocabulary (new words only)",
+  "hskLevel3Description": "HSK Level 3 vocabulary (new words only)",
+  "hskLevel4Description": "HSK Level 4 vocabulary (new words only)",
+  "hskLevel5Description": "HSK Level 5 vocabulary (new words only)",
+  "hskLevel6Description": "HSK Level 6 vocabulary (new words only)",
+
+  "erase": "Erase",
+  "showCharacter": "Show Character",
+  "hideCharacter": "Hide Character",
+  "nextStep": "Next Step",
+  "showAll": "Show All",
+  "hide": "Hide",
+
+  "createYourOwnPracticeSets": "Create your own practice sets with specific characters or words",
+  "createYourFirstSet": "Create Your First Set"
 }

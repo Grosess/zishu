@@ -1323,7 +1323,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            _profileService.firstName.isNotEmpty ? _profileService.firstName : 'User',
+                            _profileService.firstName.isNotEmpty ? _profileService.firstName : AppLocalizations.of(context)!.user,
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -1335,7 +1335,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                           if (!_profileService.hasBeenEdited) ...[
                             const SizedBox(height: 2),
                             Text(
-                              'Tap to edit profile',
+                              AppLocalizations.of(context)!.tapToEditProfile,
                               style: TextStyle(
                                 fontSize: 13,
                                 color: Theme.of(context).brightness == Brightness.dark
@@ -1373,7 +1373,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     child: Text(
-                      'SETTINGS',
+                      AppLocalizations.of(context)!.settingsHeader,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -1406,7 +1406,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     child: Text(
-                      'DATA & PROGRESS',
+                      AppLocalizations.of(context)!.dataAndProgress.toUpperCase(),
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -1423,7 +1423,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                       color: Theme.of(context).colorScheme.primary,
                     ),
                     title: Text(
-                      'Data Backup',
+                      AppLocalizations.of(context)!.dataBackup,
                       style: TextStyle(
                         color: Theme.of(context).brightness == Brightness.dark
                             ? Colors.white
@@ -1446,7 +1446,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                       color: Theme.of(context).colorScheme.primary,
                     ),
                     title: Text(
-                      'Practice History',
+                      AppLocalizations.of(context)!.practiceHistory,
                       style: TextStyle(
                         color: Theme.of(context).brightness == Brightness.dark
                             ? Colors.white
@@ -1469,7 +1469,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                       color: Theme.of(context).colorScheme.primary,
                     ),
                     title: Text(
-                      'Mark as Learned',
+                      AppLocalizations.of(context)!.markAsLearned,
                       style: TextStyle(
                         color: Theme.of(context).brightness == Brightness.dark
                             ? Colors.white
@@ -1505,7 +1505,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     child: Text(
-                      'SUPPORT',
+                      AppLocalizations.of(context)!.supportHeader,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -1522,7 +1522,7 @@ class MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                       color: Theme.of(context).colorScheme.primary,
                     ),
                     title: Text(
-                      'Give Feedback',
+                      AppLocalizations.of(context)!.giveFeedback,
                       style: TextStyle(
                         color: Theme.of(context).brightness == Brightness.dark
                             ? Colors.white

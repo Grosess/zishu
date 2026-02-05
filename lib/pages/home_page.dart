@@ -190,16 +190,38 @@ class HomePageState extends State<HomePage> with RouteAware {
     }
   }
   
+  String _getLocalizedDescription(String setId, String defaultDescription) {
+    final localizations = AppLocalizations.of(context)!;
+
+    switch (setId) {
+      case 'hsk1':
+        return localizations.hskLevel1Description;
+      case 'hsk2':
+        return localizations.hskLevel2Description;
+      case 'hsk3':
+        return localizations.hskLevel3Description;
+      case 'hsk4':
+        return localizations.hskLevel4Description;
+      case 'hsk5':
+        return localizations.hskLevel5Description;
+      case 'hsk6':
+        return localizations.hskLevel6Description;
+      default:
+        return defaultDescription;
+    }
+  }
+
   String _getGreeting() {
     final hour = DateTime.now().hour;
     final name = _profileService.firstName;
-    
+    final localizations = AppLocalizations.of(context)!;
+
     if (hour < 12) {
-      return 'Good morning, $name';
+      return localizations.goodMorning(name);
     } else if (hour < 17) {
-      return 'Good afternoon, $name';
+      return localizations.goodAfternoon(name);
     } else {
-      return 'Good evening, $name';
+      return localizations.goodEvening(name);
     }
   }
   
@@ -870,7 +892,7 @@ class HomePageState extends State<HomePage> with RouteAware {
               children: [
                 if (set.description != null && set.description!.isNotEmpty) ...[
                   Text(
-                    set.description!,
+                    _getLocalizedDescription(set.id, set.description!),
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   Divider(
@@ -1053,7 +1075,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                             );
                           },
                           icon: Icon(Icons.apps, size: isSmallScreen ? 16 : 18),
-                          label: Text(isSmallScreen ? 'Groups' : 'Show Groups',
+                          label: Text(isSmallScreen ? AppLocalizations.of(context)!.groupsButton : AppLocalizations.of(context)!.showGroupsButton,
                             style: TextStyle(fontSize: isSmallScreen ? 11 : 13),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -1115,7 +1137,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                             ).then((_) => _loadData());
                           },
                           icon: Icon(Icons.school, size: isSmallScreen ? 16 : 18),
-                          label: Text('Learn',
+                          label: Text(AppLocalizations.of(context)!.learn,
                             style: TextStyle(fontSize: isSmallScreen ? 11 : 13),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -1157,7 +1179,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                           ).then((_) => _loadData());
                         },
                         icon: Icon(Icons.view_list, size: isSmallScreen ? 16 : 18),
-                        label: Text('View All',
+                        label: Text(AppLocalizations.of(context)!.viewAll,
                           style: TextStyle(fontSize: isSmallScreen ? 11 : 13),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -1510,8 +1532,20 @@ class HomePageState extends State<HomePage> with RouteAware {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final months = ['January', 'February', 'March', 'April', 'May', 'June', 
-                    'July', 'August', 'September', 'October', 'November', 'December'];
+    final months = [
+      AppLocalizations.of(context)!.january,
+      AppLocalizations.of(context)!.february,
+      AppLocalizations.of(context)!.march,
+      AppLocalizations.of(context)!.april,
+      AppLocalizations.of(context)!.may,
+      AppLocalizations.of(context)!.june,
+      AppLocalizations.of(context)!.july,
+      AppLocalizations.of(context)!.august,
+      AppLocalizations.of(context)!.september,
+      AppLocalizations.of(context)!.october,
+      AppLocalizations.of(context)!.november,
+      AppLocalizations.of(context)!.december
+    ];
     final goalText = '${months[_goalDeadline!.month - 1]} ${_goalDeadline!.day}';
     
     return Stack(
@@ -1535,7 +1569,7 @@ class HomePageState extends State<HomePage> with RouteAware {
                   ),
                 ),
                 Text(
-                  'Keep up the great work!',
+                  AppLocalizations.of(context)!.keepUpTheGreatWork,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -2822,9 +2856,9 @@ class _EndlessPracticePageState extends State<EndlessPracticePage> {
         content: TextField(
           controller: nameController,
           autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'Set Name',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context)!.setName,
+            border: const OutlineInputBorder(),
           ),
           onSubmitted: (value) {
             if (value.trim().isNotEmpty) {

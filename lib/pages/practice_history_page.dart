@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/statistics_service.dart';
 import '../services/local_storage_service.dart';
 import '../main.dart' show DuotoneThemeExtension;
+import '../l10n/app_localizations.dart';
 
 class PracticeHistoryPage extends StatefulWidget {
   const PracticeHistoryPage({super.key});
@@ -76,7 +77,7 @@ class _PracticeHistoryPageState extends State<PracticeHistoryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Practice History'),
+        title: Text(AppLocalizations.of(context)!.practiceHistory),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -92,7 +93,7 @@ class _PracticeHistoryPageState extends State<PracticeHistoryPage> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'No practice sessions yet',
+                        AppLocalizations.of(context)!.noPracticeSessions,
                         style: TextStyle(
                           fontSize: 18,
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -100,7 +101,7 @@ class _PracticeHistoryPageState extends State<PracticeHistoryPage> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Start practicing to see your history here',
+                        AppLocalizations.of(context)!.startPracticingToSeeHistory,
                         style: TextStyle(
                           fontSize: 14,
                           color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),

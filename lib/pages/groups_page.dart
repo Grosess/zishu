@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math' as math;
 import 'character_list_page.dart';
 import '../services/learning_service.dart';
+import '../l10n/app_localizations.dart';
 
 class GroupsPage extends StatefulWidget {
   final String setName;
@@ -151,7 +152,7 @@ class _GroupsPageState extends State<GroupsPage> {
                     const SizedBox(width: 8),
                     if (totalCount > 0) // Only show count if totalCount > 0
                       Text(
-                        '($totalCount items)',
+                        AppLocalizations.of(context)!.itemsCount(totalCount),
                         style: TextStyle(
                           fontSize: 12,
                           color: isSelected
@@ -185,7 +186,7 @@ class _GroupsPageState extends State<GroupsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('${widget.setName} - Groups'),
+        title: Text(AppLocalizations.of(context)!.setGroups(widget.setName)),
       ),
       body: CustomScrollView(
         slivers: [
@@ -222,7 +223,7 @@ class _GroupsPageState extends State<GroupsPage> {
                     }
                     
                     return _buildGroupCard(
-                      label: 'Supergroup ${index + 1}',
+                      label: AppLocalizations.of(context)!.supergroupNumber(index + 1),
                       isSelected: false,
                       learnedCount: totalLearned,
                       totalCount: totalCharacters, // Show number of characters for progress
@@ -259,7 +260,7 @@ class _GroupsPageState extends State<GroupsPage> {
                     if (index == 0 && _selectedSuperGroupIndex != null) {
                       // Back button when in super-group
                       return _buildGroupCard(
-                        label: '← Back to Supergroups',
+                        label: AppLocalizations.of(context)!.backToSupergroups,
                         isSelected: false,
                         learnedCount: 0,
                         totalCount: 0, // Back button doesn't need count
@@ -283,7 +284,7 @@ class _GroupsPageState extends State<GroupsPage> {
                       }).length;
                       
                       return _buildGroupCard(
-                        label: 'Group ${groupIndex + 1}',
+                        label: AppLocalizations.of(context)!.groupNumber(groupIndex + 1),
                         isSelected: false,
                         learnedCount: learnedCount,
                         totalCount: groupChars.length,
@@ -293,7 +294,7 @@ class _GroupsPageState extends State<GroupsPage> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => CharacterListPage(
-                                setName: '${widget.setName} - Group ${groupIndex + 1}',
+                                setName: AppLocalizations.of(context)!.setGroupNumber(widget.setName, groupIndex + 1),
                                 characters: groupChars,
                                 isWordSet: widget.isWordSet,
                                 isCustomSet: false,
@@ -326,7 +327,7 @@ class _GroupsPageState extends State<GroupsPage> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'No groups needed',
+                        AppLocalizations.of(context)!.noGroupsNeeded,
                         style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),

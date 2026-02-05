@@ -124,8 +124,29 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
       }
     });
   }
-  
-  
+
+  String _getLocalizedDescription(String setId, String defaultDescription) {
+    final localizations = AppLocalizations.of(context)!;
+
+    switch (setId) {
+      case 'hsk1':
+        return localizations.hskLevel1Description;
+      case 'hsk2':
+        return localizations.hskLevel2Description;
+      case 'hsk3':
+        return localizations.hskLevel3Description;
+      case 'hsk4':
+        return localizations.hskLevel4Description;
+      case 'hsk5':
+        return localizations.hskLevel5Description;
+      case 'hsk6':
+        return localizations.hskLevel6Description;
+      default:
+        return defaultDescription;
+    }
+  }
+
+
   Future<void> _initializeWithSavedState() async {
     // Load saved tab index
     final prefs = await SharedPreferences.getInstance();
@@ -890,10 +911,21 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
   Future<void> _loadCustomSets(List<CharacterSet> customSets) async {
     // Clear the list first to avoid duplicates
     customSets.clear();
-    
+
     // Use CharacterSetManager to get custom sets (primary source)
     final manager = CharacterSetManager();
     await manager.initialize(); // Ensure manager is initialized
+
+    // Check for any errors during loading and display to user
+    final operationResult = manager.getLastOperationResult();
+    if (operationResult != null && mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _showDataRecoveryDialog(operationResult);
+        }
+      });
+    }
+
     final managerCustomSets = manager.getCustomSets();
     
     // Create a map to track unique sets by ID
@@ -971,6 +1003,49 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
     final prefs = await SharedPreferences.getInstance();
     final customSetJsonList = _customSets.map((set) => jsonEncode(set.toJson())).toList();
     await prefs.setStringList('custom_sets', customSetJsonList);
+  }
+
+  // Show dialog to user when data recovery happens
+  void _showDataRecoveryDialog(DataOperationResult result) {
+    final localizations = AppLocalizations.of(context)!;
+
+    String title;
+    String message;
+
+    if (result.errorType == 'recovery_success') {
+      // Successfully recovered from backup
+      title = localizations.dataRecoveryTitle;
+      message = localizations.dataRecoveryFromBackup(result.recoveredCount ?? 0);
+    } else if (result.errorType == 'partial_load') {
+      // Some sets failed to load
+      title = localizations.dataLoadError;
+      message = localizations.dataLoadErrorMessage(
+        result.recoveredCount ?? 0,
+        result.totalCount ?? 0,
+      );
+    } else if (result.errorType == 'no_backup') {
+      // Data corrupted and no backup available
+      title = localizations.dataLoadError;
+      message = localizations.noBackupAvailable;
+    } else {
+      // Generic error
+      title = localizations.dataLoadError;
+      message = result.errorMessage ?? localizations.dataParseError;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(localizations.ok),
+          ),
+        ],
+      ),
+    );
   }
 
   // Reload custom sets from storage (e.g., after definitions are updated)
@@ -1197,7 +1272,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                     set.description!.isNotEmpty &&
                     !_customSets.any((s) => s.id == set.id)) ...[
                   Text(
-                    set.description!,
+                    _getLocalizedDescription(set.id, set.description!),
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   Divider(
@@ -1389,8 +1464,8 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                           );
                         },
                         icon: const Icon(Icons.apps, size: 18),
-                        label: const Text('Groups',
-                          style: TextStyle(fontSize: 13),
+                        label: Text(AppLocalizations.of(context)!.groupsButton,
+                          style: const TextStyle(fontSize: 13),
                         ),
                       ),
 
@@ -1848,7 +1923,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
       return FloatingActionButton.extended(
         key: const ValueKey('fab-set-only'),
         onPressed: _showAddSetDialog,
-        label: const Text('Create Set'),
+        label: Text(AppLocalizations.of(context)!.createSet),
         icon: const Icon(Icons.add),
       );
     }
@@ -1875,7 +1950,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                 ),
                 ListTile(
                   leading: const Icon(Icons.add_box),
-                  title: const Text('Create Set'),
+                  title: Text(AppLocalizations.of(context)!.createSet),
                   onTap: () {
                     HapticService().lightImpact();
                     Navigator.pop(bottomSheetContext);
@@ -1935,7 +2010,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                   controller: _searchController,
                   autofocus: false,
                   decoration: InputDecoration(
-                    hintText: 'Search additional sets to add...',
+                    hintText: AppLocalizations.of(context)!.searchAdditionalSets,
                     prefixIcon: const Icon(Icons.search),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -2601,9 +2676,9 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
         title: Text(AppLocalizations.of(context)!.createFolder),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'Folder Name',
-            hintText: 'Enter folder name',
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context)!.folderName,
+            hintText: AppLocalizations.of(context)!.enterFolderName,
           ),
           autofocus: true,
         ),
@@ -2718,9 +2793,9 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
         title: Text(AppLocalizations.of(context)!.renameFolder),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'Folder Name',
-            hintText: 'Enter new name',
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context)!.folderName,
+            hintText: AppLocalizations.of(context)!.enterNewName,
           ),
           autofocus: true,
         ),
@@ -2825,9 +2900,9 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
         title: Text(AppLocalizations.of(context)!.renameSet),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'Set Name',
-            hintText: 'Enter new name',
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context)!.setName,
+            hintText: AppLocalizations.of(context)!.enterNewName,
           ),
           autofocus: true,
         ),
@@ -3177,7 +3252,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
             ),
             const SizedBox(height: 8),
             Text(
-              'Create your own practice sets with specific characters or words',
+              AppLocalizations.of(context)!.createYourOwnPracticeSets,
               style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
@@ -3185,7 +3260,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
             FilledButton.icon(
               onPressed: _showAddSetDialog,
               icon: const Icon(Icons.add),
-              label: const Text('Create Your First Set'),
+              label: Text(AppLocalizations.of(context)!.createYourFirstSet),
             ),
           ],
         ),
@@ -3211,18 +3286,18 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
               children: [
                 TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Set Name',
-                    hintText: 'e.g., My Practice Set',
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.setName,
+                    hintText: AppLocalizations.of(context)!.exampleMyPracticeSet,
                   ),
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: controller,
-                  decoration: const InputDecoration(
-                    labelText: 'Characters/Words',
-                    hintText: 'e.g., 我，你，他 or 你好世界',
-                    helperText: 'Use commas for words.',
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.charactersOrWords,
+                    hintText: AppLocalizations.of(context)!.exampleCharactersOrWords,
+                    helperText: AppLocalizations.of(context)!.useCommasForWords,
                   ),
                   maxLines: 3,
                 ),
@@ -3690,7 +3765,7 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                               ),
                             ),
                             Text(
-                              'Import from CSV or text files',
+                              AppLocalizations.of(context)!.importFromCSVOrText,
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -3733,10 +3808,10 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
               TextField(
                 controller: nameController,
                 autofocus: true,
-                decoration: const InputDecoration(
-                  labelText: 'Set Name',
-                  hintText: 'e.g. My Vocabulary',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.setName,
+                  hintText: AppLocalizations.of(context)!.exampleMyVocabulary,
+                  border: const OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 16),
@@ -3744,11 +3819,11 @@ class SetsPageState extends State<SetsPage> with TickerProviderStateMixin, Widge
                 controller: controller,
                 maxLines: 8,
                 decoration: InputDecoration(
-                  labelText: 'Chinese Text',
-                  hintText: 'Paste or type Chinese text here...',
-                  helperText: 'All Chinese characters will be extracted',
+                  labelText: AppLocalizations.of(context)!.chineseText,
+                  hintText: AppLocalizations.of(context)!.pasteOrTypeChineseText,
+                  helperText: AppLocalizations.of(context)!.allChineseCharactersExtracted,
                   border: const OutlineInputBorder(),
-                  counterText: '${controller.text.length} characters',
+                  counterText: AppLocalizations.of(context)!.characterCount(controller.text.length),
                 ),
                 onChanged: (text) {
                   setState(() {}); // Update character count

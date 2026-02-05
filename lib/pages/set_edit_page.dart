@@ -248,7 +248,7 @@ class _SetEditPageState extends State<SetEditPage> with SingleTickerProviderStat
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
@@ -278,7 +278,7 @@ class _SetEditPageState extends State<SetEditPage> with SingleTickerProviderStat
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
@@ -338,7 +338,7 @@ class _SetEditPageState extends State<SetEditPage> with SingleTickerProviderStat
           ),
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           TextButton(
             onPressed: () {
@@ -363,7 +363,7 @@ class _SetEditPageState extends State<SetEditPage> with SingleTickerProviderStat
                 );
               }
             },
-            child: const Text('Save'),
+            child: Text(AppLocalizations.of(context)!.save),
           ),
         ],
       ),
@@ -462,7 +462,7 @@ class _SetEditPageState extends State<SetEditPage> with SingleTickerProviderStat
                 style: TextButton.styleFrom(
                   foregroundColor: isDuotone ? duotoneExt?.duotoneColor2 : Theme.of(context).colorScheme.primary,
                 ),
-                child: const Text('Save'),
+                child: Text(AppLocalizations.of(context)!.save),
               ),
           ],
           bottom: TabBar(

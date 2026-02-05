@@ -9,6 +9,7 @@ import 'writing_practice_page.dart';
 import '../main.dart' show DuotoneThemeExtension;
 import '../utils/pinyin_utils.dart';
 import '../services/haptic_service.dart';
+import '../l10n/app_localizations.dart';
 
 class CharacterSearchPage extends StatefulWidget {
   const CharacterSearchPage({super.key});
@@ -417,9 +418,9 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
     
     return Scaffold(
       appBar: AppBar(
-        title: const FittedBox(
+        title: FittedBox(
           fit: BoxFit.scaleDown,
-          child: Text('Search Characters'),
+          child: Text(AppLocalizations.of(context)!.searchCharacters),
         ),
       ),
       body: Column(
@@ -432,7 +433,7 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
                   controller: _searchController,
                   keyboardAppearance: _getKeyboardAppearance(context),
                   decoration: InputDecoration(
-                    hintText: 'Search by pinyin, Chinese, or English',
+                    hintText: AppLocalizations.of(context)!.searchByPinyin,
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
@@ -497,7 +498,7 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
                       ),
                       Flexible(
                         child: Text(
-                          'Show learned only',
+                          AppLocalizations.of(context)!.showLearnedOnly,
                           style: Theme.of(context).textTheme.bodyMedium,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -545,14 +546,14 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Enter pinyin to search',
+                      AppLocalizations.of(context)!.enterPinyinToSearch,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Examples:',
+                      AppLocalizations.of(context)!.examples,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w500,
@@ -560,7 +561,7 @@ class _CharacterSearchPageState extends State<CharacterSearchPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '• Pinyin: "shang" → 上, 伤, 尚\n• Chinese: "上" → above/on\n• English: "water" → 水, 江, 河',
+                      '• ${AppLocalizations.of(context)!.pinyinExample}\n• ${AppLocalizations.of(context)!.chineseExample}\n• ${AppLocalizations.of(context)!.englishExample}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7),
                       ),

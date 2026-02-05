@@ -7,6 +7,7 @@ import '../services/character_set_manager.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
+import '../l10n/app_localizations.dart';
 
 class MarkAsLearnedPage extends StatefulWidget {
   const MarkAsLearnedPage({super.key});
@@ -141,7 +142,7 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
             ? duotoneTheme!.duotoneColor1 
             : null,
         title: Text(
-          'Import Known Characters',
+          AppLocalizations.of(context)!.importKnownCharacters,
           style: TextStyle(
             color: isDuotone 
                 ? duotoneTheme!.duotoneColor2 
@@ -159,10 +160,10 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Enter all characters you already know:',
+                  AppLocalizations.of(context)!.enterAllCharactersYouKnow,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: isDuotone 
-                        ? duotoneTheme!.duotoneColor2 
+                    color: isDuotone
+                        ? duotoneTheme!.duotoneColor2
                         : null,
                   ),
                 ),
@@ -172,12 +173,12 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
                   maxLines: null,
                   keyboardType: TextInputType.multiline,
                   style: TextStyle(
-                    color: isDuotone 
-                        ? duotoneTheme!.duotoneColor2 
+                    color: isDuotone
+                        ? duotoneTheme!.duotoneColor2
                         : null,
                   ),
                   decoration: InputDecoration(
-                    hintText: '你好世界学习中文...',
+                    hintText: AppLocalizations.of(context)!.exampleChineseCharacters,
                     hintStyle: TextStyle(
                       color: isDuotone 
                           ? duotoneTheme!.duotoneColor2?.withValues(alpha: 0.5)
@@ -210,7 +211,7 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Tip: You can paste characters from other sources.',
+                  AppLocalizations.of(context)!.tipPasteFromOtherSources,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: isDuotone 
                         ? duotoneTheme!.duotoneColor2?.withValues(alpha: 0.7)
@@ -229,17 +230,17 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
                     foregroundColor: duotoneTheme!.duotoneColor2,
                   )
                 : null,
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, controller.text),
-            style: isDuotone 
+            style: isDuotone
                 ? FilledButton.styleFrom(
                     backgroundColor: duotoneTheme!.duotoneColor2,
                     foregroundColor: duotoneTheme.duotoneColor1,
                   )
                 : null,
-            child: const Text('Import'),
+            child: Text(AppLocalizations.of(context)!.import),
           ),
         ],
       ),
@@ -366,7 +367,7 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
             ? duotoneTheme!.duotoneColor1 
             : null,
         title: Text(
-          'Import from CSV/TSV',
+          AppLocalizations.of(context)!.importFromCSV,
           style: TextStyle(
             color: isDuotone 
                 ? duotoneTheme!.duotoneColor2 
@@ -378,7 +379,7 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Import Chinese characters from a CSV or TSV file.',
+              AppLocalizations.of(context)!.importCSVDescription,
               style: TextStyle(
                 color: isDuotone 
                     ? duotoneTheme!.duotoneColor2 
@@ -387,7 +388,7 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
             ),
             const SizedBox(height: 12),
             Text(
-              'File format:',
+              AppLocalizations.of(context)!.fileFormat,
               style: TextStyle(
                 color: isDuotone 
                     ? duotoneTheme!.duotoneColor2 
@@ -396,7 +397,7 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
               ),
             ),
             Text(
-              '• First column should contain Chinese characters',
+              AppLocalizations.of(context)!.firstColumnChineseChars,
               style: TextStyle(
                 color: isDuotone 
                     ? duotoneTheme!.duotoneColor2?.withValues(alpha: 0.8)
@@ -404,7 +405,7 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
               ),
             ),
             Text(
-              '• Can include words or individual characters',
+              AppLocalizations.of(context)!.canIncludeWordsOrChars,
               style: TextStyle(
                 color: isDuotone 
                     ? duotoneTheme!.duotoneColor2?.withValues(alpha: 0.8)
@@ -412,7 +413,7 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
               ),
             ),
             Text(
-              '• Other columns will be ignored',
+              AppLocalizations.of(context)!.otherColumnsIgnored,
               style: TextStyle(
                 color: isDuotone 
                     ? duotoneTheme!.duotoneColor2?.withValues(alpha: 0.8)
@@ -421,7 +422,7 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Supported formats: .csv, .tsv',
+              AppLocalizations.of(context)!.supportedFormatsCSV,
               style: TextStyle(
                 color: isDuotone 
                     ? duotoneTheme!.duotoneColor2?.withValues(alpha: 0.7)
@@ -438,7 +439,7 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
                     foregroundColor: duotoneTheme!.duotoneColor2,
                   )
                 : null,
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
@@ -448,7 +449,7 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
                     foregroundColor: duotoneTheme.duotoneColor1,
                   )
                 : null,
-            child: const Text('Select File'),
+            child: Text(AppLocalizations.of(context)!.selectFile),
           ),
         ],
       ),
@@ -531,7 +532,7 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
                 ? duotoneTheme!.duotoneColor1 
                 : null,
             title: Text(
-              'Confirm Import',
+              AppLocalizations.of(context)!.confirmImport,
               style: TextStyle(
                 color: isDuotone 
                     ? duotoneTheme!.duotoneColor2 
@@ -539,7 +540,7 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
               ),
             ),
             content: Text(
-              'Found ${characters.length} unique characters to import. Continue?',
+              AppLocalizations.of(context)!.foundCharactersToImport(characters.length),
               style: TextStyle(
                 color: isDuotone 
                     ? duotoneTheme!.duotoneColor2 
@@ -554,7 +555,7 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
                         foregroundColor: duotoneTheme!.duotoneColor2,
                       )
                     : null,
-                child: const Text('Cancel'),
+                child: Text(AppLocalizations.of(context)!.cancel),
               ),
               FilledButton(
                 onPressed: () => Navigator.pop(context, true),
@@ -564,7 +565,7 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
                         foregroundColor: duotoneTheme.duotoneColor1,
                       )
                     : null,
-                child: const Text('Import'),
+                child: Text(AppLocalizations.of(context)!.import),
               ),
             ],
           );
@@ -651,7 +652,7 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Mark as Learned'),
+          title: Text(AppLocalizations.of(context)!.markAsLearned),
         ),
         body: const Center(
           child: CircularProgressIndicator(),
@@ -671,7 +672,7 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Mark as Learned'),
+          title: Text(AppLocalizations.of(context)!.markAsLearned),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () {
@@ -697,7 +698,7 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'Import Your Known Characters',
+                  AppLocalizations.of(context)!.importKnownCharacters,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -730,8 +731,8 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
                               Icons.text_fields,
                               color: Theme.of(context).colorScheme.primary,
                             ),
-                            title: const Text('Import Text'),
-                            subtitle: const Text('Paste characters you know'),
+                            title: Text(AppLocalizations.of(context)!.importText),
+                            subtitle: Text(AppLocalizations.of(context)!.pasteCharactersYouKnow),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                           ),
                         ),
@@ -752,8 +753,8 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
                               Icons.file_upload,
                               color: Theme.of(context).colorScheme.primary,
                             ),
-                            title: const Text('Import from CSV/TSV'),
-                            subtitle: const Text('Upload .csv or .tsv file'),
+                            title: Text(AppLocalizations.of(context)!.importFromCSV),
+                            subtitle: Text(AppLocalizations.of(context)!.uploadCSVFile),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                           ),
                         ),
@@ -772,7 +773,7 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
                             ),
                             const SizedBox(width: 10),
                             Text(
-                              'Import',
+                              AppLocalizations.of(context)!.import,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -802,9 +803,9 @@ class _MarkAsLearnedPageState extends State<MarkAsLearnedPage> {
                   builder: (context, snapshot) {
                     final count = snapshot.data ?? 0;
                     return Text(
-                      count == 1 
-                          ? '1 character marked as learned'
-                          : '$count characters marked as learned',
+                      count == 1
+                          ? AppLocalizations.of(context)!.characterMarkedAsLearned
+                          : AppLocalizations.of(context)!.charactersMarkedAsLearned(count),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),

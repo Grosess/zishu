@@ -7,6 +7,7 @@ import '../services/statistics_service.dart';
 import '../services/streak_service.dart';
 import '../services/profile_service.dart';
 import '../main.dart' show DuotoneThemeExtension, restartApp, MainScreen;
+import '../l10n/app_localizations.dart';
 
 class DataBackupPage extends StatefulWidget {
   const DataBackupPage({super.key});
@@ -26,7 +27,7 @@ class _DataBackupPageState extends State<DataBackupPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Data Backup'),
+        title: Text(AppLocalizations.of(context)!.dataBackup),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -47,20 +48,20 @@ class _DataBackupPageState extends State<DataBackupPage> {
                           color: Theme.of(context).colorScheme.primary,
                         ),
                         const SizedBox(width: 16),
-                        const Expanded(
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Export Data',
-                                style: TextStyle(
+                                AppLocalizations.of(context)!.exportData,
+                                style: const TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               Text(
-                                'Save your progress to share with other devices',
-                                style: TextStyle(fontSize: 14),
+                                AppLocalizations.of(context)!.saveProgressToShare,
+                                style: const TextStyle(fontSize: 14),
                               ),
                             ],
                           ),
@@ -71,7 +72,7 @@ class _DataBackupPageState extends State<DataBackupPage> {
                     ElevatedButton.icon(
                       onPressed: _exportData,
                       icon: const Icon(Icons.download),
-                      label: const Text('Export Data'),
+                      label: Text(AppLocalizations.of(context)!.exportDataButton),
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 48),
                       ),
@@ -90,9 +91,9 @@ class _DataBackupPageState extends State<DataBackupPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text(
-                                  'Exported Data (tap to copy):',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                Text(
+                                  AppLocalizations.of(context)!.exportedDataTapToCopy,
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
                                 ),
                                 IconButton(
                                   icon: const Icon(Icons.copy, size: 20),
@@ -136,20 +137,20 @@ class _DataBackupPageState extends State<DataBackupPage> {
                           color: Theme.of(context).colorScheme.primary,
                         ),
                         const SizedBox(width: 16),
-                        const Expanded(
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Import Data',
-                                style: TextStyle(
+                                AppLocalizations.of(context)!.importData,
+                                style: const TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               Text(
-                                'Restore your progress from another device',
-                                style: TextStyle(fontSize: 14),
+                                AppLocalizations.of(context)!.restoreProgress,
+                                style: const TextStyle(fontSize: 14),
                               ),
                             ],
                           ),
@@ -159,10 +160,10 @@ class _DataBackupPageState extends State<DataBackupPage> {
                     const SizedBox(height: 16),
                     TextField(
                       controller: _importController,
-                      decoration: const InputDecoration(
-                        labelText: 'Paste exported data here',
-                        hintText: 'Paste the JSON data from export',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.pasteExportedData,
+                        hintText: AppLocalizations.of(context)!.pasteExportedData,
+                        border: const OutlineInputBorder(),
                       ),
                       maxLines: 4,
                     ),
@@ -170,7 +171,7 @@ class _DataBackupPageState extends State<DataBackupPage> {
                     OutlinedButton.icon(
                       onPressed: _importData,
                       icon: const Icon(Icons.upload),
-                      label: const Text('Import Data'),
+                      label: Text(AppLocalizations.of(context)!.importDataButton),
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 48),
                       ),
@@ -186,21 +187,21 @@ class _DataBackupPageState extends State<DataBackupPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'How it works:',
-                      style: TextStyle(
+                    Text(
+                      AppLocalizations.of(context)!.howItWorks,
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text('1. Export your data on one device'),
-                    const Text('2. Copy the exported text'),
-                    const Text('3. Send it to your other device (email, message, etc.)'),
-                    const Text('4. Paste and import on the other device'),
+                    Text(AppLocalizations.of(context)!.exportDataStep1),
+                    Text(AppLocalizations.of(context)!.exportDataStep2),
+                    Text(AppLocalizations.of(context)!.exportDataStep3),
+                    Text(AppLocalizations.of(context)!.exportDataStep4),
                     const SizedBox(height: 16),
                     Text(
-                      'Note: This is a simple backup solution. Your data stays on your devices only.',
+                      AppLocalizations.of(context)!.backupNote,
                       style: TextStyle(
                         fontStyle: FontStyle.italic,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -238,7 +239,7 @@ class _DataBackupPageState extends State<DataBackupPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Danger Zone',
+                                AppLocalizations.of(context)!.dangerZone,
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
@@ -247,7 +248,7 @@ class _DataBackupPageState extends State<DataBackupPage> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Permanently delete all your data',
+                                AppLocalizations.of(context)!.permanentlyDeleteAllData,
                                 style: TextStyle(
                                   color: Colors.red.shade600,
                                 ),
@@ -259,7 +260,7 @@ class _DataBackupPageState extends State<DataBackupPage> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'This will delete all your learned characters, practice history, custom sets, and all other data. This action cannot be undone!',
+                      AppLocalizations.of(context)!.deleteAllDataWarning,
                       style: TextStyle(
                         color: Colors.red.shade700,
                       ),
@@ -269,7 +270,7 @@ class _DataBackupPageState extends State<DataBackupPage> {
                       child: ElevatedButton.icon(
                         onPressed: _showResetConfirmationDialog,
                         icon: const Icon(Icons.delete_forever),
-                        label: const Text('Reset All Data'),
+                        label: Text(AppLocalizations.of(context)!.resetAllData),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red,
                           foregroundColor: Colors.white,
@@ -302,8 +303,8 @@ class _DataBackupPageState extends State<DataBackupPage> {
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Data exported successfully'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.dataExportedSuccessfully),
             backgroundColor: Colors.green,
           ),
         );
@@ -325,8 +326,8 @@ class _DataBackupPageState extends State<DataBackupPage> {
     final data = _importController.text.trim();
     if (data.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please paste data to import'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.pleasePasteDataToImport),
         ),
       );
       return;
@@ -343,15 +344,15 @@ class _DataBackupPageState extends State<DataBackupPage> {
         if (success) {
           _importController.clear();
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Data imported successfully'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.dataImportedSuccessfully),
               backgroundColor: Colors.green,
             ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Invalid data format'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.invalidDataFormat),
               backgroundColor: Colors.red,
             ),
           );
@@ -361,8 +362,8 @@ class _DataBackupPageState extends State<DataBackupPage> {
       setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to import data'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.failedToImportData),
             backgroundColor: Colors.red,
           ),
         );
@@ -373,8 +374,8 @@ class _DataBackupPageState extends State<DataBackupPage> {
   void _copyToClipboard(String text) {
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Copied to clipboard'),
+      SnackBar(
+        content: Text(AppLocalizations.of(context)!.copiedToClipboard),
       ),
     );
   }
@@ -391,29 +392,29 @@ class _DataBackupPageState extends State<DataBackupPage> {
               color: Colors.red.shade700,
             ),
             const SizedBox(width: 8),
-            const Text('Confirm Reset'),
+            Text(AppLocalizations.of(context)!.confirmReset),
           ],
         ),
-        content: const Column(
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Are you absolutely sure you want to reset all data?',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              AppLocalizations.of(context)!.confirmResetQuestion,
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 16),
-            Text('This will permanently delete:'),
-            SizedBox(height: 8),
-            Text('• All learned characters and words'),
-            Text('• All practice history and statistics'),
-            Text('• All custom character sets'),
-            Text('• All folders and organization'),
-            Text('• All settings and preferences'),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
+            Text(AppLocalizations.of(context)!.thisWillPermanentlyDelete),
+            const SizedBox(height: 8),
+            Text(AppLocalizations.of(context)!.allLearnedCharactersAndWords),
+            Text(AppLocalizations.of(context)!.allPracticeHistoryAndStats),
+            Text(AppLocalizations.of(context)!.allCustomCharacterSets),
+            Text(AppLocalizations.of(context)!.allFoldersAndOrganization),
+            Text(AppLocalizations.of(context)!.allSettingsAndPreferences),
+            const SizedBox(height: 16),
             Text(
-              'This action cannot be undone!',
-              style: TextStyle(
+              AppLocalizations.of(context)!.thisActionCannotBeUndone,
+              style: const TextStyle(
                 color: Colors.red,
                 fontWeight: FontWeight.bold,
               ),
@@ -423,7 +424,7 @@ class _DataBackupPageState extends State<DataBackupPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
@@ -431,7 +432,7 @@ class _DataBackupPageState extends State<DataBackupPage> {
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Yes, Delete Everything'),
+            child: Text(AppLocalizations.of(context)!.yesDeleteEverything),
           ),
         ],
       ),
@@ -498,7 +499,7 @@ class _DataBackupPageState extends State<DataBackupPage> {
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('All data has been reset'),
+            content: Text(AppLocalizations.of(context)!.allDataHasBeenReset),
             backgroundColor: isDuotone ? Colors.blue : Colors.green,
           ),
         );

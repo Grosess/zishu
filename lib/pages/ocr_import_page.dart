@@ -6,6 +6,7 @@ import '../services/character_set_manager.dart';
 import '../services/haptic_service.dart';
 import '../main.dart' show DuotoneThemeExtension;
 import '../generated/l10n.dart';
+import '../l10n/app_localizations.dart';
 
 class OCRImportPage extends StatefulWidget {
   const OCRImportPage({super.key});
@@ -698,8 +699,8 @@ class _OCRImportPageState extends State<OCRImportPage> {
                 child: TextField(
                   controller: _nameController,
                   decoration: InputDecoration(
-                    labelText: 'Character Set Name',
-                    hintText: 'Enter a name for this set',
+                    labelText: AppLocalizations.of(context)!.characterSetName,
+                    hintText: AppLocalizations.of(context)!.enterNameForSet,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),

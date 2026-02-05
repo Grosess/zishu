@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import '../services/profile_service.dart';
 import 'help_page.dart';
 import '../main.dart';
+import '../l10n/app_localizations.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -189,7 +190,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile'),
+        title: Text(AppLocalizations.of(context)!.profile),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -204,11 +205,11 @@ class _ProfilePageState extends State<ProfilePage> {
             // Name Field
             TextField(
               controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Name',
-                hintText: 'Enter your name',
-                prefixIcon: Icon(Icons.person_outline),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.name,
+                hintText: AppLocalizations.of(context)!.enterYourName,
+                prefixIcon: const Icon(Icons.person_outline),
+                border: const OutlineInputBorder(),
               ),
               textCapitalization: TextCapitalization.words,
               onChanged: (_) => setState(() {}), // Update avatar letter
@@ -231,7 +232,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       )
                     : const Icon(Icons.save),
-                label: Text(_isSaving ? 'Saving...' : 'Save Profile'),
+                label: Text(_isSaving ? 'Saving...' : AppLocalizations.of(context)!.saveProfile),
               ),
             ),
             const SizedBox(height: 16),
@@ -250,7 +251,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   );
                 },
                 icon: const Icon(Icons.help_outline),
-                label: const Text('How to Use Zishu'),
+                label: Text(AppLocalizations.of(context)!.howToUseZishu),
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(
                     color: Theme.of(context).colorScheme.primary,
@@ -285,7 +286,7 @@ class _ImagePickerDialogState extends State<_ImagePickerDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Change Profile Picture'),
+      title: Text(AppLocalizations.of(context)!.changeProfilePicture),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -365,7 +366,7 @@ class _ImagePickerDialogState extends State<_ImagePickerDialog> {
               height: 16,
               child: CircularProgressIndicator(strokeWidth: 2),
             ) : const Icon(Icons.folder_open),
-            label: Text(_isLoading ? 'Loading...' : 'Choose from Files'),
+            label: Text(_isLoading ? AppLocalizations.of(context)!.loading : AppLocalizations.of(context)!.chooseFromFiles),
           ),
           const SizedBox(height: 8),
           OutlinedButton.icon(
@@ -373,15 +374,15 @@ class _ImagePickerDialogState extends State<_ImagePickerDialog> {
               Navigator.pop(context, 'use_initials');
             },
             icon: const Icon(Icons.text_fields),
-            label: Text(widget.currentName.isEmpty 
-              ? 'Enter name to use initials' 
-              : 'Use Initials (${widget.currentName.isNotEmpty ? widget.currentName[0].toUpperCase() : ""})'),
+            label: Text(widget.currentName.isEmpty
+              ? AppLocalizations.of(context)!.enterNameToUseInitials
+              : AppLocalizations.of(context)!.useInitials(widget.currentName.isNotEmpty ? widget.currentName[0].toUpperCase() : "")),
           ),
           const SizedBox(height: 8),
           Text(
-            _tempImageBytes != null 
-                ? 'Image selected' 
-                : 'No image selected',
+            _tempImageBytes != null
+                ? AppLocalizations.of(context)!.imageSelected
+                : AppLocalizations.of(context)!.noImageSelected,
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
@@ -392,7 +393,7 @@ class _ImagePickerDialogState extends State<_ImagePickerDialog> {
             // Production: removed debug print
             Navigator.pop(context, null);
           },
-          child: const Text('Cancel'),
+          child: Text(AppLocalizations.of(context)!.cancel),
         ),
         AnimatedContainer(
           duration: const Duration(milliseconds: 300),
@@ -402,7 +403,7 @@ class _ImagePickerDialogState extends State<_ImagePickerDialog> {
                     // Production: removed debug print
                     Navigator.pop(context, _tempImageBytes);
                   },
-                  child: const Text('Submit'),
+                  child: Text(AppLocalizations.of(context)!.submit),
                 )
               : const SizedBox.shrink(),
         ),

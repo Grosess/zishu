@@ -5,6 +5,27 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
+// Result class for tracking load/save operations
+class DataOperationResult {
+  final bool success;
+  final String? errorType; // 'parse_error', 'recovery_success', 'partial_load', 'no_backup'
+  final int? recoveredCount;
+  final int? totalCount;
+  final String? errorMessage;
+
+  DataOperationResult({
+    required this.success,
+    this.errorType,
+    this.recoveredCount,
+    this.totalCount,
+    this.errorMessage,
+  });
+
+  bool get hasError => errorType != null;
+  bool get isRecovery => errorType == 'recovery_success';
+  bool get isPartialLoad => errorType == 'partial_load';
+}
+
 class CharacterSet {
   final String id;
   final String name;
@@ -99,7 +120,17 @@ class CharacterSetManager {
   final Map<String, CharacterSet> _userSets = {};
   
   bool _predefinedSetsLoaded = false;
-  
+
+  // Track last operation result for user feedback
+  DataOperationResult? _lastOperationResult;
+
+  // Get last operation result (for displaying to user)
+  DataOperationResult? getLastOperationResult() {
+    final result = _lastOperationResult;
+    _lastOperationResult = null; // Clear after reading
+    return result;
+  }
+
   // Load predefined sets from JSON
   Future<void> loadPredefinedSets() async {
     if (_predefinedSetsLoaded) {
@@ -373,6 +404,7 @@ class CharacterSetManager {
           // CRITICAL: Parse FIRST, only clear if successful
           final List<dynamic> customSetsJson = jsonDecode(customSetsString);
           final Map<String, CharacterSet> newSets = {};
+          int failedCount = 0;
 
           // Parse all sets
           for (final setJson in customSetsJson) {
@@ -381,6 +413,7 @@ class CharacterSetManager {
               newSets[set.id] = set;
             } catch (setError) {
               print('CharacterSetManager: Error parsing set: $setError');
+              failedCount++;
               // Continue with other sets
             }
           }
@@ -390,6 +423,17 @@ class CharacterSetManager {
             _userSets.clear();
             _userSets.addAll(newSets);
             print('CharacterSetManager: Loaded ${_userSets.length} custom sets from storage');
+
+            // Track partial load errors (some sets failed to parse)
+            if (failedCount > 0) {
+              _lastOperationResult = DataOperationResult(
+                success: true,
+                errorType: 'partial_load',
+                recoveredCount: newSets.length,
+                totalCount: customSetsJson.length,
+                errorMessage: 'Some sets could not be loaded due to corrupted data',
+              );
+            }
           } else {
             print('CharacterSetManager: WARNING - Parsed 0 sets from non-empty data, keeping existing sets');
           }
@@ -410,9 +454,30 @@ class CharacterSetManager {
               print('CharacterSetManager: Recovered ${_userSets.length} sets from backup');
               // Restore the backup to main storage
               await prefs.setString('custom_character_sets', backup);
+
+              // Notify user of successful recovery
+              _lastOperationResult = DataOperationResult(
+                success: true,
+                errorType: 'recovery_success',
+                recoveredCount: backupSets.length,
+                errorMessage: 'Data was recovered from backup due to corruption',
+              );
             } catch (backupError) {
               print('CharacterSetManager: Failed to recover from backup: $backupError');
+              // No backup available or backup also corrupted
+              _lastOperationResult = DataOperationResult(
+                success: false,
+                errorType: 'no_backup',
+                errorMessage: 'Data corrupted and no backup available',
+              );
             }
+          } else {
+            // No backup available
+            _lastOperationResult = DataOperationResult(
+              success: false,
+              errorType: 'no_backup',
+              errorMessage: 'Data corrupted and no backup available',
+            );
           }
         }
       } else {

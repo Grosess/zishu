@@ -581,4 +581,777 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get charactersPerDay => '个字符/天';
+
+  @override
+  String get dataRecoveryTitle => '数据恢复通知';
+
+  @override
+  String dataRecoverySuccess(int count) {
+    return '成功从备份恢复了$count个集合';
+  }
+
+  @override
+  String get dataLoadError => '加载集合时出错';
+
+  @override
+  String dataLoadErrorMessage(int recovered, int total) {
+    return '由于数据损坏，某些集合无法加载。已恢复$recovered/$total个集合。';
+  }
+
+  @override
+  String get dataParseError => '无法加载自定义集合。数据可能已损坏。正在尝试从备份恢复...';
+
+  @override
+  String dataRecoveryFromBackup(int count) {
+    return '已从备份恢复数据！恢复了$count个集合。';
+  }
+
+  @override
+  String get noBackupAvailable => '没有可用的备份。如果丢失数据，请报告此问题。';
+
+  @override
+  String get dataSaveWarning => '警告：无法保存更改。请重试，如果问题持续存在，请联系支持。';
+
+  @override
+  String get ok => '确定';
+
+  @override
+  String get viewDetails => '查看详情';
+
+  @override
+  String goodEvening(String name) {
+    return '晚上好，$name';
+  }
+
+  @override
+  String goodMorning(String name) {
+    return '早上好，$name';
+  }
+
+  @override
+  String goodAfternoon(String name) {
+    return '下午好，$name';
+  }
+
+  @override
+  String goodNight(String name) {
+    return '晚安，$name';
+  }
+
+  @override
+  String get keepUpTheGreatWork => '继续加油！';
+
+  @override
+  String get writingMode => '书写模式';
+
+  @override
+  String get writingModeNormal => '笔画顺序';
+
+  @override
+  String get writingModeNormalDesc => '跟随笔画顺序指导';
+
+  @override
+  String get writingModeFree => '自由书写';
+
+  @override
+  String get writingModeFreeDesc => '无笔画指导自由绘制';
+
+  @override
+  String get showStrokeAnimation => '显示笔画动画';
+
+  @override
+  String get showStrokeAnimationDesc => '动画显示正确的笔画路径';
+
+  @override
+  String get showRadicalAnalysis => '显示部首分析';
+
+  @override
+  String get showRadicalAnalysisDesc => '显示字符部首分解';
+
+  @override
+  String get beta => '测试版';
+
+  @override
+  String get hapticFeedback => '触觉反馈';
+
+  @override
+  String get hapticFeedbackDesc => '交互时振动';
+
+  @override
+  String get strokeLeniency => '笔画宽松度';
+
+  @override
+  String get strokeLeniencyDesc => '笔画验证的严格程度';
+
+  @override
+  String get mostMissed => '最易出错';
+
+  @override
+  String get errorRate => '错误率';
+
+  @override
+  String get wrong => '错误';
+
+  @override
+  String get right => '正确';
+
+  @override
+  String get attempts => '尝试次数';
+
+  @override
+  String get dataAndProgress => '数据与进度';
+
+  @override
+  String get dataBackup => '数据备份';
+
+  @override
+  String get practiceHistory => '练习历史';
+
+  @override
+  String get markAsLearned => '标记为已学习';
+
+  @override
+  String get giveFeedback => '提供反馈';
+
+  @override
+  String get profile => '个人资料';
+
+  @override
+  String get saveProfile => '保存个人资料';
+
+  @override
+  String get howToUseZishu => '如何使用紫书';
+
+  @override
+  String get howToUseZishuTutorial => '紫书使用教程';
+
+  @override
+  String get enterFolderName => '输入文件夹名称';
+
+  @override
+  String get folderName => '文件夹名称';
+
+  @override
+  String get hours => '小时';
+
+  @override
+  String get minutes => '分钟';
+
+  @override
+  String get seconds => '秒';
+
+  @override
+  String get hour => '小时';
+
+  @override
+  String get minute => '分钟';
+
+  @override
+  String get second => '秒';
+
+  @override
+  String get usingDuotoneForeground => '使用双色前景色';
+
+  @override
+  String get pixels => '像素';
+
+  @override
+  String get auto => '自动';
+
+  @override
+  String get strokesConvertToFont => '绘制后笔画转换为字体';
+
+  @override
+  String get exportData => '导出数据';
+
+  @override
+  String get saveProgressToShare => '保存进度以便与其他设备共享';
+
+  @override
+  String get exportDataButton => '导出数据';
+
+  @override
+  String get importData => '导入数据';
+
+  @override
+  String get restoreProgress => '从另一设备恢复进度';
+
+  @override
+  String get pasteExportedData => '在此粘贴导出的数据';
+
+  @override
+  String get importDataButton => '导入数据';
+
+  @override
+  String get howItWorks => '工作原理：';
+
+  @override
+  String get exportDataStep1 => '1. 在一个设备上导出数据';
+
+  @override
+  String get exportDataStep2 => '2. 复制导出的文本';
+
+  @override
+  String get exportDataStep3 => '3. 发送到另一设备（邮件、消息等）';
+
+  @override
+  String get exportDataStep4 => '4. 在另一设备上粘贴并导入';
+
+  @override
+  String get backupNote => '注意：这是一个简单的备份方案。数据仅保存在您的设备上。';
+
+  @override
+  String get noPracticeSessions => '暂无练习记录';
+
+  @override
+  String get startPracticingToSeeHistory => '开始练习以查看历史记录';
+
+  @override
+  String get importKnownCharacters => '导入已知字符';
+
+  @override
+  String get import => '导入';
+
+  @override
+  String get characterMarkedAsLearned => '已标记1个字符为已学习';
+
+  @override
+  String charactersMarkedAsLearned(Object count) {
+    return '已标记$count个字符为已学习';
+  }
+
+  @override
+  String get searchByPinyin => '通过拼音、中文或英文搜索...';
+
+  @override
+  String get showLearnedOnly => '仅显示已学习';
+
+  @override
+  String get enterPinyinToSearch => '输入拼音进行搜索';
+
+  @override
+  String get examples => '示例：';
+
+  @override
+  String get pinyinExample => '拼音：\"shang\" → 上、伤、尚';
+
+  @override
+  String get chineseExample => '中文：\"上\" → 在上面/在...上';
+
+  @override
+  String get englishExample => '英文：\"water\" → 水、江、河';
+
+  @override
+  String get writingModeAutoDesc => '绘制后笔画转换为字体';
+
+  @override
+  String get writingModeHandwritingDesc => '手写并自动检查准确性';
+
+  @override
+  String get writingModeTrueHandwritingDesc => '自由绘制并自我评估，最适合记忆';
+
+  @override
+  String get handwriting => '手写';
+
+  @override
+  String get trueHandwriting => '真实手写';
+
+  @override
+  String get name => '名称';
+
+  @override
+  String get enterYourName => '输入您的名字';
+
+  @override
+  String get targetCharacters => '目标字符数';
+
+  @override
+  String exampleNumber(String number) {
+    return '例如：$number';
+  }
+
+  @override
+  String get dailyReviewTarget => '每日复习目标';
+
+  @override
+  String get characterSetName => '字符集名称';
+
+  @override
+  String get enterNameForSet => '为字集输入名称';
+
+  @override
+  String get chineseText => '中文文本';
+
+  @override
+  String get pasteOrTypeChineseText => '在此粘贴或输入中文文本...';
+
+  @override
+  String get enterDefinition => '输入定义...';
+
+  @override
+  String get exampleMyPracticeSet => '例如：我的练习集';
+
+  @override
+  String get exampleCharactersOrWords => '例如：我，你，他 或 你好世界';
+
+  @override
+  String get exampleMyVocabulary => '例如：我的词汇';
+
+  @override
+  String get optional => '可选';
+
+  @override
+  String get newFolder => '新文件夹';
+
+  @override
+  String get pleaseEnterFolderName => '请输入文件夹名称';
+
+  @override
+  String get coverCharacter => '封面字符';
+
+  @override
+  String get selectCoverCharacter => '选择一个字符来代表此字集';
+
+  @override
+  String get charactersOrWords => '字符/词语';
+
+  @override
+  String get useCommasForWords => '用逗号分隔词语。';
+
+  @override
+  String get allChineseCharactersExtracted => '将提取所有中文字符';
+
+  @override
+  String characterCount(int count) {
+    return '$count 个字符';
+  }
+
+  @override
+  String get enterAllCharactersYouKnow => '输入您已知的所有字符：';
+
+  @override
+  String get exampleChineseCharacters => '你好世界学习中文...';
+
+  @override
+  String get january => '一月';
+
+  @override
+  String get february => '二月';
+
+  @override
+  String get march => '三月';
+
+  @override
+  String get april => '四月';
+
+  @override
+  String get may => '五月';
+
+  @override
+  String get june => '六月';
+
+  @override
+  String get july => '七月';
+
+  @override
+  String get august => '八月';
+
+  @override
+  String get september => '九月';
+
+  @override
+  String get october => '十月';
+
+  @override
+  String get november => '十一月';
+
+  @override
+  String get december => '十二月';
+
+  @override
+  String get settingsHeader => '设置';
+
+  @override
+  String get supportHeader => '支持';
+
+  @override
+  String get tapToEditProfile => '点击编辑个人资料';
+
+  @override
+  String get user => '用户';
+
+  @override
+  String get system => '系统';
+
+  @override
+  String get light => '浅色';
+
+  @override
+  String get dark => '深色';
+
+  @override
+  String get chooseTheme => '选择主题';
+
+  @override
+  String get swap => '交换';
+
+  @override
+  String pixelsValue(String value) {
+    return '$value 像素';
+  }
+
+  @override
+  String get strokeOrderData => '笔画顺序数据和字符分解';
+
+  @override
+  String get dictionaryData => '中英文词典数据';
+
+  @override
+  String get characterInfoData => '字符信息和部首数据';
+
+  @override
+  String get viewOnGitHub => '在GitHub上查看';
+
+  @override
+  String get visitMDBG => '访问MDBG';
+
+  @override
+  String get learnMore => '了解更多';
+
+  @override
+  String get openSource => '开源';
+
+  @override
+  String get openSourceDescription =>
+      '字书使用Flutter构建，并使用各种开源库。我们感谢所有使这些资源可用的贡献者。';
+
+  @override
+  String get copyrightShaunak => '版权所有 (c) 2016 Shaunak Kishore';
+
+  @override
+  String get licensedLGPL => '采用LGPL-3.0许可证';
+
+  @override
+  String get copyrightMDBG => '版权所有 (c) 2024 MDBG';
+
+  @override
+  String get licensedCCBY => '采用CC BY-SA 4.0许可证';
+
+  @override
+  String get copyrightUnicode => '版权所有 (c) 1991-2024 Unicode, Inc.';
+
+  @override
+  String get licensedUnicode => '采用Unicode许可协议';
+
+  @override
+  String get takePhoto => '拍照';
+
+  @override
+  String get selectFromGallery => '从相册选择';
+
+  @override
+  String get addPhotos => '添加照片';
+
+  @override
+  String get importFromPhoto => '从照片导入';
+
+  @override
+  String get removeAll => '全部移除';
+
+  @override
+  String get scanVocabulary => '扫描词汇表';
+
+  @override
+  String get processingImages => '处理图像中';
+
+  @override
+  String get extractingCharacters => '提取字符中';
+
+  @override
+  String get mayTakeMoment => '可能需要一些时间';
+
+  @override
+  String get ocrProcessing => 'OCR处理中';
+
+  @override
+  String get downloadingModel => '下载模型中';
+
+  @override
+  String get importText => '导入文本';
+
+  @override
+  String get pasteCharactersYouKnow => '粘贴您已知的字符';
+
+  @override
+  String get importFromCSV => '从CSV/TSV导入';
+
+  @override
+  String get uploadCSVFile => '上传 .csv 或 .tsv 文件';
+
+  @override
+  String get importFromCSVOrText => '从CSV或文本文件导入';
+
+  @override
+  String get importCSVDescription => '从CSV或TSV文件导入中文字符。';
+
+  @override
+  String get fileFormat => '文件格式：';
+
+  @override
+  String get firstColumnChineseChars => '• 第一列应包含中文字符';
+
+  @override
+  String get canIncludeWordsOrChars => '• 可以包含词语或单个字符';
+
+  @override
+  String get otherColumnsIgnored => '• 其他列将被忽略';
+
+  @override
+  String get supportedFormatsCSV => '支持的格式：.csv，.tsv';
+
+  @override
+  String get selectFile => '选择文件';
+
+  @override
+  String get tipPasteFromOtherSources => '提示：您可以从其他来源粘贴字符。';
+
+  @override
+  String get setDailyReviewGoal => '设置每日复习目标';
+
+  @override
+  String get setDailyReviewDescription => '设置您每天想要复习/练习的字符数量。';
+
+  @override
+  String get appearance => '外观';
+
+  @override
+  String get dataExportedSuccessfully => '数据导出成功';
+
+  @override
+  String get pleasePasteDataToImport => '请粘贴要导入的数据';
+
+  @override
+  String get dangerZone => '危险区域';
+
+  @override
+  String get permanentlyDeleteAllData => '永久删除所有数据';
+
+  @override
+  String get deleteAllDataWarning => '这将删除您所有已学习的字符、练习历史、自定义字集和所有其他数据。此操作无法撤销！';
+
+  @override
+  String get resetAllData => '重置所有数据';
+
+  @override
+  String get streakSettings => '连续天数设置';
+
+  @override
+  String learnCharsToMaintainStreak(int goal) {
+    return '今天学习 $goal 个新字符以保持连续';
+  }
+
+  @override
+  String get basedOnProgressGoal => '基于您的进度目标';
+
+  @override
+  String get close => '关闭';
+
+  @override
+  String get noStatisticsYet => '暂无统计数据';
+
+  @override
+  String get practiceToSeeErrorRates => '练习字符以查看您的错误率';
+
+  @override
+  String get days => '天';
+
+  @override
+  String get exportedDataTapToCopy => '导出的数据（点击复制）：';
+
+  @override
+  String get confirmImport => '确认导入';
+
+  @override
+  String foundCharactersToImport(int count) {
+    return '找到 $count 个唯一字符要导入。是否继续？';
+  }
+
+  @override
+  String get groups => '分组';
+
+  @override
+  String hskLevelVocabulary(String level) {
+    return 'HSK $level 级词汇';
+  }
+
+  @override
+  String groupNumber(int number) {
+    return '第 $number 组';
+  }
+
+  @override
+  String itemsCount(int count) {
+    return '（$count 项）';
+  }
+
+  @override
+  String setGroups(String setName) {
+    return '$setName - 分组';
+  }
+
+  @override
+  String supergroupNumber(int number) {
+    return '超级分组 $number';
+  }
+
+  @override
+  String get backToSupergroups => '← 返回超级分组';
+
+  @override
+  String get hideGroups => '隐藏分组';
+
+  @override
+  String get hideSupergroups => '隐藏超级分组';
+
+  @override
+  String get showSupergroups => '显示超级分组';
+
+  @override
+  String get learningMode => '学习模式';
+
+  @override
+  String get practiceAll => '全部练习';
+
+  @override
+  String get setLearned => '字集已学习！';
+
+  @override
+  String get noGroupsNeeded => '无需分组';
+
+  @override
+  String setGroupNumber(String setName, int number) {
+    return '$setName - 第 $number 组';
+  }
+
+  @override
+  String get changeProfilePicture => '更改头像';
+
+  @override
+  String get loading => '加载中...';
+
+  @override
+  String get chooseFromFiles => '从文件选择';
+
+  @override
+  String get enterNameToUseInitials => '输入名字以使用首字母';
+
+  @override
+  String useInitials(String initial) {
+    return '使用首字母 ($initial)';
+  }
+
+  @override
+  String get imageSelected => '已选择图片';
+
+  @override
+  String get noImageSelected => '未选择图片';
+
+  @override
+  String get submit => '提交';
+
+  @override
+  String get dataImportedSuccessfully => '数据导入成功';
+
+  @override
+  String get invalidDataFormat => '数据格式无效';
+
+  @override
+  String get failedToImportData => '导入数据失败';
+
+  @override
+  String get copiedToClipboard => '已复制到剪贴板';
+
+  @override
+  String get confirmReset => '确认重置';
+
+  @override
+  String get confirmResetQuestion => '您确定要重置所有数据吗？';
+
+  @override
+  String get thisWillPermanentlyDelete => '这将永久删除：';
+
+  @override
+  String get allLearnedCharactersAndWords => '• 所有已学习的字符和词语';
+
+  @override
+  String get allPracticeHistoryAndStats => '• 所有练习历史和统计数据';
+
+  @override
+  String get allCustomCharacterSets => '• 所有自定义字符集';
+
+  @override
+  String get allFoldersAndOrganization => '• 所有文件夹和组织';
+
+  @override
+  String get allSettingsAndPreferences => '• 所有设置和偏好';
+
+  @override
+  String get thisActionCannotBeUndone => '此操作无法撤销！';
+
+  @override
+  String get yesDeleteEverything => '是的，删除所有内容';
+
+  @override
+  String get allDataHasBeenReset => '所有数据已被重置';
+
+  @override
+  String get showGroupsButton => '显示分组';
+
+  @override
+  String get groupsButton => '分组';
+
+  @override
+  String get chooseHintColor => '选择提示颜色';
+
+  @override
+  String get hskLevel1Description => 'HSK 1 级词汇';
+
+  @override
+  String get hskLevel2Description => 'HSK 2 级词汇（仅新词）';
+
+  @override
+  String get hskLevel3Description => 'HSK 3 级词汇（仅新词）';
+
+  @override
+  String get hskLevel4Description => 'HSK 4 级词汇（仅新词）';
+
+  @override
+  String get hskLevel5Description => 'HSK 5 级词汇（仅新词）';
+
+  @override
+  String get hskLevel6Description => 'HSK 6 级词汇（仅新词）';
+
+  @override
+  String get erase => '擦除';
+
+  @override
+  String get showCharacter => '显示字符';
+
+  @override
+  String get hideCharacter => '隐藏字符';
+
+  @override
+  String get nextStep => '下一步';
+
+  @override
+  String get showAll => '全部显示';
+
+  @override
+  String get hide => '隐藏';
+
+  @override
+  String get createYourOwnPracticeSets => '创建您自己的练习集，包含特定的汉字或词语';
+
+  @override
+  String get createYourFirstSet => '创建您的第一个字集';
 }

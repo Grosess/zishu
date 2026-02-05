@@ -374,9 +374,9 @@ class _CharacterListPageState extends State<CharacterListPage> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              _shouldShowSuperGroups 
-                                ? (_showSuperGroups ? 'Hide Supergroups' : 'Show Supergroups')
-                                : (_showGroups ? 'Hide Groups' : 'Show Groups'),
+                              _shouldShowSuperGroups
+                                ? (_showSuperGroups ? AppLocalizations.of(context)!.hideSupergroups : AppLocalizations.of(context)!.showSupergroups)
+                                : (_showGroups ? AppLocalizations.of(context)!.hideGroups : AppLocalizations.of(context)!.showGroups),
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -427,7 +427,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
                     }
                     
                     return _buildGroupCard(
-                      label: 'Supergroup ${index + 1}',
+                      label: AppLocalizations.of(context)!.supergroupNumber(index + 1),
                       subtitle: '', // No longer needed, count is inline
                       isSelected: false,
                       learnedCount: totalLearned,
@@ -775,7 +775,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
                       },
                       icon: Icon(_isSetFullyLearned ? Icons.check_circle : Icons.school),
                       label: Text(
-                        _isSetFullyLearned ? 'Set Learned!' : 'Learning Mode'
+                        _isSetFullyLearned ? AppLocalizations.of(context)!.setLearned : AppLocalizations.of(context)!.learningMode
                       ),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -851,8 +851,8 @@ class _CharacterListPageState extends State<CharacterListPage> {
                           }
                         });
                       },
-                      icon: const Icon(Icons.quiz),
-                      label: const Text('Practice All'),
+                      icon: const Icon(Icons.edit),
+                      label: Text(AppLocalizations.of(context)!.practiceAll),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         backgroundColor: Theme.of(context).colorScheme.secondary,
@@ -910,16 +910,16 @@ class _CharacterListPageState extends State<CharacterListPage> {
         title: const Text('Rename Set'),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'Set Name',
-            hintText: 'Enter new name',
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context)!.setName,
+            hintText: AppLocalizations.of(context)!.enterNewName,
           ),
           autofocus: true,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           FilledButton(
             onPressed: () async {
@@ -954,7 +954,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
@@ -1013,7 +1013,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),

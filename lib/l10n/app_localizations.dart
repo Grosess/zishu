@@ -1165,6 +1165,1470 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'characters per day'**
   String get charactersPerDay;
+
+  /// No description provided for @dataRecoveryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Data Recovery Notice'**
+  String get dataRecoveryTitle;
+
+  /// No description provided for @dataRecoverySuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Successfully recovered {count} sets from backup'**
+  String dataRecoverySuccess(int count);
+
+  /// No description provided for @dataLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error Loading Sets'**
+  String get dataLoadError;
+
+  /// No description provided for @dataLoadErrorMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Some sets could not be loaded due to corrupted data. Recovered {recovered} out of {total} sets.'**
+  String dataLoadErrorMessage(int recovered, int total);
+
+  /// No description provided for @dataParseError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load custom sets. Data may be corrupted. Attempting recovery from backup...'**
+  String get dataParseError;
+
+  /// No description provided for @dataRecoveryFromBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovered data from backup! {count} sets restored.'**
+  String dataRecoveryFromBackup(int count);
+
+  /// No description provided for @noBackupAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No backup available. Please report this issue if you lost data.'**
+  String get noBackupAvailable;
+
+  /// No description provided for @dataSaveWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Warning: Unable to save changes. Please try again or contact support if the problem persists.'**
+  String get dataSaveWarning;
+
+  /// No description provided for @ok.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get ok;
+
+  /// No description provided for @viewDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'View Details'**
+  String get viewDetails;
+
+  /// No description provided for @goodEvening.
+  ///
+  /// In en, this message translates to:
+  /// **'Good evening, {name}'**
+  String goodEvening(String name);
+
+  /// No description provided for @goodMorning.
+  ///
+  /// In en, this message translates to:
+  /// **'Good morning, {name}'**
+  String goodMorning(String name);
+
+  /// No description provided for @goodAfternoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Good afternoon, {name}'**
+  String goodAfternoon(String name);
+
+  /// No description provided for @goodNight.
+  ///
+  /// In en, this message translates to:
+  /// **'Good night, {name}'**
+  String goodNight(String name);
+
+  /// No description provided for @keepUpTheGreatWork.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep up the great work!'**
+  String get keepUpTheGreatWork;
+
+  /// No description provided for @writingMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Writing Mode'**
+  String get writingMode;
+
+  /// No description provided for @writingModeNormal.
+  ///
+  /// In en, this message translates to:
+  /// **'Stroke by Stroke'**
+  String get writingModeNormal;
+
+  /// No description provided for @writingModeNormalDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow stroke order with guidance'**
+  String get writingModeNormalDesc;
+
+  /// No description provided for @writingModeFree.
+  ///
+  /// In en, this message translates to:
+  /// **'Free Draw'**
+  String get writingModeFree;
+
+  /// No description provided for @writingModeFreeDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Draw freely without stroke guidance'**
+  String get writingModeFreeDesc;
+
+  /// No description provided for @showStrokeAnimation.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Stroke Animation'**
+  String get showStrokeAnimation;
+
+  /// No description provided for @showStrokeAnimationDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Animate the correct stroke path'**
+  String get showStrokeAnimationDesc;
+
+  /// No description provided for @showRadicalAnalysis.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Radical Analysis'**
+  String get showRadicalAnalysis;
+
+  /// No description provided for @showRadicalAnalysisDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Display character radical breakdown'**
+  String get showRadicalAnalysisDesc;
+
+  /// No description provided for @beta.
+  ///
+  /// In en, this message translates to:
+  /// **'Beta'**
+  String get beta;
+
+  /// No description provided for @hapticFeedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Haptic Feedback'**
+  String get hapticFeedback;
+
+  /// No description provided for @hapticFeedbackDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Vibrate on interactions'**
+  String get hapticFeedbackDesc;
+
+  /// No description provided for @strokeLeniency.
+  ///
+  /// In en, this message translates to:
+  /// **'Stroke Leniency'**
+  String get strokeLeniency;
+
+  /// No description provided for @strokeLeniencyDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'How strict stroke validation is'**
+  String get strokeLeniencyDesc;
+
+  /// No description provided for @mostMissed.
+  ///
+  /// In en, this message translates to:
+  /// **'Most Missed'**
+  String get mostMissed;
+
+  /// No description provided for @errorRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Error Rate'**
+  String get errorRate;
+
+  /// No description provided for @wrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong'**
+  String get wrong;
+
+  /// No description provided for @right.
+  ///
+  /// In en, this message translates to:
+  /// **'Right'**
+  String get right;
+
+  /// No description provided for @attempts.
+  ///
+  /// In en, this message translates to:
+  /// **'Attempts'**
+  String get attempts;
+
+  /// No description provided for @dataAndProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Data & Progress'**
+  String get dataAndProgress;
+
+  /// No description provided for @dataBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Data Backup'**
+  String get dataBackup;
+
+  /// No description provided for @practiceHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Practice History'**
+  String get practiceHistory;
+
+  /// No description provided for @markAsLearned.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as Learned'**
+  String get markAsLearned;
+
+  /// No description provided for @giveFeedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Give Feedback'**
+  String get giveFeedback;
+
+  /// No description provided for @profile.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get profile;
+
+  /// No description provided for @saveProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Profile'**
+  String get saveProfile;
+
+  /// No description provided for @howToUseZishu.
+  ///
+  /// In en, this message translates to:
+  /// **'How to Use Zishu'**
+  String get howToUseZishu;
+
+  /// No description provided for @howToUseZishuTutorial.
+  ///
+  /// In en, this message translates to:
+  /// **'How to Use Zishu Tutorial'**
+  String get howToUseZishuTutorial;
+
+  /// No description provided for @enterFolderName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter folder name'**
+  String get enterFolderName;
+
+  /// No description provided for @folderName.
+  ///
+  /// In en, this message translates to:
+  /// **'Folder Name'**
+  String get folderName;
+
+  /// No description provided for @hours.
+  ///
+  /// In en, this message translates to:
+  /// **'hours'**
+  String get hours;
+
+  /// No description provided for @minutes.
+  ///
+  /// In en, this message translates to:
+  /// **'minutes'**
+  String get minutes;
+
+  /// No description provided for @seconds.
+  ///
+  /// In en, this message translates to:
+  /// **'seconds'**
+  String get seconds;
+
+  /// No description provided for @hour.
+  ///
+  /// In en, this message translates to:
+  /// **'hour'**
+  String get hour;
+
+  /// No description provided for @minute.
+  ///
+  /// In en, this message translates to:
+  /// **'minute'**
+  String get minute;
+
+  /// No description provided for @second.
+  ///
+  /// In en, this message translates to:
+  /// **'second'**
+  String get second;
+
+  /// No description provided for @usingDuotoneForeground.
+  ///
+  /// In en, this message translates to:
+  /// **'Using Duotone Foreground'**
+  String get usingDuotoneForeground;
+
+  /// No description provided for @pixels.
+  ///
+  /// In en, this message translates to:
+  /// **'pixels'**
+  String get pixels;
+
+  /// No description provided for @auto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get auto;
+
+  /// No description provided for @strokesConvertToFont.
+  ///
+  /// In en, this message translates to:
+  /// **'Strokes convert to font after drawing'**
+  String get strokesConvertToFont;
+
+  /// No description provided for @exportData.
+  ///
+  /// In en, this message translates to:
+  /// **'Export Data'**
+  String get exportData;
+
+  /// No description provided for @saveProgressToShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Save your progress to share with other devices'**
+  String get saveProgressToShare;
+
+  /// No description provided for @exportDataButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Export Data'**
+  String get exportDataButton;
+
+  /// No description provided for @importData.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Data'**
+  String get importData;
+
+  /// No description provided for @restoreProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore your progress from another device'**
+  String get restoreProgress;
+
+  /// No description provided for @pasteExportedData.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste exported data here'**
+  String get pasteExportedData;
+
+  /// No description provided for @importDataButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Data'**
+  String get importDataButton;
+
+  /// No description provided for @howItWorks.
+  ///
+  /// In en, this message translates to:
+  /// **'How it works:'**
+  String get howItWorks;
+
+  /// No description provided for @exportDataStep1.
+  ///
+  /// In en, this message translates to:
+  /// **'1. Export your data on one device'**
+  String get exportDataStep1;
+
+  /// No description provided for @exportDataStep2.
+  ///
+  /// In en, this message translates to:
+  /// **'2. Copy the exported text'**
+  String get exportDataStep2;
+
+  /// No description provided for @exportDataStep3.
+  ///
+  /// In en, this message translates to:
+  /// **'3. Send it to your other device (email, message, etc.)'**
+  String get exportDataStep3;
+
+  /// No description provided for @exportDataStep4.
+  ///
+  /// In en, this message translates to:
+  /// **'4. Paste and import on the other device'**
+  String get exportDataStep4;
+
+  /// No description provided for @backupNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note: This is a simple backup solution. Your data stays on your devices only.'**
+  String get backupNote;
+
+  /// No description provided for @noPracticeSessions.
+  ///
+  /// In en, this message translates to:
+  /// **'No practice sessions yet'**
+  String get noPracticeSessions;
+
+  /// No description provided for @startPracticingToSeeHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Start practicing to see your history here'**
+  String get startPracticingToSeeHistory;
+
+  /// No description provided for @importKnownCharacters.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Known Characters'**
+  String get importKnownCharacters;
+
+  /// No description provided for @import.
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get import;
+
+  /// No description provided for @characterMarkedAsLearned.
+  ///
+  /// In en, this message translates to:
+  /// **'1 character marked as learned'**
+  String get characterMarkedAsLearned;
+
+  /// No description provided for @charactersMarkedAsLearned.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} characters marked as learned'**
+  String charactersMarkedAsLearned(Object count);
+
+  /// No description provided for @searchByPinyin.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by pinyin, Chinese, or English...'**
+  String get searchByPinyin;
+
+  /// No description provided for @showLearnedOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Show learned only'**
+  String get showLearnedOnly;
+
+  /// No description provided for @enterPinyinToSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter pinyin to search'**
+  String get enterPinyinToSearch;
+
+  /// No description provided for @examples.
+  ///
+  /// In en, this message translates to:
+  /// **'Examples:'**
+  String get examples;
+
+  /// No description provided for @pinyinExample.
+  ///
+  /// In en, this message translates to:
+  /// **'Pinyin: \"shang\" → 上, 伤, 尚'**
+  String get pinyinExample;
+
+  /// No description provided for @chineseExample.
+  ///
+  /// In en, this message translates to:
+  /// **'Chinese: \"上\" → above/on'**
+  String get chineseExample;
+
+  /// No description provided for @englishExample.
+  ///
+  /// In en, this message translates to:
+  /// **'English: \"water\" → 水, 江, 河'**
+  String get englishExample;
+
+  /// No description provided for @writingModeAutoDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Strokes convert to font after drawing'**
+  String get writingModeAutoDesc;
+
+  /// No description provided for @writingModeHandwritingDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Handwriting with automatic accuracy checking'**
+  String get writingModeHandwritingDesc;
+
+  /// No description provided for @writingModeTrueHandwritingDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Draw and self-assess, best for memory'**
+  String get writingModeTrueHandwritingDesc;
+
+  /// No description provided for @handwriting.
+  ///
+  /// In en, this message translates to:
+  /// **'Handwriting'**
+  String get handwriting;
+
+  /// No description provided for @trueHandwriting.
+  ///
+  /// In en, this message translates to:
+  /// **'True Handwriting'**
+  String get trueHandwriting;
+
+  /// No description provided for @name.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get name;
+
+  /// No description provided for @enterYourName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your name'**
+  String get enterYourName;
+
+  /// No description provided for @targetCharacters.
+  ///
+  /// In en, this message translates to:
+  /// **'Target Characters'**
+  String get targetCharacters;
+
+  /// No description provided for @exampleNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., {number}'**
+  String exampleNumber(String number);
+
+  /// No description provided for @dailyReviewTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily Review Target'**
+  String get dailyReviewTarget;
+
+  /// No description provided for @characterSetName.
+  ///
+  /// In en, this message translates to:
+  /// **'Character Set Name'**
+  String get characterSetName;
+
+  /// No description provided for @enterNameForSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a name for this set'**
+  String get enterNameForSet;
+
+  /// No description provided for @chineseText.
+  ///
+  /// In en, this message translates to:
+  /// **'Chinese Text'**
+  String get chineseText;
+
+  /// No description provided for @pasteOrTypeChineseText.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste or type Chinese text here...'**
+  String get pasteOrTypeChineseText;
+
+  /// No description provided for @enterDefinition.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter definition...'**
+  String get enterDefinition;
+
+  /// No description provided for @exampleMyPracticeSet.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., My Practice Set'**
+  String get exampleMyPracticeSet;
+
+  /// No description provided for @exampleCharactersOrWords.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., 我，你，他 or 你好世界'**
+  String get exampleCharactersOrWords;
+
+  /// No description provided for @exampleMyVocabulary.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., My Vocabulary'**
+  String get exampleMyVocabulary;
+
+  /// No description provided for @optional.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get optional;
+
+  /// No description provided for @newFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'New Folder'**
+  String get newFolder;
+
+  /// No description provided for @pleaseEnterFolderName.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a folder name'**
+  String get pleaseEnterFolderName;
+
+  /// No description provided for @coverCharacter.
+  ///
+  /// In en, this message translates to:
+  /// **'Cover Character'**
+  String get coverCharacter;
+
+  /// No description provided for @selectCoverCharacter.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a character to represent this set'**
+  String get selectCoverCharacter;
+
+  /// No description provided for @charactersOrWords.
+  ///
+  /// In en, this message translates to:
+  /// **'Characters/Words'**
+  String get charactersOrWords;
+
+  /// No description provided for @useCommasForWords.
+  ///
+  /// In en, this message translates to:
+  /// **'Use commas for words.'**
+  String get useCommasForWords;
+
+  /// No description provided for @allChineseCharactersExtracted.
+  ///
+  /// In en, this message translates to:
+  /// **'All Chinese characters will be extracted'**
+  String get allChineseCharactersExtracted;
+
+  /// No description provided for @characterCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} characters'**
+  String characterCount(int count);
+
+  /// No description provided for @enterAllCharactersYouKnow.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter all characters you already know:'**
+  String get enterAllCharactersYouKnow;
+
+  /// No description provided for @exampleChineseCharacters.
+  ///
+  /// In en, this message translates to:
+  /// **'你好世界学习中文...'**
+  String get exampleChineseCharacters;
+
+  /// No description provided for @january.
+  ///
+  /// In en, this message translates to:
+  /// **'January'**
+  String get january;
+
+  /// No description provided for @february.
+  ///
+  /// In en, this message translates to:
+  /// **'February'**
+  String get february;
+
+  /// No description provided for @march.
+  ///
+  /// In en, this message translates to:
+  /// **'March'**
+  String get march;
+
+  /// No description provided for @april.
+  ///
+  /// In en, this message translates to:
+  /// **'April'**
+  String get april;
+
+  /// No description provided for @may.
+  ///
+  /// In en, this message translates to:
+  /// **'May'**
+  String get may;
+
+  /// No description provided for @june.
+  ///
+  /// In en, this message translates to:
+  /// **'June'**
+  String get june;
+
+  /// No description provided for @july.
+  ///
+  /// In en, this message translates to:
+  /// **'July'**
+  String get july;
+
+  /// No description provided for @august.
+  ///
+  /// In en, this message translates to:
+  /// **'August'**
+  String get august;
+
+  /// No description provided for @september.
+  ///
+  /// In en, this message translates to:
+  /// **'September'**
+  String get september;
+
+  /// No description provided for @october.
+  ///
+  /// In en, this message translates to:
+  /// **'October'**
+  String get october;
+
+  /// No description provided for @november.
+  ///
+  /// In en, this message translates to:
+  /// **'November'**
+  String get november;
+
+  /// No description provided for @december.
+  ///
+  /// In en, this message translates to:
+  /// **'December'**
+  String get december;
+
+  /// No description provided for @settingsHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'SETTINGS'**
+  String get settingsHeader;
+
+  /// No description provided for @supportHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'SUPPORT'**
+  String get supportHeader;
+
+  /// No description provided for @tapToEditProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to edit profile'**
+  String get tapToEditProfile;
+
+  /// No description provided for @user.
+  ///
+  /// In en, this message translates to:
+  /// **'User'**
+  String get user;
+
+  /// No description provided for @system.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get system;
+
+  /// No description provided for @light.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get light;
+
+  /// No description provided for @dark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get dark;
+
+  /// No description provided for @chooseTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Theme'**
+  String get chooseTheme;
+
+  /// No description provided for @swap.
+  ///
+  /// In en, this message translates to:
+  /// **'Swap'**
+  String get swap;
+
+  /// No description provided for @pixelsValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} pixels'**
+  String pixelsValue(String value);
+
+  /// No description provided for @strokeOrderData.
+  ///
+  /// In en, this message translates to:
+  /// **'Stroke order data and character decomposition'**
+  String get strokeOrderData;
+
+  /// No description provided for @dictionaryData.
+  ///
+  /// In en, this message translates to:
+  /// **'Chinese-English dictionary data'**
+  String get dictionaryData;
+
+  /// No description provided for @characterInfoData.
+  ///
+  /// In en, this message translates to:
+  /// **'Character information and radical data'**
+  String get characterInfoData;
+
+  /// No description provided for @viewOnGitHub.
+  ///
+  /// In en, this message translates to:
+  /// **'View on GitHub'**
+  String get viewOnGitHub;
+
+  /// No description provided for @visitMDBG.
+  ///
+  /// In en, this message translates to:
+  /// **'Visit MDBG'**
+  String get visitMDBG;
+
+  /// No description provided for @learnMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Learn More'**
+  String get learnMore;
+
+  /// No description provided for @openSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Source'**
+  String get openSource;
+
+  /// No description provided for @openSourceDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Zishu is built with Flutter and uses various open-source libraries. We are grateful to all the contributors who make these resources available.'**
+  String get openSourceDescription;
+
+  /// No description provided for @copyrightShaunak.
+  ///
+  /// In en, this message translates to:
+  /// **'Copyright (c) 2016 Shaunak Kishore'**
+  String get copyrightShaunak;
+
+  /// No description provided for @licensedLGPL.
+  ///
+  /// In en, this message translates to:
+  /// **'Licensed under LGPL-3.0'**
+  String get licensedLGPL;
+
+  /// No description provided for @copyrightMDBG.
+  ///
+  /// In en, this message translates to:
+  /// **'Copyright (c) 2024 MDBG'**
+  String get copyrightMDBG;
+
+  /// No description provided for @licensedCCBY.
+  ///
+  /// In en, this message translates to:
+  /// **'Licensed under CC BY-SA 4.0'**
+  String get licensedCCBY;
+
+  /// No description provided for @copyrightUnicode.
+  ///
+  /// In en, this message translates to:
+  /// **'Copyright (c) 1991-2024 Unicode, Inc.'**
+  String get copyrightUnicode;
+
+  /// No description provided for @licensedUnicode.
+  ///
+  /// In en, this message translates to:
+  /// **'Licensed under the Unicode License Agreement'**
+  String get licensedUnicode;
+
+  /// No description provided for @takePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Take Photo'**
+  String get takePhoto;
+
+  /// No description provided for @selectFromGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Select from Gallery'**
+  String get selectFromGallery;
+
+  /// No description provided for @addPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Photos'**
+  String get addPhotos;
+
+  /// No description provided for @importFromPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Import from Photo'**
+  String get importFromPhoto;
+
+  /// No description provided for @removeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove All'**
+  String get removeAll;
+
+  /// No description provided for @scanVocabulary.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan Vocabulary'**
+  String get scanVocabulary;
+
+  /// No description provided for @processingImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing Images'**
+  String get processingImages;
+
+  /// No description provided for @extractingCharacters.
+  ///
+  /// In en, this message translates to:
+  /// **'Extracting Characters'**
+  String get extractingCharacters;
+
+  /// No description provided for @mayTakeMoment.
+  ///
+  /// In en, this message translates to:
+  /// **'May take a moment'**
+  String get mayTakeMoment;
+
+  /// No description provided for @ocrProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'OCR Processing'**
+  String get ocrProcessing;
+
+  /// No description provided for @downloadingModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading Model'**
+  String get downloadingModel;
+
+  /// No description provided for @importText.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Text'**
+  String get importText;
+
+  /// No description provided for @pasteCharactersYouKnow.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste characters you know'**
+  String get pasteCharactersYouKnow;
+
+  /// No description provided for @importFromCSV.
+  ///
+  /// In en, this message translates to:
+  /// **'Import from CSV/TSV'**
+  String get importFromCSV;
+
+  /// No description provided for @uploadCSVFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload .csv or .tsv file'**
+  String get uploadCSVFile;
+
+  /// No description provided for @importFromCSVOrText.
+  ///
+  /// In en, this message translates to:
+  /// **'Import from CSV or text files'**
+  String get importFromCSVOrText;
+
+  /// No description provided for @importCSVDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Chinese characters from a CSV or TSV file.'**
+  String get importCSVDescription;
+
+  /// No description provided for @fileFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'File format:'**
+  String get fileFormat;
+
+  /// No description provided for @firstColumnChineseChars.
+  ///
+  /// In en, this message translates to:
+  /// **'• First column should contain Chinese characters'**
+  String get firstColumnChineseChars;
+
+  /// No description provided for @canIncludeWordsOrChars.
+  ///
+  /// In en, this message translates to:
+  /// **'• Can include words or individual characters'**
+  String get canIncludeWordsOrChars;
+
+  /// No description provided for @otherColumnsIgnored.
+  ///
+  /// In en, this message translates to:
+  /// **'• Other columns will be ignored'**
+  String get otherColumnsIgnored;
+
+  /// No description provided for @supportedFormatsCSV.
+  ///
+  /// In en, this message translates to:
+  /// **'Supported formats: .csv, .tsv'**
+  String get supportedFormatsCSV;
+
+  /// No description provided for @selectFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Select File'**
+  String get selectFile;
+
+  /// No description provided for @tipPasteFromOtherSources.
+  ///
+  /// In en, this message translates to:
+  /// **'Tip: You can paste characters from other sources.'**
+  String get tipPasteFromOtherSources;
+
+  /// No description provided for @setDailyReviewGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Daily Review Goal'**
+  String get setDailyReviewGoal;
+
+  /// No description provided for @setDailyReviewDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Set how many characters you want to review/practice each day.'**
+  String get setDailyReviewDescription;
+
+  /// No description provided for @appearance.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get appearance;
+
+  /// No description provided for @dataExportedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Data exported successfully'**
+  String get dataExportedSuccessfully;
+
+  /// No description provided for @pleasePasteDataToImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Please paste data to import'**
+  String get pleasePasteDataToImport;
+
+  /// No description provided for @dangerZone.
+  ///
+  /// In en, this message translates to:
+  /// **'Danger Zone'**
+  String get dangerZone;
+
+  /// No description provided for @permanentlyDeleteAllData.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently delete all your data'**
+  String get permanentlyDeleteAllData;
+
+  /// No description provided for @deleteAllDataWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This will delete all your learned characters, practice history, custom sets, and all other data. This action cannot be undone!'**
+  String get deleteAllDataWarning;
+
+  /// No description provided for @resetAllData.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset All Data'**
+  String get resetAllData;
+
+  /// No description provided for @streakSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Streak Settings'**
+  String get streakSettings;
+
+  /// No description provided for @learnCharsToMaintainStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'Learn {goal} new characters today to maintain your streak'**
+  String learnCharsToMaintainStreak(int goal);
+
+  /// No description provided for @basedOnProgressGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Based on your progress goal'**
+  String get basedOnProgressGoal;
+
+  /// No description provided for @close.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
+
+  /// No description provided for @noStatisticsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No statistics yet'**
+  String get noStatisticsYet;
+
+  /// No description provided for @practiceToSeeErrorRates.
+  ///
+  /// In en, this message translates to:
+  /// **'Practice characters to see your error rates'**
+  String get practiceToSeeErrorRates;
+
+  /// No description provided for @days.
+  ///
+  /// In en, this message translates to:
+  /// **'days'**
+  String get days;
+
+  /// No description provided for @exportedDataTapToCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Exported Data (tap to copy):'**
+  String get exportedDataTapToCopy;
+
+  /// No description provided for @confirmImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Import'**
+  String get confirmImport;
+
+  /// No description provided for @foundCharactersToImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Found {count} unique characters to import. Continue?'**
+  String foundCharactersToImport(int count);
+
+  /// No description provided for @groups.
+  ///
+  /// In en, this message translates to:
+  /// **'Groups'**
+  String get groups;
+
+  /// No description provided for @hskLevelVocabulary.
+  ///
+  /// In en, this message translates to:
+  /// **'HSK Level {level} vocabulary'**
+  String hskLevelVocabulary(String level);
+
+  /// No description provided for @groupNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Group {number}'**
+  String groupNumber(int number);
+
+  /// No description provided for @itemsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'({count} items)'**
+  String itemsCount(int count);
+
+  /// No description provided for @setGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'{setName} - Groups'**
+  String setGroups(String setName);
+
+  /// No description provided for @supergroupNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Supergroup {number}'**
+  String supergroupNumber(int number);
+
+  /// No description provided for @backToSupergroups.
+  ///
+  /// In en, this message translates to:
+  /// **'← Back to Supergroups'**
+  String get backToSupergroups;
+
+  /// No description provided for @hideGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide Groups'**
+  String get hideGroups;
+
+  /// No description provided for @hideSupergroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide Supergroups'**
+  String get hideSupergroups;
+
+  /// No description provided for @showSupergroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Supergroups'**
+  String get showSupergroups;
+
+  /// No description provided for @learningMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Learning Mode'**
+  String get learningMode;
+
+  /// No description provided for @practiceAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Practice All'**
+  String get practiceAll;
+
+  /// No description provided for @setLearned.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Learned!'**
+  String get setLearned;
+
+  /// No description provided for @noGroupsNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'No groups needed'**
+  String get noGroupsNeeded;
+
+  /// No description provided for @setGroupNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'{setName} - Group {number}'**
+  String setGroupNumber(String setName, int number);
+
+  /// No description provided for @changeProfilePicture.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Profile Picture'**
+  String get changeProfilePicture;
+
+  /// No description provided for @loading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading...'**
+  String get loading;
+
+  /// No description provided for @chooseFromFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose from Files'**
+  String get chooseFromFiles;
+
+  /// No description provided for @enterNameToUseInitials.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter name to use initials'**
+  String get enterNameToUseInitials;
+
+  /// No description provided for @useInitials.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Initials ({initial})'**
+  String useInitials(String initial);
+
+  /// No description provided for @imageSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Image selected'**
+  String get imageSelected;
+
+  /// No description provided for @noImageSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'No image selected'**
+  String get noImageSelected;
+
+  /// No description provided for @submit.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit'**
+  String get submit;
+
+  /// No description provided for @dataImportedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Data imported successfully'**
+  String get dataImportedSuccessfully;
+
+  /// No description provided for @invalidDataFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid data format'**
+  String get invalidDataFormat;
+
+  /// No description provided for @failedToImportData.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to import data'**
+  String get failedToImportData;
+
+  /// No description provided for @copiedToClipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied to clipboard'**
+  String get copiedToClipboard;
+
+  /// No description provided for @confirmReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Reset'**
+  String get confirmReset;
+
+  /// No description provided for @confirmResetQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you absolutely sure you want to reset all data?'**
+  String get confirmResetQuestion;
+
+  /// No description provided for @thisWillPermanentlyDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'This will permanently delete:'**
+  String get thisWillPermanentlyDelete;
+
+  /// No description provided for @allLearnedCharactersAndWords.
+  ///
+  /// In en, this message translates to:
+  /// **'• All learned characters and words'**
+  String get allLearnedCharactersAndWords;
+
+  /// No description provided for @allPracticeHistoryAndStats.
+  ///
+  /// In en, this message translates to:
+  /// **'• All practice history and statistics'**
+  String get allPracticeHistoryAndStats;
+
+  /// No description provided for @allCustomCharacterSets.
+  ///
+  /// In en, this message translates to:
+  /// **'• All custom character sets'**
+  String get allCustomCharacterSets;
+
+  /// No description provided for @allFoldersAndOrganization.
+  ///
+  /// In en, this message translates to:
+  /// **'• All folders and organization'**
+  String get allFoldersAndOrganization;
+
+  /// No description provided for @allSettingsAndPreferences.
+  ///
+  /// In en, this message translates to:
+  /// **'• All settings and preferences'**
+  String get allSettingsAndPreferences;
+
+  /// No description provided for @thisActionCannotBeUndone.
+  ///
+  /// In en, this message translates to:
+  /// **'This action cannot be undone!'**
+  String get thisActionCannotBeUndone;
+
+  /// No description provided for @yesDeleteEverything.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, Delete Everything'**
+  String get yesDeleteEverything;
+
+  /// No description provided for @allDataHasBeenReset.
+  ///
+  /// In en, this message translates to:
+  /// **'All data has been reset'**
+  String get allDataHasBeenReset;
+
+  /// No description provided for @showGroupsButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Groups'**
+  String get showGroupsButton;
+
+  /// No description provided for @groupsButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Groups'**
+  String get groupsButton;
+
+  /// No description provided for @chooseHintColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Hint Color'**
+  String get chooseHintColor;
+
+  /// No description provided for @hskLevel1Description.
+  ///
+  /// In en, this message translates to:
+  /// **'HSK Level 1 vocabulary'**
+  String get hskLevel1Description;
+
+  /// No description provided for @hskLevel2Description.
+  ///
+  /// In en, this message translates to:
+  /// **'HSK Level 2 vocabulary (new words only)'**
+  String get hskLevel2Description;
+
+  /// No description provided for @hskLevel3Description.
+  ///
+  /// In en, this message translates to:
+  /// **'HSK Level 3 vocabulary (new words only)'**
+  String get hskLevel3Description;
+
+  /// No description provided for @hskLevel4Description.
+  ///
+  /// In en, this message translates to:
+  /// **'HSK Level 4 vocabulary (new words only)'**
+  String get hskLevel4Description;
+
+  /// No description provided for @hskLevel5Description.
+  ///
+  /// In en, this message translates to:
+  /// **'HSK Level 5 vocabulary (new words only)'**
+  String get hskLevel5Description;
+
+  /// No description provided for @hskLevel6Description.
+  ///
+  /// In en, this message translates to:
+  /// **'HSK Level 6 vocabulary (new words only)'**
+  String get hskLevel6Description;
+
+  /// No description provided for @erase.
+  ///
+  /// In en, this message translates to:
+  /// **'Erase'**
+  String get erase;
+
+  /// No description provided for @showCharacter.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Character'**
+  String get showCharacter;
+
+  /// No description provided for @hideCharacter.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide Character'**
+  String get hideCharacter;
+
+  /// No description provided for @nextStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Next Step'**
+  String get nextStep;
+
+  /// No description provided for @showAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Show All'**
+  String get showAll;
+
+  /// No description provided for @hide.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide'**
+  String get hide;
+
+  /// No description provided for @createYourOwnPracticeSets.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your own practice sets with specific characters or words'**
+  String get createYourOwnPracticeSets;
+
+  /// No description provided for @createYourFirstSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Your First Set'**
+  String get createYourFirstSet;
 }
 
 class _AppLocalizationsDelegate

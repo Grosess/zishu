@@ -170,13 +170,13 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
       
       // Calculate how many characters needed per day to reach goal
       final charactersPerDay = (charactersRemaining / daysRemaining).ceil();
-      
-      // Today's target is simply the daily rate
+
+      // Today's learn target is the calculated daily rate
       _charactersNeededToday = charactersPerDay;
-      _dailyPracticeGoal = charactersPerDay;
-      
-      // Save the calculated daily goal for the streak service to use
-      _prefs.setInt('daily_practice_goal', charactersPerDay);
+      // NOTE: _dailyPracticeGoal (review goal) is NOT overwritten here - it's set by user
+
+      // Save the calculated learn goal for the streak service to use
+      _prefs.setInt('daily_learn_goal', charactersPerDay);
       
       // Daily progress is based on today's target
       _dailyProgress = _charactersNeededToday > 0 
@@ -309,9 +309,9 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
               TextField(
                 controller: goalController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Target Characters',
-                  hintText: 'e.g., 100',
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.targetCharacters,
+                  hintText: AppLocalizations.of(context)!.exampleNumber('100'),
                 ),
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,
@@ -367,7 +367,7 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text(AppLocalizations.of(context)!.cancel),
             ),
             FilledButton(
               onPressed: () {
@@ -395,7 +395,7 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
                 
                 Navigator.pop(context);
               },
-              child: const Text('Save'),
+              child: Text(AppLocalizations.of(context)!.save),
             ),
           ],
         ),
@@ -405,18 +405,30 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
 
   void _showPracticeGoalDialog() {
     final controller = TextEditingController(text: _dailyPracticeGoal.toString());
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Set Daily Practice Goal'),
-        content: TextField(
-          controller: controller,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-            labelText: 'Daily Practice Target',
-            hintText: 'e.g., 20',
-          ),
+        title: Text(AppLocalizations.of(context)!.setDailyReviewGoal),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              AppLocalizations.of(context)!.setDailyReviewDescription,
+              style: const TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.dailyReviewTarget,
+                hintText: AppLocalizations.of(context)!.exampleNumber('20'),
+                suffixText: AppLocalizations.of(context)!.characters,
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -426,16 +438,16 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
           FilledButton(
             onPressed: () {
               final goal = int.tryParse(controller.text) ?? _dailyPracticeGoal;
-              
+
               setState(() {
                 _dailyPracticeGoal = goal;
               });
-              
+
               _saveGoal('daily_practice_goal', goal);
-              
+
               Navigator.pop(context);
             },
-            child: const Text('Save'),
+            child: Text(AppLocalizations.of(context)!.save),
           ),
         ],
       ),
@@ -825,7 +837,7 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
               ),
               const SizedBox(width: 8),
               Text(
-                'Most Missed',
+                AppLocalizations.of(context)!.mostMissed,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -837,7 +849,7 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
                 TextButton(
                   onPressed: _showAllStatistics,
                   child: Text(
-                    'View All',
+                    AppLocalizations.of(context)!.viewAll,
                     style: TextStyle(
                       color: isDuotone ? primaryColor : Colors.red,
                     ),
@@ -860,7 +872,7 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'No statistics yet',
+                      AppLocalizations.of(context)!.noStatisticsYet,
                       style: TextStyle(
                         fontSize: 14,
                         color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
@@ -868,7 +880,7 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Practice characters to see your error rates',
+                      AppLocalizations.of(context)!.practiceToSeeErrorRates,
                       style: TextStyle(
                         fontSize: 12,
                         color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
@@ -950,7 +962,7 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
                       ],
                     ),
                     Text(
-                      '${stat.wrongAttempts} wrong / ${stat.totalAttempts} total',
+                      '${stat.wrongAttempts} ${AppLocalizations.of(context)!.wrong.toLowerCase()} / ${stat.totalAttempts} ${AppLocalizations.of(context)!.attempts.toLowerCase()}',
                       style: TextStyle(
                         fontSize: 11,
                         color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
@@ -1164,22 +1176,14 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
   }
 
   String _formatDuration(Duration duration) {
-    final locale = Localizations.localeOf(context).languageCode;
     final hours = duration.inHours;
     final minutes = duration.inMinutes.remainder(60);
-    
-    if (locale == 'zh') {
-      if (hours > 0) {
-        return '$hours小时$minutes分钟';
-      } else {
-        return '$minutes分钟';
-      }
+
+    // Always use compact format to prevent overflow
+    if (hours > 0) {
+      return '${hours}h ${minutes}m';
     } else {
-      if (hours > 0) {
-        return '${hours}h ${minutes}m';
-      } else {
-        return '${minutes}m';
-      }
+      return '${minutes}m';
     }
   }
 }
@@ -1361,7 +1365,7 @@ class _AllStatisticsSheetState extends State<_AllStatisticsSheet> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'No statistics yet',
+                            AppLocalizations.of(context)!.noStatisticsYet,
                             style: TextStyle(
                               fontSize: 16,
                               color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
@@ -1522,7 +1526,7 @@ class _AllStatisticsSheetState extends State<_AllStatisticsSheet> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${stat.wrongAttempts} wrong',
+                          '${stat.wrongAttempts} ${AppLocalizations.of(context)!.wrong.toLowerCase()}',
                           style: TextStyle(
                             fontSize: 12,
                             color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
@@ -1536,7 +1540,7 @@ class _AllStatisticsSheetState extends State<_AllStatisticsSheet> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${stat.totalAttempts - stat.wrongAttempts} correct',
+                          '${stat.totalAttempts - stat.wrongAttempts} ${AppLocalizations.of(context)!.right.toLowerCase()}',
                           style: TextStyle(
                             fontSize: 12,
                             color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
@@ -1546,7 +1550,7 @@ class _AllStatisticsSheetState extends State<_AllStatisticsSheet> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${stat.totalAttempts} total attempts',
+                      '${stat.totalAttempts} ${AppLocalizations.of(context)!.attempts.toLowerCase()}',
                       style: TextStyle(
                         fontSize: 11,
                         color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),

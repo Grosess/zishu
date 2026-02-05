@@ -254,7 +254,7 @@ class _StreakDisplayState extends State<StreakDisplay> {
               color: Theme.of(context).colorScheme.primary,
             ),
             const SizedBox(width: 8),
-            const Text('Streak Settings'),
+            Text(AppLocalizations.of(context)!.streakSettings),
           ],
         ),
         content: Column(
@@ -262,12 +262,12 @@ class _StreakDisplayState extends State<StreakDisplay> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${AppLocalizations.of(context)!.currentStreak}: ${_streakData!.currentStreak} days',
+              '${AppLocalizations.of(context)!.currentStreak}: ${_streakData!.currentStreak} ${AppLocalizations.of(context)!.days}',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
             Text(
-              '${AppLocalizations.of(context)!.bestStreak}: ${_streakData!.longestStreak} days',
+              '${AppLocalizations.of(context)!.bestStreak}: ${_streakData!.longestStreak} ${AppLocalizations.of(context)!.days}',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 16),
@@ -288,7 +288,7 @@ class _StreakDisplayState extends State<StreakDisplay> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Learn ${_streakData!.dailyGoal} new characters today to maintain your streak',
+                      AppLocalizations.of(context)!.learnCharsToMaintainStreak(_streakData!.dailyGoal),
                       style: Theme.of(context).textTheme.bodySmall,
                       textAlign: TextAlign.center,
                     ),
@@ -298,7 +298,7 @@ class _StreakDisplayState extends State<StreakDisplay> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Based on your progress goal',
+              AppLocalizations.of(context)!.basedOnProgressGoal,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 fontStyle: FontStyle.italic,
                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),

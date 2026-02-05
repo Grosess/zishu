@@ -98,6 +98,7 @@ class _SettingsPageState extends State<SettingsPage> {
       orElse: () => StrokeType.classic,
     );
     _dailyLearnGoal = _prefs.getInt('daily_learn_goal') ?? 10;
+    _dailyLearnGoal = _dailyLearnGoal.clamp(5, 50); // Clamp to valid range
     _strokeLeniency = _prefs.getDouble('stroke_leniency') ?? 0.55;
     _strokeLeniency = _strokeLeniency.clamp(0.3, 0.8); // Clamp to valid range
     _hapticFeedbackEnabled = _prefs.getBool('haptic_feedback_enabled') ?? true;
@@ -147,13 +148,14 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   String _getWritingModeDescription(WritingMode mode) {
+    final localizations = AppLocalizations.of(context)!;
     switch (mode) {
       case WritingMode.auto:
-        return 'Strokes convert to font after drawing';
+        return localizations.writingModeAutoDesc;
       case WritingMode.handwriting:
-        return 'Handwriting with automatic accuracy checking';
+        return localizations.writingModeHandwritingDesc;
       case WritingMode.trueHandwriting:
-        return 'Draw and self-assess, best for memory';
+        return localizations.writingModeTrueHandwritingDesc;
     }
   }
 
@@ -248,11 +250,11 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 
                 // Appearance Settings
-                const Padding(
-                  padding: EdgeInsets.all(16),
+                Padding(
+                  padding: const EdgeInsets.all(16),
                   child: Text(
-                    'Appearance',
-                    style: TextStyle(
+                    AppLocalizations.of(context)!.appearance,
+                    style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
@@ -390,7 +392,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Text(_duotoneBackground.substring(0, 1).toUpperCase() + _duotoneBackground.substring(1)),
+                        Text(_getColorName(_duotoneBackground)),
                       ],
                     ),
                     trailing: const Icon(Icons.chevron_right),
@@ -437,7 +439,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Text(_duotoneColor.substring(0, 1).toUpperCase() + _duotoneColor.substring(1)),
+                        Text(_getColorName(_duotoneColor)),
                       ],
                     ),
                     trailing: const Icon(Icons.chevron_right),
@@ -500,7 +502,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         }
                       },
                       icon: const Icon(Icons.swap_horiz, size: 18),
-                      label: const Text('Swap'),
+                      label: Text(AppLocalizations.of(context)!.swap),
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       ),
@@ -520,22 +522,22 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ),
                 ListTile(
-                  title: const Text('Writing Mode'),
+                  title: Text(AppLocalizations.of(context)!.writingMode),
                   subtitle: Text(_getWritingModeDescription(_writingMode)),
                   trailing: DropdownButton<WritingMode>(
                     value: _writingMode,
-                    items: const [
+                    items: [
                       DropdownMenuItem(
                         value: WritingMode.auto,
-                        child: Text('Auto'),
+                        child: Text(AppLocalizations.of(context)!.auto),
                       ),
                       DropdownMenuItem(
                         value: WritingMode.handwriting,
-                        child: Text('Handwriting'),
+                        child: Text(AppLocalizations.of(context)!.handwriting),
                       ),
                       DropdownMenuItem(
                         value: WritingMode.trueHandwriting,
-                        child: Text('True Handwriting'),
+                        child: Text(AppLocalizations.of(context)!.trueHandwriting),
                       ),
                     ],
                     onChanged: (value) {
@@ -574,8 +576,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   },
                 ),
                 SwitchListTile(
-                  title: const Text('Show Stroke Animation'),
-                  subtitle: const Text('Animate stroke hints in learning mode'),
+                  title: Text(AppLocalizations.of(context)!.showStrokeAnimation),
+                  subtitle: Text(AppLocalizations.of(context)!.showStrokeAnimationDesc),
                   value: _showStrokeAnimation,
                   onChanged: (value) {
                     HapticService().selectionClick();
@@ -588,7 +590,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 SwitchListTile(
                   title: Row(
                     children: [
-                      const Text('Show Radical Analysis'),
+                      Text(AppLocalizations.of(context)!.showRadicalAnalysis),
                       const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -597,7 +599,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          'Beta',
+                          AppLocalizations.of(context)!.beta,
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
@@ -607,7 +609,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                     ],
                   ),
-                  subtitle: const Text('Display character components in learning mode'),
+                  subtitle: Text(AppLocalizations.of(context)!.showRadicalAnalysisDesc),
                   value: _showRadicalAnalysis,
                   onChanged: (value) {
                     HapticService().selectionClick();
@@ -618,8 +620,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   },
                 ),
                 SwitchListTile(
-                  title: const Text('Haptic Feedback'),
-                  subtitle: const Text('Subtle vibrations for interactions'),
+                  title: Text(AppLocalizations.of(context)!.hapticFeedback),
+                  subtitle: Text(AppLocalizations.of(context)!.hapticFeedbackDesc),
                   value: _hapticFeedbackEnabled,
                   onChanged: (value) async {
                     setState(() {
@@ -670,8 +672,8 @@ class _SettingsPageState extends State<SettingsPage> {
 
                 // Stroke Leniency Setting
                 ListTile(
-                  title: const Text('Stroke Leniency'),
-                  subtitle: Text('How forgiving stroke validation is (${(_strokeLeniency * 100).toInt()}%)'),
+                  title: Text(AppLocalizations.of(context)!.strokeLeniency),
+                  subtitle: Text('${AppLocalizations.of(context)!.strokeLeniencyDesc} (${(_strokeLeniency * 100).toInt()}%)'),
                   trailing: SizedBox(
                     width: 200,
                     child: Slider(
@@ -702,8 +704,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ),
                 ListTile(
-                  title: const Text('Stroke Width'),
-                  subtitle: Text('${_strokeWidth.toStringAsFixed(1)} pixels'),
+                  title: Text(AppLocalizations.of(context)!.strokeWidth),
+                  subtitle: Text(AppLocalizations.of(context)!.pixelsValue(_strokeWidth.toStringAsFixed(1))),
                   trailing: SizedBox(
                     width: 200,
                     child: Slider(
@@ -723,7 +725,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 ListTile(
                   enabled: _themeMode != 'duotone' && _themeMode != 'duotone',
-                  title: Text('Stroke Color',
+                  title: Text(AppLocalizations.of(context)!.strokeColor,
                     style: TextStyle(
                       color: (_themeMode == 'duotone' || _themeMode == 'duotone')
                         ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5)
@@ -752,8 +754,8 @@ class _SettingsPageState extends State<SettingsPage> {
                       const SizedBox(width: 8),
                       Text(
                         _themeMode == 'duotone'
-                          ? 'Using Duotone Foreground'
-                          : _strokeColor == 'primary' ? 'Theme Color' : _strokeColor.substring(0, 1).toUpperCase() + _strokeColor.substring(1),
+                          ? AppLocalizations.of(context)!.usingDuotoneForeground
+                          : _strokeColor == 'primary' ? AppLocalizations.of(context)!.themeColor : _strokeColor.substring(0, 1).toUpperCase() + _strokeColor.substring(1),
                         style: TextStyle(
                           color: _themeMode == 'duotone'
                             ? _getDuotoneAccentColor(_duotoneColor, _duotoneBackground)
@@ -771,7 +773,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
-                        title: const Text('Choose Stroke Color'),
+                        title: Text(AppLocalizations.of(context)!.chooseColor),
                         content: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -849,7 +851,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       showDialog(
                         context: context,
                         builder: (context) => AlertDialog(
-                          title: const Text('Choose Hint Color'),
+                          title: Text(AppLocalizations.of(context)!.chooseHintColor),
                           content: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -868,11 +870,11 @@ class _SettingsPageState extends State<SettingsPage> {
               
               // About section
               const SizedBox(height: 24),
-              const Padding(
-                padding: EdgeInsets.all(16),
+              Padding(
+                padding: const EdgeInsets.all(16),
                 child: Text(
-                  'About',
-                  style: TextStyle(
+                  AppLocalizations.of(context)!.about,
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
@@ -894,8 +896,8 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               ListTile(
                 leading: const Icon(Icons.info_outline),
-                title: const Text('Version'),
-                subtitle: const Text('1.1.0'),
+                title: Text(AppLocalizations.of(context)!.version),
+                subtitle: const Text('1.1.1'),
               ),
               const SizedBox(height: 32),
               ],
@@ -1294,5 +1296,32 @@ class _SettingsPageState extends State<SettingsPage> {
       }
     }
   }
-  
+
+  String _getColorName(String colorValue) {
+    switch (colorValue) {
+      case 'white':
+        return AppLocalizations.of(context)!.white;
+      case 'black':
+        return AppLocalizations.of(context)!.black;
+      case 'blue':
+        return AppLocalizations.of(context)!.blue;
+      case 'green':
+        return AppLocalizations.of(context)!.green;
+      case 'bluegreen':
+        return AppLocalizations.of(context)!.blueGreen;
+      case 'red':
+        return AppLocalizations.of(context)!.red;
+      case 'lightpink':
+        return AppLocalizations.of(context)!.lightPink;
+      case 'hotpink':
+        return AppLocalizations.of(context)!.hotPink;
+      case 'gold':
+        return AppLocalizations.of(context)!.gold;
+      case 'purple':
+        return AppLocalizations.of(context)!.purple;
+      default:
+        return colorValue.substring(0, 1).toUpperCase() + colorValue.substring(1);
+    }
+  }
+
 }

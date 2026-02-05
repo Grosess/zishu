@@ -23,6 +23,7 @@ import '../services/haptic_service.dart';
 import '../services/pronunciation_service.dart';
 import '../services/character_statistics_service.dart';
 import '../services/user_definitions_service.dart';
+import '../l10n/app_localizations.dart';
 
 enum PracticeMode { learning, testing }
 
@@ -1303,7 +1304,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                       });
                     } : null,
                     icon: const Icon(Icons.clear),
-                    label: const Text('Erase'),
+                    label: Text(AppLocalizations.of(context)!.erase),
                   ),
                   // Show character button
                   TextButton.icon(
@@ -1318,7 +1319,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                       });
                     },
                     icon: Icon(_showFullCharacter ? Icons.visibility_off : Icons.visibility),
-                    label: Text(_showFullCharacter ? 'Hide Character' : 'Show Character'),
+                    label: Text(_showFullCharacter ? AppLocalizations.of(context)!.hideCharacter : AppLocalizations.of(context)!.showCharacter),
                   ),
                 ],
               ) :
@@ -1353,7 +1354,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                         });
                       },
                       icon: const Icon(Icons.clear),
-                      label: const Text('Erase'),
+                      label: Text(AppLocalizations.of(context)!.erase),
                     ),
                   ),
                   // Show next step button
@@ -1368,7 +1369,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                       });
                     },
                     icon: const Icon(Icons.lightbulb_outline),
-                    label: const Text('Next Step'),
+                    label: Text(AppLocalizations.of(context)!.nextStep),
                   ),
                   // Show whole character button
                   TextButton.icon(
@@ -1381,7 +1382,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
                       });
                     },
                     icon: Icon(_showFullCharacter ? Icons.visibility_off : Icons.visibility),
-                    label: Text(_showFullCharacter ? 'Hide' : 'Show All'),
+                    label: Text(_showFullCharacter ? AppLocalizations.of(context)!.hide : AppLocalizations.of(context)!.showAll),
                   ),
                 ],
               ),
@@ -2915,9 +2916,9 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         content: TextField(
           controller: nameController,
           autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'Set Name',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context)!.setName,
+            border: const OutlineInputBorder(),
           ),
           onSubmitted: (value) {
             if (value.trim().isNotEmpty) {
@@ -2928,7 +2929,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           FilledButton(
             onPressed: () {
@@ -3605,19 +3606,19 @@ class _WritingPracticePageState extends State<WritingPracticePage>
           controller: controller,
           autofocus: true,
           maxLines: 3,
-          decoration: const InputDecoration(
-            hintText: 'Enter definition...',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            hintText: AppLocalizations.of(context)!.enterDefinition,
+            border: const OutlineInputBorder(),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, controller.text),
-            child: const Text('Save'),
+            child: Text(AppLocalizations.of(context)!.save),
           ),
         ],
       ),
