@@ -661,5 +661,34 @@
   "hide": "Hide",
 
   "createYourOwnPracticeSets": "Create your own practice sets with specific characters or words",
-  "createYourFirstSet": "Create Your First Set"
+  "createYourFirstSet": "Create Your First Set",
+
+  "characterStatistics": "Character Statistics",
+  "charactersTracked": "{count} characters tracked",
+  "@charactersTracked": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "errorRate": "error rate",
+  "swipe": "swipe",
+  "resetStatisticsFor": "Reset statistics for {character}",
+  "@resetStatisticsFor": {
+    "placeholders": {
+      "character": {"type": "String"}
+    }
+  },
+  "resetButton": "Reset",
+
+  "setLearningGoal": "Set Learning Goal",
+  "targetDate": "Target Date",
+  "goalLimitedToMaximum": "Goal limited to 99,999 characters maximum",
+
+  "classic": "Classic",
+  "invisible": "Invisible",
+  "smoothCalligraphyBrush": "Smooth calligraphy brush",
+  "noVisualFeedback": "No visual feedback",
+  "hintColor": "Hint Color",
+  "lightMode": "Light Mode",
+  "darkMode": "Dark Mode"
 }

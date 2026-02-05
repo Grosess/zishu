@@ -302,7 +302,7 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Set Learning Goal'),
+          title: Text(AppLocalizations.of(context)!.setLearningGoal),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -328,7 +328,7 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
                 },
               ),
               const SizedBox(height: 24),
-              const Text('Target Date', style: TextStyle(fontSize: 16)),
+              Text(AppLocalizations.of(context)!.targetDate, style: const TextStyle(fontSize: 16)),
               const SizedBox(height: 8),
               InkWell(
                 onTap: () async {
@@ -378,8 +378,8 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
                 
                 if (goal > 99999) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Goal limited to 99,999 characters maximum'),
+                    SnackBar(
+                      content: Text(AppLocalizations.of(context)!.goalLimitedToMaximum),
                     ),
                   );
                 }
@@ -953,7 +953,7 @@ class ProgressPageState extends State<ProgressPage> with TickerProviderStateMixi
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'error rate',
+                          AppLocalizations.of(context)!.errorRate,
                           style: TextStyle(
                             fontSize: 12,
                             color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
@@ -1320,7 +1320,7 @@ class _AllStatisticsSheetState extends State<_AllStatisticsSheet> {
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      'Character Statistics',
+                      AppLocalizations.of(context)!.characterStatistics,
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -1343,7 +1343,7 @@ class _AllStatisticsSheetState extends State<_AllStatisticsSheet> {
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: Text(
-                    '${allStats.length} characters tracked',
+                    AppLocalizations.of(context)!.charactersTracked(allStats.length),
                     style: TextStyle(
                       fontSize: 14,
                       color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
@@ -1401,7 +1401,7 @@ class _AllStatisticsSheetState extends State<_AllStatisticsSheet> {
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Reset statistics for ${stat.character}'),
+                                  content: Text(AppLocalizations.of(context)!.resetStatisticsFor(stat.character)),
                                   duration: const Duration(seconds: 2),
                                 ),
                               );
@@ -1424,7 +1424,7 @@ class _AllStatisticsSheetState extends State<_AllStatisticsSheet> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Reset',
+                                  AppLocalizations.of(context)!.resetButton,
                                   style: TextStyle(
                                     color: isDuotone ? Theme.of(context).colorScheme.onPrimary : Colors.white,
                                     fontWeight: FontWeight.bold,
@@ -1508,7 +1508,7 @@ class _AllStatisticsSheetState extends State<_AllStatisticsSheet> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'error rate',
+                          AppLocalizations.of(context)!.errorRate,
                           style: TextStyle(
                             fontSize: 13,
                             color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
@@ -1569,7 +1569,7 @@ class _AllStatisticsSheetState extends State<_AllStatisticsSheet> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'swipe',
+                    AppLocalizations.of(context)!.swipe,
                     style: TextStyle(
                       fontSize: 10,
                       color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),

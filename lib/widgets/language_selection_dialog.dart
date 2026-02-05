@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/language_service.dart';
-import '../generated/l10n.dart';
+import '../l10n/app_localizations.dart';
 
 class LanguageSelectionDialog extends StatelessWidget {
   final LanguageService languageService;
@@ -16,7 +16,7 @@ class LanguageSelectionDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(
-        isWelcome ? S.of(context).welcomeTitle : S.of(context).selectLanguage,
+        isWelcome ? AppLocalizations.of(context)!.welcomeTitle : AppLocalizations.of(context)!.selectLanguage,
         style: const TextStyle(fontWeight: FontWeight.bold),
       ),
       content: Column(
@@ -26,7 +26,7 @@ class LanguageSelectionDialog extends StatelessWidget {
           if (isWelcome)
             Padding(
               padding: const EdgeInsets.only(bottom: 16.0),
-              child: Text(S.of(context).welcomeMessage),
+              child: Text(AppLocalizations.of(context)!.welcomeMessage),
             ),
           ...LanguageService.supportedLocales.map((locale) {
             return ListTile(
@@ -54,7 +54,7 @@ class LanguageSelectionDialog extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
-              'Cancel',
+              AppLocalizations.of(context)!.cancel,
               style: TextStyle(color: Theme.of(context).colorScheme.outline),
             ),
           ),

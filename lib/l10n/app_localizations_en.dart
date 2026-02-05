@@ -696,7 +696,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mostMissed => 'Most Missed';
 
   @override
-  String get errorRate => 'Error Rate';
+  String get errorRate => 'error rate';
 
   @override
   String get wrong => 'Wrong';
@@ -1382,4 +1382,51 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get createYourFirstSet => 'Create Your First Set';
+
+  @override
+  String get characterStatistics => 'Character Statistics';
+
+  @override
+  String charactersTracked(int count) {
+    return '$count characters tracked';
+  }
+
+  @override
+  String get swipe => 'swipe';
+
+  @override
+  String resetStatisticsFor(String character) {
+    return 'Reset statistics for $character';
+  }
+
+  @override
+  String get resetButton => 'Reset';
+
+  @override
+  String get setLearningGoal => 'Set Learning Goal';
+
+  @override
+  String get targetDate => 'Target Date';
+
+  @override
+  String get goalLimitedToMaximum =>
+      'Goal limited to 99,999 characters maximum';
+
+  @override
+  String get classic => 'Classic';
+
+  @override
+  String get invisible => 'Invisible';
+
+  @override
+  String get smoothCalligraphyBrush => 'Smooth calligraphy brush';
+
+  @override
+  String get noVisualFeedback => 'No visual feedback';
+
+  @override
+  String get lightMode => 'Light Mode';
+
+  @override
+  String get darkMode => 'Dark Mode';
 }

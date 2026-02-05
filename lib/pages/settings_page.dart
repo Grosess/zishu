@@ -117,19 +117,6 @@ class _SettingsPageState extends State<SettingsPage> {
       _isLoading = false;
     });
   }
-  
-  String _getGreeting() {
-    final hour = DateTime.now().hour;
-    final name = _userName.split(' ').first; // Use first name only
-    
-    if (hour < 12) {
-      return 'Good morning, $name';
-    } else if (hour < 17) {
-      return 'Good afternoon, $name';
-    } else {
-      return 'Good evening, $name';
-    }
-  }
 
   Future<void> _saveBoolSetting(String key, bool value) async {
     await _prefs.setBool(key, value);
@@ -226,18 +213,6 @@ class _SettingsPageState extends State<SettingsPage> {
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               children: [
-                // Greeting message
-                if (_userName.isNotEmpty) ...[
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      _getGreeting(),
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.w300,
-                      ),
-                    ),
-                  ),
-                ],
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: Text(
@@ -348,7 +323,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Text(_accentColor.substring(0, 1).toUpperCase() + _accentColor.substring(1)),
+                        Text(_getColorName(_accentColor)),
                       ],
                     ),
                     trailing: const Icon(Icons.chevron_right),
@@ -799,7 +774,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                   subtitle: Text(
-                    _themeMode == 'duotone' ? AppLocalizations.of(context)!.classicFixed : _getStrokeTypeLabel(_strokeType),
+                    _themeMode == 'duotone' ? AppLocalizations.of(context)!.classicFixed : _getStrokeTypeLabel(context, _strokeType),
                     style: TextStyle(
                       color: _themeMode == 'duotone'
                         ? _getDuotoneAccentColor(_duotoneColor, _duotoneBackground)
@@ -819,8 +794,8 @@ class _SettingsPageState extends State<SettingsPage> {
                         content: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            _buildStrokeTypeOption('Classic', StrokeType.classic, 'Smooth calligraphy brush'),
-                            _buildStrokeTypeOption('Invisible', StrokeType.invisible, 'No visual feedback'),
+                            _buildStrokeTypeOption(AppLocalizations.of(context)!.classic, StrokeType.classic, AppLocalizations.of(context)!.smoothCalligraphyBrush),
+                            _buildStrokeTypeOption(AppLocalizations.of(context)!.invisible, StrokeType.invisible, AppLocalizations.of(context)!.noVisualFeedback),
                           ],
                         ),
                       ),
@@ -829,7 +804,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 if (_themeMode != 'duotone')
                   ListTile(
-                    title: const Text('Hint Color'),
+                    title: Text(AppLocalizations.of(context)!.hintColor),
                     subtitle: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -843,7 +818,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Text(_hintColor == 'primary' ? 'Theme Color' : _hintColor.substring(0, 1).toUpperCase() + _hintColor.substring(1)),
+                        Text(_hintColor == 'primary' ? AppLocalizations.of(context)!.themeColor : _getColorName(_hintColor)),
                       ],
                     ),
                     trailing: const Icon(Icons.chevron_right),
@@ -956,12 +931,12 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
   
-  String _getStrokeTypeLabel(StrokeType type) {
+  String _getStrokeTypeLabel(BuildContext context, StrokeType type) {
     switch (type) {
       case StrokeType.invisible:
-        return 'Invisible';
+        return AppLocalizations.of(context)!.invisible;
       case StrokeType.classic:
-        return 'Classic';
+        return AppLocalizations.of(context)!.classic;
     }
   }
   

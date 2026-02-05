@@ -1354,4 +1354,50 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get createYourFirstSet => '创建您的第一个字集';
+
+  @override
+  String get characterStatistics => '字符统计';
+
+  @override
+  String charactersTracked(int count) {
+    return '已追踪 $count 个字符';
+  }
+
+  @override
+  String get swipe => '滑动';
+
+  @override
+  String resetStatisticsFor(String character) {
+    return '重置 $character 的统计数据';
+  }
+
+  @override
+  String get resetButton => '重置';
+
+  @override
+  String get setLearningGoal => '设置学习目标';
+
+  @override
+  String get targetDate => '目标日期';
+
+  @override
+  String get goalLimitedToMaximum => '目标限制为最多 99,999 个字符';
+
+  @override
+  String get classic => '经典';
+
+  @override
+  String get invisible => '隐形';
+
+  @override
+  String get smoothCalligraphyBrush => '流畅的书法笔刷';
+
+  @override
+  String get noVisualFeedback => '无视觉反馈';
+
+  @override
+  String get lightMode => '浅色模式';
+
+  @override
+  String get darkMode => '深色模式';
 }

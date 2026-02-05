@@ -1349,7 +1349,7 @@ abstract class AppLocalizations {
   /// No description provided for @errorRate.
   ///
   /// In en, this message translates to:
-  /// **'Error Rate'**
+  /// **'error rate'**
   String get errorRate;
 
   /// No description provided for @wrong.
@@ -2629,6 +2629,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Create Your First Set'**
   String get createYourFirstSet;
+
+  /// No description provided for @characterStatistics.
+  ///
+  /// In en, this message translates to:
+  /// **'Character Statistics'**
+  String get characterStatistics;
+
+  /// No description provided for @charactersTracked.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} characters tracked'**
+  String charactersTracked(int count);
+
+  /// No description provided for @swipe.
+  ///
+  /// In en, this message translates to:
+  /// **'swipe'**
+  String get swipe;
+
+  /// No description provided for @resetStatisticsFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset statistics for {character}'**
+  String resetStatisticsFor(String character);
+
+  /// No description provided for @resetButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get resetButton;
+
+  /// No description provided for @setLearningGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Learning Goal'**
+  String get setLearningGoal;
+
+  /// No description provided for @targetDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Target Date'**
+  String get targetDate;
+
+  /// No description provided for @goalLimitedToMaximum.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal limited to 99,999 characters maximum'**
+  String get goalLimitedToMaximum;
+
+  /// No description provided for @classic.
+  ///
+  /// In en, this message translates to:
+  /// **'Classic'**
+  String get classic;
+
+  /// No description provided for @invisible.
+  ///
+  /// In en, this message translates to:
+  /// **'Invisible'**
+  String get invisible;
+
+  /// No description provided for @smoothCalligraphyBrush.
+  ///
+  /// In en, this message translates to:
+  /// **'Smooth calligraphy brush'**
+  String get smoothCalligraphyBrush;
+
+  /// No description provided for @noVisualFeedback.
+  ///
+  /// In en, this message translates to:
+  /// **'No visual feedback'**
+  String get noVisualFeedback;
+
+  /// No description provided for @lightMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Light Mode'**
+  String get lightMode;
+
+  /// No description provided for @darkMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark Mode'**
+  String get darkMode;
 }
 
 class _AppLocalizationsDelegate
