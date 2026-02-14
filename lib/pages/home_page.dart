@@ -7,6 +7,7 @@ import '../services/character_database.dart';
 import '../services/character_dictionary.dart';
 import '../services/profile_service.dart';
 import '../services/learning_service.dart';
+import '../services/streak_service.dart';
 import 'writing_practice_page.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
@@ -46,8 +47,9 @@ class HomePageState extends State<HomePage> with RouteAware {
   DateTime? _goalDeadline;
   int _currentProgress = 0;
   double _progressPercentage = 0.0;
-  int _paceOffset = 0; // Positive = ahead of pace, negative = behind
+  int _paceOffset = 0; // Positive = ahead of daily goal, negative = behind daily goal
   int _dailyGoal = 0; // Dynamic daily goal based on remaining characters and days
+  int _todayLearned = 0; // Characters learned today
   
   // Recent sets
   List<Map<String, dynamic>> _recentSets = [];
@@ -225,50 +227,31 @@ class HomePageState extends State<HomePage> with RouteAware {
     }
   }
   
-  void _calculatePace() {
+  Future<void> _calculatePace() async {
     if (_goalDeadline == null) return;
-    
+
     final now = DateTime.now();
-    // Get the start date (stored or 30 days before deadline)
-    final startDateString = _prefs.getString('goal_start_date');
-    final startDate = startDateString != null 
-        ? DateTime.parse(startDateString)
-        : _goalDeadline!.subtract(const Duration(days: 30));
-    
-    // Save start date if not stored
-    if (startDateString == null) {
-      _prefs.setString('goal_start_date', startDate.toIso8601String());
-    }
-    
-    final totalDays = _goalDeadline!.difference(startDate).inDays;
-    final daysElapsed = now.difference(startDate).inDays;
-    
-    if (daysElapsed <= 0 || totalDays <= 0) {
-      _paceOffset = 0;
-      _dailyGoal = (_characterGoal - _currentProgress) ~/ math.max(1, totalDays);
-      return;
-    }
-    
-    // Calculate expected progress for pace tracking
-    final progressRate = daysElapsed / totalDays;
-    final expectedProgress = (_characterGoal * progressRate).round();
-    
-    // Calculate pace offset
-    _paceOffset = _currentProgress - expectedProgress;
-    
+
     // Calculate dynamic daily goal based on remaining characters and days
     final remainingCharacters = _characterGoal - _currentProgress;
-    final remainingDays = _goalDeadline!.difference(now).inDays;
-    
-    if (remainingDays <= 0) {
-      // Deadline passed or is today
-      _dailyGoal = remainingCharacters; // Need to complete all today
-    } else if (remainingCharacters <= 0) {
+    final remainingDays = math.max(1, _goalDeadline!.difference(now).inDays + 1);
+
+    if (remainingCharacters <= 0) {
       // Goal already achieved
       _dailyGoal = 0;
+      _paceOffset = 0;
     } else {
       // Calculate daily goal - round up to ensure we meet the goal
       _dailyGoal = (remainingCharacters / remainingDays).ceil();
+
+      // Get today's learned count from streak service
+      final streakService = StreakService();
+      final streakData = await streakService.getStreakData();
+      _todayLearned = streakData.todayProgress;
+
+      // Calculate pace offset: how many ahead/behind the daily goal we are today
+      // Positive = ahead of today's goal, negative = behind today's goal
+      _paceOffset = _todayLearned - _dailyGoal;
     }
   }
 
