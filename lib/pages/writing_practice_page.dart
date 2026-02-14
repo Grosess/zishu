@@ -4,7 +4,6 @@ import 'dart:math' as math;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/local_storage_service.dart';
-import '../services/streak_service.dart';
 import '../services/character_stroke_service.dart';
 import '../services/character_database.dart';
 import '../services/character_dictionary.dart';
@@ -23,6 +22,7 @@ import '../services/haptic_service.dart';
 import '../services/pronunciation_service.dart';
 import '../services/character_statistics_service.dart';
 import '../services/user_definitions_service.dart';
+import '../services/character_set_manager.dart';
 import '../l10n/app_localizations.dart';
 
 enum PracticeMode { learning, testing }
@@ -2087,11 +2087,6 @@ class _WritingPracticePageState extends State<WritingPracticePage>
           if (widget.onComplete != null) {
             widget.onComplete!(finalWordResult);
           }
-          
-          // Update streak progress for endless practice
-          if (finalWordResult) {
-            StreakService().updateProgress(1);
-          }
           return;
         }
         
@@ -2303,10 +2298,6 @@ class _WritingPracticePageState extends State<WritingPracticePage>
           if (widget.onComplete != null) {
             widget.onComplete!(finalWordResult);
           }
-          // Update streak progress for endless practice
-          if (finalWordResult) {
-            StreakService().updateProgress(1);
-          }
           return;
         } else {
           // Track the result for the last character
@@ -2328,12 +2319,7 @@ class _WritingPracticePageState extends State<WritingPracticePage>
             if (widget.onComplete != null) {
               widget.onComplete!(finalWordResult);
             }
-            
-            // Update streak if successful
-            if (finalWordResult) {
-              StreakService().updateProgress(1);
-            }
-            
+
             // Navigate back
             if (mounted) {
               // Refresh progress before exiting
@@ -2495,23 +2481,12 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         if (widget.mode == PracticeMode.learning && _learningStage == 2 && wasCorrect) {
           final completedItem = widget.allCharacters![_currentCharacterIndex];
           
-          // Debug: Check current learned status before marking
+          // Mark as learned (this will automatically update progress for new characters)
           if (completedItem.length > 1) {
-            final isAlreadyLearned = await _learningService.isWordLearned(completedItem);
-            // Production: removed debug print
             await _learningService.markWordAsLearned(completedItem);
-            final isNowLearned = await _learningService.isWordLearned(completedItem);
-            // Production: removed debug print
           } else {
-            final isAlreadyLearned = await _learningService.isCharacterLearned(completedItem);
-            // Production: removed debug print
             await _learningService.markCharacterAsLearned(completedItem);
-            final isNowLearned = await _learningService.isCharacterLearned(completedItem);
-            // Production: removed debug print
           }
-          
-          // Update streak progress when learning
-          StreakService().updateProgress(1);
         }
         
         // Check if we have more items to practice/learn
@@ -2570,10 +2545,6 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         // For endless practice, call the completion callback
         if (widget.onComplete != null) {
           widget.onComplete!(wasCorrect);
-        }
-        // Update streak progress for endless practice
-        if (wasCorrect) {
-          StreakService().updateProgress(1);
         }
         return;
       } else {
@@ -2893,21 +2864,19 @@ class _WritingPracticePageState extends State<WritingPracticePage>
   Future<void> _createCustomSetFromIncorrect() async {
     // First, close the current dialog
     Navigator.of(context).pop();
-    
-    // Get existing set names
-    final prefs = await SharedPreferences.getInstance();
-    final customSets = prefs.getStringList('custom_sets') ?? [];
-    final existingNames = customSets.map((setJson) {
-      final setData = jsonDecode(setJson) as Map<String, dynamic>;
-      return setData['name'] as String;
-    }).toList();
-    
+
+    // Get character set manager and initialize it
+    final setManager = CharacterSetManager();
+    await setManager.initialize();
+    final existingSets = setManager.getCustomSets();
+    final existingNames = existingSets.map((s) => s.name).toList();
+
     // Show dialog to get set name
     final TextEditingController nameController = TextEditingController();
     final baseName = '${widget.characterSet} - Review';
     final uniqueName = _getUniqueSetName(baseName, existingNames);
     nameController.text = uniqueName;
-    
+
     final setName = await showDialog<String>(
       context: context,
       barrierDismissible: false,
@@ -2943,69 +2912,50 @@ class _WritingPracticePageState extends State<WritingPracticePage>
         ],
       ),
     );
-    
+
     if (setName == null || !mounted) return;
-    
-    // Re-fetch to ensure we have the latest data
-    final prefs2 = await SharedPreferences.getInstance();
-    final updatedCustomSets = prefs2.getStringList('custom_sets') ?? [];
-    final updatedExistingNames = updatedCustomSets.map((setJson) {
-      final setData = jsonDecode(setJson) as Map<String, dynamic>;
-      return setData['name'] as String;
-    }).toList();
-    
-    // Ensure name is unique
-    final finalSetName = _getUniqueSetName(setName, updatedExistingNames);
-    
-    // Generate unique set ID
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final setId = 'custom_$timestamp';
-    
-    // Save custom set
-    final setData = {
-      'id': setId,
-      'name': finalSetName,
-      'characters': _incorrectItems,
-      'isWordSet': widget.isWord,
-      'createdAt': DateTime.now().toIso8601String(),
-    };
-    
-    updatedCustomSets.add(jsonEncode(setData));
-    await prefs2.setStringList('custom_sets', updatedCustomSets);
-    
-    if (mounted) {
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Created custom set: $finalSetName',
-            style: TextStyle(
-              color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                  ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
-                  : null,
-            ),
-          ),
-          backgroundColor: _getSuccessColor(),
-          action: SnackBarAction(
-            label: 'View',
-            textColor: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
-                ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
-                : null,
-            onPressed: () {
-              // Navigate to home and then to sets tab
-              Navigator.of(context).popUntil((route) => route.isFirst);
-              // Refresh the sets progress to show the new set
-              refreshSetsProgress();
-            },
-          ),
-        ),
+
+    // Create custom set using CharacterSetManager
+    try {
+      final newSet = await setManager.createCustomSet(
+        name: setName,
+        characters: _incorrectItems,
+        description: 'Created from incorrect answers',
+        isWordSet: widget.isWord,
       );
-      
-      // Refresh sets progress before navigating back
-      refreshSetsProgress();
-      
-      // Navigate back to home
-      Navigator.of(context).pop();
+
+      if (mounted) {
+        // Refresh sets progress
+        refreshSetsProgress();
+
+        // Navigate back to home first
+        Navigator.of(context).pop();
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Created custom set: ${newSet.name}',
+              style: TextStyle(
+                color: Theme.of(context).extension<DuotoneThemeExtension>()?.isDuotoneTheme == true
+                    ? Theme.of(context).extension<DuotoneThemeExtension>()!.duotoneColor2!
+                    : null,
+              ),
+            ),
+            backgroundColor: _getSuccessColor(),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to create set: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
   
