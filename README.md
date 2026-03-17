@@ -21,7 +21,7 @@ Whether you're a beginner starting with basic radicals or an advanced learner ta
 
 ## 📲 Download
 
-**iOS**: Available on the [App Store](https://apps.apple.com/app/zishu/id6738848149)
+**iOS**: Available on the [App Store](https://apps.apple.com/us/app/zishu/id6747624319)
 
 ## 🛠️ Technology Stack
 
