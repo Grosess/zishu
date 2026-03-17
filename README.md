@@ -1,6 +1,6 @@
-# Zishu (字书)
+# Zishu 字书
 
-**Master Chinese character writing with authentic stroke order guidance**
+**Master Chinese character writing with stroke order guidance**
 
 Zishu is an open-source Flutter mobile application that helps learners master Chinese character writing through interactive stroke-by-stroke practice. Using authentic data from the MakeMeAHanzi database, Zishu provides real-time stroke validation, visual feedback, and comprehensive progress tracking to make learning Chinese characters engaging and effective.
 
@@ -8,7 +8,7 @@ Whether you're a beginner starting with basic radicals or an advanced learner ta
 
 ## ✨ Features
 
-- ✍️ **Authentic stroke order** - Practice with real stroke data from MakeMeAHanzi, ensuring you learn the correct writing technique
+- ✍️ **Stroke order** - Practice with real stroke data from MakeMeAHanzi, ensuring you learn the correct writing technique
 - 📚 **Comprehensive character sets** - Pre-built sets including HSK levels 1-6, radicals, and frequency-based lists
 - 🎯 **Custom practice sets** - Create your own character lists or import from text files and images via OCR
 - 📊 **Progress tracking** - Monitor your learning with daily streaks, goal setting, and detailed statistics
@@ -85,7 +85,7 @@ This means:
 
 **Archer Morrison** ([@Grosess](https://github.com/Grosess))
 
-Designed and developed with assistance from Claude AI.
+Designed Zishu, coded by Claude AI.
 
 ## 🙏 Acknowledgments
 
