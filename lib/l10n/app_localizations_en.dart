@@ -1033,6 +1033,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get visitMDBG => 'Visit MDBG';
 
   @override
+  String get visitDiscordServer =>
+      'Contribute by reporting/fixing bugs or developing features here';
+
+  @override
   String get learnMore => 'Learn More';
 
   @override
