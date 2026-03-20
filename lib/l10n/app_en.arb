@@ -489,6 +489,7 @@
   "characterInfoData": "Character information and radical data",
   "viewOnGitHub": "View on GitHub",
   "visitMDBG": "Visit MDBG",
+  "visitDiscordServer": "Contribute by reporting/fixing bugs or developing features here",
   "learnMore": "Learn More",
   "openSource": "Open Source",
   "openSourceDescription": "Zishu is built with Flutter and uses various open-source libraries. We are grateful to all the contributors who make these resources available.",

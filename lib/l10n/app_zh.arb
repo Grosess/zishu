@@ -360,6 +360,7 @@
   "characterInfoData": "字符信息和部首数据",
   "viewOnGitHub": "在GitHub上查看",
   "visitMDBG": "访问MDBG",
+  "visitDiscordServer": "加入我们的Discord服务器以聊天和获取支持",
   "learnMore": "了解更多",
   "openSource": "开源",
   "openSourceDescription": "字书使用Flutter构建，并使用各种开源库。我们感谢所有使这些资源可用的贡献者。",

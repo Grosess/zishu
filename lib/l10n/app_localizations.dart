@@ -1988,6 +1988,12 @@ abstract class AppLocalizations {
   /// **'Visit MDBG'**
   String get visitMDBG;
 
+  /// No description provided for @visitDiscordServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Contribute by reporting/fixing bugs or developing features here'**
+  String get visitDiscordServer;
+
   /// No description provided for @learnMore.
   ///
   /// In en, this message translates to:

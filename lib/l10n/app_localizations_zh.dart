@@ -1016,6 +1016,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get visitMDBG => '访问MDBG';
 
   @override
+  String get visitDiscordServer => '加入我们的Discord服务器以聊天和获取支持';
+
+  @override
   String get learnMore => '了解更多';
 
   @override

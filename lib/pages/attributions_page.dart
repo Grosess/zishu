@@ -139,6 +139,11 @@ class AttributionsPage extends StatelessWidget {
                   Text(
                     AppLocalizations.of(context)!.openSourceDescription,
                   ),
+                  TextButton.icon(
+                    onPressed: () => _launchUrl('https://discord.gg/Zjt2XfhqPK'),
+                    icon: const Icon(Icons.open_in_new, size: 16),
+                    label: Text(AppLocalizations.of(context)!.visitDiscordServer),
+                  ),
                 ],
               ),
             ),
