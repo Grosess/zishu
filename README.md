@@ -28,11 +28,13 @@ Whether you're a beginner starting with basic radicals or an advanced learner ta
 Built with **Flutter** and **Dart** for cross-platform native performance.
 
 **Character data sources:**
+
 - [MakeMeAHanzi](https://github.com/skishore/makemeahanzi) - Authentic stroke order and SVG path data (LGPL License)
 - [CC-CEDICT](https://www.mdbg.net/chinese/dictionary?page=cc-cedict) - Comprehensive Chinese-English dictionary (CC BY-SA License)
 - [Unicode Unihan Database](https://www.unicode.org/charts/unihan.html) - Character metadata and classifications
 
 **Key dependencies:**
+
 - `flutter_tts` - Text-to-speech for pronunciation
 - `google_mlkit_text_recognition` - OCR for image import
 - `sqflite` - Local database storage
@@ -41,11 +43,13 @@ Built with **Flutter** and **Dart** for cross-platform native performance.
 ## 🤝 Contributing
 
 Contributions are welcome! Zishu is open source under the GPL v3 license, which means you're free to:
+
 - Use the code for personal or commercial projects
 - Modify and adapt it to your needs
 - Distribute your own versions (with source code)
 
 **Before contributing:**
+
 1. Open an issue to discuss your proposed changes
 2. Fork the repository and create a feature branch
 3. Follow the existing code style and architecture
@@ -56,25 +60,17 @@ Please note that any contributions you make will be licensed under GPL v3.
 
 ## 📋 Building from Source
 
-```bash
-# Prerequisites: Flutter SDK 3.8.1 or higher
+The build process id dependent on your operating system.
 
-# Clone the repository
-git clone https://github.com/Grosess/zishu.git
-cd zishu
-
-# Get dependencies
-flutter pub get
-
-# Run on connected device or simulator
-flutter run
-```
+- [iOS](./docs/BUILDING_ON_IOS.md)
+- [Windows or Linux](./docs/Building_ON_WINDOWS_AND_LINUX.md)
 
 ## 📄 License
 
 This project is licensed under the **GNU General Public License v3.0** - see the [LICENSE](LICENSE) file for details.
 
 This means:
+
 - ✅ You can use, modify, and distribute this software
 - ✅ You can use it for commercial purposes
 - ⚠️ Any distributed modifications must also be open source under GPL v3
@@ -90,6 +86,7 @@ Designed Zishu, coded by Claude AI.
 ## 🙏 Acknowledgments
 
 Special thanks to:
+
 - **Shaunak Kishore** for creating and maintaining [MakeMeAHanzi](https://github.com/skishore/makemeahanzi), which provides the stroke order data that makes this app possible
 - **MDBG.net** for maintaining the [CC-CEDICT](https://www.mdbg.net/chinese/dictionary?page=cc-cedict) Chinese-English dictionary
 - **Unicode Consortium** for the comprehensive [Unihan Database](https://www.unicode.org/charts/unihan.html)
@@ -98,6 +95,7 @@ Special thanks to:
 ## 📱 Privacy
 
 Zishu respects your privacy:
+
 - ✅ All data stored locally on your device
 - ✅ No analytics or tracking
 - ✅ No account required
